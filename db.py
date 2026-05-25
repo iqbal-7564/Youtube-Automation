@@ -21,7 +21,7 @@ def already_posted(conn, url_hash):
         "SELECT 1 FROM posted WHERE url_hash=?", (url_hash,)
     ).fetchone() is not None
 
-def title_already_posted(conn, title, threshold=0.85):
+def title_already_posted(conn, title, threshold=0.78):
     rows = conn.execute("""
         SELECT title FROM posted
         WHERE posted_at >= datetime('now', '-7 days')

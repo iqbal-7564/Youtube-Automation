@@ -9,6 +9,40 @@ PAKISTAN_KEYWORDS = [
     "pakistan economy", "pakistan flood", "pakistan election"
 ]
 
+# Pakistan news must also match at least one of these "worth posting" topics
+PAKISTAN_IMPORTANT_TOPICS = [
+    # Politics & governance
+    "election", "vote", "parliament", "senate", "assembly", "cabinet",
+    "prime minister", "president", "chief minister", "governor",
+    "verdict", "court", "supreme court", "arrest", "resign", "impeach",
+    "imran khan", "shehbaz", "nawaz sharif", "zardari", "bilawal",
+    "pti", "pmln", "ppp", "ispr",
+
+    # Security & military
+    "army", "military", "operation", "attack", "blast", "bomb",
+    "terrorist", "terrorism", "ttp", "killed", "dead", "casualties",
+    "border", "loc", "india pakistan", "afghanistan",
+
+    # Economy
+    "imf", "rupee", "inflation", "budget", "economy", "economic",
+    "sbp", "interest rate", "gdp", "debt", "loan", "bailout",
+    "cpec", "investment", "trade", "oil prices", "fuel prices",
+    "electricity", "power crisis", "gas",
+
+    # Disasters & crises
+    "flood", "earthquake", "disaster", "drought", "heatwave",
+    "emergency", "relief", "rescue",
+
+    # International / diplomacy
+    "india", "china", "us", "united states", "iran", "saudi",
+    "un", "nato", "foreign minister", "diplomat", "sanction",
+    "visit", "summit",
+
+    # Cricket & major sports
+    "test match", "odi", "t20", "world cup", "series", "babar azam",
+    "shaheen", "pcb", "cricket board",
+]
+
 BREAKING_KEYWORDS = [
     "breaking", "urgent", "killed", "dead", "attack", "blast",
     "bomb", "earthquake", "flood", "fire", "crash", "arrested",
@@ -90,19 +124,32 @@ def score_article(article):
     if len(article.get("summary", "")) < 80:
         return 0, 5
 
-    # Pakistan news
+    # Pakistan news — must be about an important topic, not just any Pakistan story
     if source == "pakistan":
-        if any(kw in text for kw in PAKISTAN_KEYWORDS):
-            score += 50
-            level  = 2
-            if any(kw in text for kw in BREAKING_KEYWORDS):
-                score += 40
-                level  = 1
-        elif any(kw in text for kw in BREAKING_KEYWORDS):
-            score += 40
-            level  = 2
-        else:
+        has_pk_keyword   = any(kw in text for kw in PAKISTAN_KEYWORDS)
+        has_important    = any(kw in text for kw in PAKISTAN_IMPORTANT_TOPICS)
+        has_breaking     = any(kw in text for kw in BREAKING_KEYWORDS)
+
+        if not has_pk_keyword:
             return 0, 5
+
+        # Must match an important topic OR be genuinely breaking
+        if not has_important and not has_breaking:
+            print(f"  ✗ Pakistan skip (not important enough): '{article['title'][:60]}'")
+            return 0, 5
+
+        # Require important topic to appear in the TITLE (not just buried in summary)
+        title_has_important = any(kw in title for kw in PAKISTAN_IMPORTANT_TOPICS)
+        title_has_breaking  = any(kw in title for kw in BREAKING_KEYWORDS)
+        if not title_has_important and not title_has_breaking:
+            print(f"  ✗ Pakistan skip (important keyword only in summary): '{article['title'][:60]}'")
+            return 0, 5
+
+        score += 50
+        level  = 2
+        if has_breaking:
+            score += 40
+            level  = 1
 
     # World news — keyword must appear in the TITLE, not just the summary
     elif source == "world":
