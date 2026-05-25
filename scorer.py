@@ -67,6 +67,21 @@ BLOCKED_KEYWORDS = [
 
     # Sports entertainment
     "fans furious", "fans react", "fan theory",
+    # Academic/controversial gender content
+"sex differences",
+"sex difference",
+"billion years of sex",
+"evolutionary psychology",
+"nature vs nurture",
+"gender differences",
+"men and women differences",
+"stewart-williams",
+
+# Any sex-related content
+"sex",
+"sexual",
+"sexuality",
+"intercourse",
 ]
 
 def _is_blocked(text, keyword):
@@ -84,9 +99,9 @@ def score_article(article):
 
     # Block immediately
     for kw in BLOCKED_KEYWORDS:
-        if _is_blocked(text, kw):
-            print(f"  ✗ Blocked: '{article['title'][:50]}' [{kw}]")
-            return 0, 5
+     if kw in text:
+        print(f"  ✗ Blocked: '{article['title'][:50]}' [{kw}]")
+        return 0, 5
 
     # Minimum content check
     if len(article.get("summary", "")) < 80:

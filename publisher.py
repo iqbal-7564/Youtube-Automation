@@ -180,3 +180,50 @@ def post_to_instagram(text, image_path=None):
     except Exception as e:
         print(f"  Instagram exception: {e}")
         return False
+def post_to_twitter(text, image_path=None):
+    import tweepy
+
+    API_KEY            = os.getenv("TWITTER_API_KEY")
+    API_SECRET         = os.getenv("TWITTER_API_SECRET")
+    ACCESS_TOKEN       = os.getenv("TWITTER_ACCESS_TOKEN")
+    ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+    if not all([API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET]):
+        print("  Twitter credentials missing")
+        return False
+
+    try:
+        # Twitter client
+        client = tweepy.Client(
+            consumer_key=API_KEY,
+            consumer_secret=API_SECRET,
+            access_token=ACCESS_TOKEN,
+            access_token_secret=ACCESS_TOKEN_SECRET
+        )
+
+        # Trim text to 280 characters
+        tweet_text = text[:277] + "..." if len(text) > 280 else text
+
+        # Post with image
+        if image_path and os.path.exists(image_path):
+            # Need v1.1 API for media upload
+            auth = tweepy.OAuth1UserHandler(
+                API_KEY, API_SECRET,
+                ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+            )
+            api = tweepy.API(auth)
+
+            media = api.media_upload(filename=image_path)
+            r = client.create_tweet(
+                text=tweet_text,
+                media_ids=[media.media_id]
+            )
+        else:
+            r = client.create_tweet(text=tweet_text)
+
+        print(f"  Twitter posted: {r.data['id']}")
+        return True
+
+    except Exception as e:
+        print(f"  Twitter error: {e}")
+        return False

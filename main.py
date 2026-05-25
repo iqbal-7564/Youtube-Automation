@@ -10,7 +10,7 @@ from fetcher      import fetch_articles
 from deduplicator import deduplicate
 from scorer       import score_article
 from generator    import generate_post, generate_image
-from publisher    import post_to_facebook, post_to_instagram
+from publisher import post_to_facebook, post_to_instagram, post_to_twitter
 
 PKT            = pytz.timezone("Asia/Karachi")
 FB_DAILY_LIMIT = 10
@@ -105,6 +105,14 @@ def run_pipeline():
                 mark_posted(conn, article["hash"], article["title"], "facebook")
                 fb_count += 1
                 print(f"[FB {fb_count}/10] Posted")
+
+                post_to_twitter(content["post_text"], image_path)
+                print(f"[Twitter] Posted")
+                ig_success = post_to_instagram(content["post_text"], image_path)
+                if ig_success:
+                 mark_posted(conn, article["hash"], article["title"], "instagram")
+                 ig_count += 1
+                print(f"[IG {ig_count}/5] Posted")
 
                 # Post to Instagram at specific hours only
                 if post_ig:
