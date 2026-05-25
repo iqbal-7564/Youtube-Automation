@@ -111,8 +111,12 @@ def post_to_facebook(text, image_path=None):
 
         error = result.get("error", {})
         code  = error.get("code", 0)
-        if code in {190, 102, 467, 463, 460}:
-            print("TOKEN EXPIRED — update FB_PAGE_TOKEN!")
+        if code in {190, 102, 200, 467, 463, 460}:
+            print(f"FATAL Facebook error (code {code}) — stopping pipeline.")
+            if code == 200:
+                print("FIX: Regenerate token with 'pages_manage_posts' permission.")
+            else:
+                print("FIX: Update FB_PAGE_TOKEN in GitHub secrets.")
             return None
 
         print(f"  Facebook failed: {error.get('message')}")

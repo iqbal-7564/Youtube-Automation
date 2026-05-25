@@ -31,11 +31,11 @@ WORLD_MAJOR_KEYWORDS = [
 ]
 
 BLOCKED_KEYWORDS = [
-    # Sexual content — 100% blocked (use full phrases to avoid false positives)
-    "sex tape", "sex work", "sex scandal", "sex crime", "sex trafficking",
-    "sexual", "nude", "naked", "porn", "pornography",
+    # Sexual content
+    "sex", "sex tape", "sex work", "sex scandal", "sex crime", "sex trafficking",
+    "sexual", "sexuality", "intercourse", "nude", "naked", "porn", "pornography",
     "adult content", "explicit content", "erotic", "xxx", "onlyfans",
-    "prostitution", "rape", "sexual assault",
+    "prostitution", "rape", "sexual assault", "sex differences", "sex difference",
     "seductive", "lingerie model", "strip club", "striptease",
     "escort service", "escort agency",
     "hookup", "affair details", "intimate photos",
@@ -48,14 +48,14 @@ BLOCKED_KEYWORDS = [
     "grammy", "oscar", "emmy", "golden globe", "red carpet",
     "star wars", "marvel", "disney", "anime", "sitcom",
     "reality show", "talk show", "comedy special",
-    "meghan", "markle", "royal gossip",
-"nightmare", "exposed",
 
     # Gossip
     "rumour", "rumor", "gossip", "breakup", "divorce",
     "baby shower", "affair details", "badmouthing",
     "speaks out", "breaks silence", "claps back",
     "responds to haters", "reveals dating",
+    "meghan markle", "prince harry drama",
+    "prince george", "princess anne gossip",
 
     # Useless
     "horoscope", "zodiac", "viral video", "meme",
@@ -63,28 +63,8 @@ BLOCKED_KEYWORDS = [
     "sponsored", "advertisement", "listicle",
     "best restaurants", "travel tips", "recipe",
 
-    # Royal gossip
-    "prince george", "princess anne gossip",
-    "meghan markle", "prince harry drama",
-
     # Sports entertainment
     "fans furious", "fans react", "fan theory",
-    # Academic/controversial gender content
-"sex differences",
-"sex difference",
-"billion years of sex",
-"evolutionary psychology",
-"nature vs nurture",
-"gender differences",
-"men and women differences",
-"stewart-williams",
-
-# Any sex-related content
-"sex",
-"sexual",
-"sexuality",
-"intercourse",
-
 ]
 
 def _is_blocked(text, keyword):
@@ -102,9 +82,9 @@ def score_article(article):
 
     # Block immediately
     for kw in BLOCKED_KEYWORDS:
-     if kw in text:
-        print(f"  ✗ Blocked: '{article['title'][:50]}' [{kw}]")
-        return 0, 5
+        if _is_blocked(text, kw):
+            print(f"  ✗ Blocked: '{article['title'][:50]}' [{kw}]")
+            return 0, 5
 
     # Minimum content check
     if len(article.get("summary", "")) < 80:

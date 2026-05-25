@@ -101,9 +101,12 @@ def run_pipeline():
                 fb_count += 1
                 print(f"[FB {fb_count}/10] Posted")
 
-                post_to_twitter(content["post_text"], image_path)
-                mark_posted(conn, article["hash"], article["title"], "twitter")
-                print("[Twitter] Posted")
+                tw_success = post_to_twitter(content["post_text"], image_path)
+                if tw_success:
+                    mark_posted(conn, article["hash"], article["title"], "twitter")
+                    print("[Twitter] Posted")
+                else:
+                    print("[Twitter] Failed — not marked as posted")
 
                 if post_ig:
                     ig_success = post_to_instagram(content["post_text"], image_path)

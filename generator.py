@@ -1,4 +1,5 @@
 import os, json, time, requests, random
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from groq import Groq
 from langdetect import detect
 from dotenv import load_dotenv
@@ -22,6 +23,16 @@ _FONT_REGULAR = [
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "arial.ttf",
 ]
+
+def _http_get(url, params=None, hard_timeout=12):
+    def _call():
+        return requests.get(url, params=params, timeout=(5, hard_timeout))
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        fut = ex.submit(_call)
+        try:
+            return fut.result(timeout=hard_timeout + 3)
+        except (FuturesTimeout, Exception):
+            return None
 
 def _load_font(size, bold=False):
     paths = _FONT_BOLD if bold else _FONT_REGULAR
@@ -248,7 +259,7 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
         if not term.strip():
             continue
         try:
-            r = requests.get(
+            r = _http_get(
                 "https://pixabay.com/api/",
                 params={
                     "key":        os.getenv("PIXABAY_API_KEY"),
@@ -258,17 +269,22 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
                     "min_width":  1200,
                     "safesearch": "true",
                     "order":      "popular"
-                },
-                timeout=15
+                }
             )
+            if r is None:
+                print(f"  Pixabay timeout for '{term}'")
+                continue
             data = r.json()
 
             if data.get("hits"):
-                hit     = random.choice(data["hits"])
-                img_url = hit["largeImageURL"]
+                hit      = random.choice(data["hits"])
+                img_url  = hit["largeImageURL"]
                 print(f"  Image found for '{term}'")
 
-                img_data = requests.get(img_url, timeout=20).content
+                img_resp = _http_get(img_url, hard_timeout=20)
+                if img_resp is None:
+                    continue
+                img_data = img_resp.content
                 if len(img_data) > 5000:
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
                     tmp.write(img_data)
