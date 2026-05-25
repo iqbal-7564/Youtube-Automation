@@ -1,5 +1,4 @@
 import os, json, time, requests, random
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from groq import Groq
 from langdetect import detect
 from dotenv import load_dotenv
@@ -25,17 +24,6 @@ _FONT_REGULAR = [
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "arial.ttf",
 ]
-
-def _http_get(url, params=None, hard_timeout=12):
-    """requests.get with a thread-enforced hard deadline that works on all platforms."""
-    def _call():
-        return requests.get(url, params=params, timeout=(5, hard_timeout))
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        fut = ex.submit(_call)
-        try:
-            return fut.result(timeout=hard_timeout + 3)
-        except (FuturesTimeout, Exception):
-            return None
 
 def _load_font(size, bold=False):
     paths = _FONT_BOLD if bold else _FONT_REGULAR
@@ -66,7 +54,7 @@ def detect_language(article):
 
 def get_post_length(score, level):
     if level == 1 and score >= 100:
-        return "up to 50 lines — this is a major breaking story, explain fully"
+        return "up to 50 lines — major breaking story, explain fully"
     elif level == 1 and score >= 80:
         return "up to 20 lines — important breaking news, explain in detail"
     elif level <= 2 and score >= 60:
@@ -93,7 +81,6 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
         font_brand_b  = _load_font(21, bold=True)
         font_brand    = _load_font(21)
 
-        # Strong gradient covering bottom half
         overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         ov      = ImageDraw.Draw(overlay)
         start   = h // 2
@@ -103,33 +90,28 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
         img  = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
         draw = ImageDraw.Draw(img)
 
-        # Source tag — top left
         tag_w = _text_width(draw, tag_text, font_tag) + 26
         tx, ty = 20, 20
         draw.rectangle([(tx, ty), (tx + tag_w, ty + 38)], fill=accent)
         draw.text((tx + 13, ty + 8), tag_text, fill="white", font=font_tag)
 
-        # Breaking badge — next to source tag
         if is_breaking:
             bx      = tx + tag_w + 10
-            br_text = "⚡ BREAKING"
+            br_text = "BREAKING"
             br_w    = _text_width(draw, br_text, font_breaking) + 26
             draw.rectangle([(bx, ty), (bx + br_w, ty + 38)], fill=(215, 0, 0))
             draw.text((bx + 13, ty + 8), br_text, fill="white", font=font_breaking)
 
-        # Accent line above headline
         line_y = h - 222
         draw.rectangle([(20, line_y), (72, line_y + 4)], fill=accent)
         draw.rectangle([(76, line_y + 1), (w - 20, line_y + 2)], fill=(140, 140, 140))
 
-        # Headline text
         wrapped = textwrap.wrap(headline, width=46)[:3]
         y_text  = line_y + 15
         for line in wrapped:
             _draw_shadow_text(draw, (20, y_text), line, font_headline)
             y_text += 58
 
-        # Branding bar
         bar_y = h - 52
         draw.rectangle([(0, bar_y), (w, h)], fill=(8, 8, 8))
         draw.text((20, bar_y + 14), "VISIONARY MINDS", fill=accent, font=font_brand_b)
@@ -146,12 +128,11 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
         print(f"  Overlay error: {e}")
         return image_path
 
-
 def generate_post(article):
-    lang      = detect_language(article)
+    lang       = detect_language(article)
     lang_names = {"ur": "Urdu", "ar": "Arabic", "hi": "Hindi", "fa": "Persian"}
     instruction = (
-        f"The article is in {lang_names.get(lang, 'another language')}. Translate fully to English."
+        f"Article is in {lang_names.get(lang, 'another language')}. Translate to English."
         if lang != "en" else "Article is in English."
     )
 
@@ -160,45 +141,25 @@ def generate_post(article):
     level        = article.get("level", 3)
     post_length  = get_post_length(score, level)
 
-    prompt = f"""You are a senior editor at a world-class international news network (BBC, Reuters, Al Jazeera level quality).
+    prompt = f"""News social media manager. Write Facebook post.
 
-Article Title: {article['title']}
-Article Details: {article['summary']}
+Title: {article['title']}
+Details: {article['summary'][:500]}
 Category: {source_label}
-Importance Score: {score}
 {instruction}
 
-Write a professional Facebook news post.
+Rules:
+- English only
+- Start with most important fact directly
+- No filler phrases
+- Factual and professional
+- {post_length}
+- 5-7 specific hashtags at end
+- Include #Pakistan for Pakistan news
+- NO sexual content
 
-WRITING RULES:
-- Open directly with the most important fact — no filler phrases like "In a shocking development", "According to reports", or "It has been revealed"
-- Be factual, authoritative, and clear — like a Reuters wire report rewritten for social media
-- Short punchy sentences. No passive voice. No fluff.
-- Only state confirmed facts from the article — zero speculation
-- End with one sharp closing line that gives perspective or invites a reaction
-- NO sexual content — if the article has any sexual theme, write only about the legal/political/social impact
-
-STRUCTURE TO FOLLOW:
-[Relevant emoji] [Strong opening statement — the single most important fact]
-
-[2-3 sentences of key verified facts]
-
-[1-2 sentences of context — background or why this matters globally/regionally]
-
-[1 sharp closing line — significance or a thought-provoking question]
-
-[Hashtags on their own line — 5 to 7, specific and relevant]
-
-POST LENGTH: {post_length}
-LANGUAGE: English only
-HASHTAGS: Include #Pakistan for Pakistan news. Make hashtags specific, not generic (#PakistanFlood not just #news).
-
-Return ONLY valid JSON with no extra text before or after:
-{{
-  "post_text": "your complete post here with hashtags at the very end",
-  "image_keywords": "3-4 specific words describing the actual scene/location/event for image search. Example: 'pakistan train rescue workers', 'gaza buildings smoke rubble', 'india protest crowd street'. Never use: news, breaking, media, photorealistic, powerful.",
-  "image_headline": "6-8 word direct factual headline for the image overlay. No vague words."
-}}"""
+Return ONLY this JSON:
+{{"post_text":"complete post with hashtags","image_keywords":"2-3 specific scene words like 'pakistan flood rescue' or 'kyiv missile damage'. Never use: news, breaking, photorealistic","image_headline":"6-8 word factual headline"}}"""
 
     for attempt in range(3):
         try:
@@ -209,8 +170,8 @@ Return ONLY valid JSON with no extra text before or after:
             )
             text = r.choices[0].message.content
             if not text or not text.strip():
-                print(f"  Empty response from Groq")
-                time.sleep(2)
+                print(f"  Empty response")
+                time.sleep(3)
                 continue
             text = text.replace("```json", "").replace("```", "").strip()
             result = json.loads(text)
@@ -220,12 +181,11 @@ Return ONLY valid JSON with no extra text before or after:
 
         except json.JSONDecodeError as e:
             print(f"  JSON error: {e}")
-            time.sleep(2)
+            time.sleep(3)
         except Exception as e:
             print(f"  Groq error: {e}")
-            time.sleep(2)
+            time.sleep(5)
     return None
-
 
 def generate_image(keywords, headline, source_type="world", is_breaking=False):
     clean_keywords = keywords.lower()
@@ -247,7 +207,7 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
         if not term.strip():
             continue
         try:
-            r = _http_get(
+            r = requests.get(
                 "https://pixabay.com/api/",
                 params={
                     "key":        os.getenv("PIXABAY_API_KEY"),
@@ -256,13 +216,10 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
                     "per_page":   10,
                     "min_width":  1200,
                     "safesearch": "true",
-                    "order":      "popular",
-                    "category":   "news" if source_type == "world" else ""
-                }
+                    "order":      "popular"
+                },
+                timeout=15
             )
-            if r is None:
-                print(f"  Pixabay timeout for '{term}'")
-                continue
             data = r.json()
 
             if data.get("hits"):
@@ -270,10 +227,7 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
                 img_url = hit["largeImageURL"]
                 print(f"  Image found for '{term}'")
 
-                img_resp = _http_get(img_url, hard_timeout=20)
-                if img_resp is None:
-                    continue
-                img_data = img_resp.content
+                img_data = requests.get(img_url, timeout=20).content
                 if len(img_data) > 5000:
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
                     tmp.write(img_data)
