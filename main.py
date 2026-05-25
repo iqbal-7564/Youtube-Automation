@@ -15,10 +15,10 @@ from publisher    import post_to_facebook, post_to_instagram
 PKT            = pytz.timezone("Asia/Karachi")
 FB_DAILY_LIMIT = 10
 IG_DAILY_LIMIT = 5
-IG_POST_HOURS  = {8, 11, 14, 17, 20}
+# IG_POST_HOURS  = {8, 11, 14, 17, 20}
 
-def should_post_instagram():
-    return datetime.now(PKT).hour in IG_POST_HOURS
+# def should_post_instagram():
+#     return datetime.now(PKT).hour in IG_POST_HOURS
 
 def run_pipeline():
     now = datetime.now(PKT)
@@ -30,7 +30,7 @@ def run_pipeline():
     try:
         fb_count = get_today_count(conn, "facebook")
         ig_count = get_today_count(conn, "instagram")
-        post_ig  = should_post_instagram() and ig_count < IG_DAILY_LIMIT
+        post_ig = ig_count < IG_DAILY_LIMIT
 
         print(f"FB: {fb_count}/10 | IG: {ig_count}/5 | IG hour: {post_ig}")
 

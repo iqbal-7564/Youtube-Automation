@@ -6,11 +6,10 @@ import re
 from datetime import datetime, timedelta
 
 PAKISTAN_SOURCES = [
-    "https://feeds.dawn.com/dawn/top-stories",
-    "https://tribune.com.pk/feed/breaking-news",
-    "https://www.thenews.com.pk/rss/1/16",
-    "https://www.samaa.tv/feed/",
-    "https://dunyanews.tv/index.php/en?format=feed",
+    "https://tribune.com.pk/feed/breaking-news",     # Express Tribune
+    "https://www.thenews.com.pk/rss/1/16",          # The News International
+    "https://www.pakistantoday.com.pk/feed/",        # Pakistan Today
+    "https://brecorder.com/feed",                    # Business Recorder
 ]
 
 WORLD_SOURCES = [
@@ -49,14 +48,19 @@ def clean_text(text):
     return text.strip()
 
 def is_fresh(entry):
+    # No date = reject (don't allow unknown age articles)
     if not hasattr(entry, "published_parsed") or not entry.published_parsed:
-        return True
+        return False
+
     try:
         published = datetime(*entry.published_parsed[:6])
-        return datetime.utcnow() - published <= timedelta(hours=12)
-    except:
-        return True
+        age = datetime.utcnow() - published
 
+        # Only accept articles from last 6 hours
+        return age <= timedelta(hours=6)
+
+    except:
+        return False  # reject if date parsing fails
 def fetch_articles():
     articles = []
     seen_urls = set()
