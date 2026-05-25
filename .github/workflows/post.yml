@@ -35,21 +35,19 @@ jobs:
           path: ~/.local/lib/python3.11/site-packages
           key: pip-${{ hashFiles('requirements.txt') }}
 
+      - name: Restore state database
+        uses: actions/cache@v4
+        with:
+          path: state.db
+          key: state-db-${{ github.run_number }}
+          restore-keys: state-db-
+
       - name: Install fonts
         run: sudo apt-get install -y fonts-liberation fonts-dejavu -q
 
       - name: Install dependencies
         if: steps.pip-cache.outputs.cache-hit != 'true'
         run: pip install -r requirements.txt
-
-      - name: Check database writeable
-        run: |
-          git config user.name "autoposter"
-          git config user.email "bot@github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git fetch origin main
-          git pull --rebase origin main
-          echo "DB check passed"
 
       - name: Run pipeline
         run: python main.py
@@ -71,9 +69,8 @@ jobs:
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
           TZ: Asia/Karachi
 
-      - name: Save database
-        run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git add -f state.db
-          git diff --staged --quiet || git commit -m "update state"
-          git push --force
+      - name: Save state database
+        uses: actions/cache/save@v4
+        with:
+          path: state.db
+          key: state-db-${{ github.run_number }}
