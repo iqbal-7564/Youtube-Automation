@@ -2,7 +2,7 @@ name: News Autoposter
 
 on:
   schedule:
-    - cron: '0 0,2,4,6,8,10,12,14,16,18 * * *'
+    - cron: '0 0,2,3,4,6,8,9,10,12,14,15,16,18 * * *'
   workflow_dispatch:
 
 jobs:
@@ -45,6 +45,9 @@ jobs:
           FB_PAGE_TOKEN:   ${{ secrets.FB_PAGE_TOKEN }}
           FB_PAGE_ID:      ${{ secrets.FB_PAGE_ID }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          IMGBB_API_KEY:   ${{ secrets.IMGBB_API_KEY }}
+          FB_APP_ID:       ${{ secrets.FB_APP_ID }}
+          FB_APP_SECRET:   ${{ secrets.FB_APP_SECRET }}
           TZ: Asia/Karachi
 
       - name: Save database
