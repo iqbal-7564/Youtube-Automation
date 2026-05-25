@@ -42,6 +42,7 @@ jobs:
         run: python main.py
         env:
           GROQ_API_KEY:    ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           FB_PAGE_TOKEN:   ${{ secrets.FB_PAGE_TOKEN }}
           FB_PAGE_ID:      ${{ secrets.FB_PAGE_ID }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}

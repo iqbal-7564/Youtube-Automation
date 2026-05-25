@@ -8,8 +8,6 @@ import textwrap
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
 _FONT_BOLD = [
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -86,7 +84,10 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
         start   = h // 2
         for i in range(h - start):
             alpha = int((i / (h - start)) ** 0.6 * 245)
-            ov.rectangle([(0, start + i), (w, start + i + 1)], fill=(0, 0, 0, alpha))
+            ov.rectangle(
+                [(0, start + i), (w, start + i + 1)],
+                fill=(0, 0, 0, alpha)
+            )
         img  = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
         draw = ImageDraw.Draw(img)
 
@@ -116,7 +117,12 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
         draw.rectangle([(0, bar_y), (w, h)], fill=(8, 8, 8))
         draw.text((20, bar_y + 14), "VISIONARY MINDS", fill=accent, font=font_brand_b)
         sep_x = 20 + _text_width(draw, "VISIONARY MINDS", font_brand_b) + 10
-        draw.text((sep_x, bar_y + 14), "|  Authentic News, Every Hour", fill=(165, 165, 165), font=font_brand)
+        draw.text(
+            (sep_x, bar_y + 14),
+            "|  Authentic News, Every Hour",
+            fill=(165, 165, 165),
+            font=font_brand
+        )
 
         output = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
         img.save(output.name, "JPEG", quality=95)
@@ -127,6 +133,32 @@ def add_text_overlay(image_path, headline, source_type="world", is_breaking=Fals
     except Exception as e:
         print(f"  Overlay error: {e}")
         return image_path
+
+# ─── AI Providers ────────────────────────────────────────
+
+def call_groq_1(prompt):
+    key = os.getenv("GROQ_API_KEY")
+    if not key:
+        raise Exception("GROQ_API_KEY not set")
+    client = Groq(api_key=key)
+    r = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return r.choices[0].message.content
+
+def call_groq_2(prompt):
+    key = os.getenv("GROQ_API_KEY_2")
+    if not key:
+        raise Exception("GROQ_API_KEY_2 not set")
+    client = Groq(api_key=key)
+    r = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return r.choices[0].message.content
+
+# ─── Generate Post ────────────────────────────────────────
 
 def generate_post(article):
     lang       = detect_language(article)
@@ -161,31 +193,40 @@ Rules:
 Return ONLY this JSON:
 {{"post_text":"complete post with hashtags","image_keywords":"2-3 specific scene words like 'pakistan flood rescue' or 'kyiv missile damage'. Never use: news, breaking, photorealistic","image_headline":"6-8 word factual headline"}}"""
 
-    for attempt in range(3):
-        try:
-            print(f"  Groq attempt {attempt+1}...")
-            r = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            text = r.choices[0].message.content
-            if not text or not text.strip():
-                print(f"  Empty response")
-                time.sleep(3)
-                continue
-            text = text.replace("```json", "").replace("```", "").strip()
-            result = json.loads(text)
-            print(f"  Keywords: {result.get('image_keywords')}")
-            print(f"  Headline: {result.get('image_headline')}")
-            return result
+    providers = [
+        ("Groq Account 1", call_groq_1),
+        ("Groq Account 2", call_groq_2),
+    ]
 
-        except json.JSONDecodeError as e:
-            print(f"  JSON error: {e}")
-            time.sleep(3)
-        except Exception as e:
-            print(f"  Groq error: {e}")
-            time.sleep(5)
+    for provider_name, provider_func in providers:
+        for attempt in range(3):
+            try:
+                print(f"  {provider_name} attempt {attempt+1}...")
+                text = provider_func(prompt)
+                if not text or not text.strip():
+                    print(f"  Empty response from {provider_name}")
+                    time.sleep(3)
+                    continue
+                text   = text.replace("```json", "").replace("```", "").strip()
+                result = json.loads(text)
+                print(f"  Keywords: {result.get('image_keywords')}")
+                print(f"  Headline: {result.get('image_headline')}")
+                return result
+
+            except json.JSONDecodeError as e:
+                print(f"  JSON error: {e}")
+                time.sleep(3)
+            except Exception as e:
+                error_msg = str(e)
+                if "429" in error_msg or "rate_limit" in error_msg.lower():
+                    print(f"  {provider_name} rate limit — switching to next account")
+                    break
+                print(f"  {provider_name} error: {e}")
+                time.sleep(5)
+
     return None
+
+# ─── Generate Image ───────────────────────────────────────
 
 def generate_image(keywords, headline, source_type="world", is_breaking=False):
     clean_keywords = keywords.lower()
@@ -232,7 +273,9 @@ def generate_image(keywords, headline, source_type="world", is_breaking=False):
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
                     tmp.write(img_data)
                     tmp.close()
-                    final_path = add_text_overlay(tmp.name, headline, source_type, is_breaking)
+                    final_path = add_text_overlay(
+                        tmp.name, headline, source_type, is_breaking
+                    )
                     if final_path != tmp.name:
                         try:
                             os.unlink(tmp.name)
