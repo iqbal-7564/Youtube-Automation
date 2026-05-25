@@ -9,7 +9,7 @@ FB_PAGE_TOKEN = os.environ["FB_PAGE_TOKEN"]
 
 def post_facebook_video(video_path, metadata):
     print("Posting to Facebook...")
-    
+
     caption = (
         f"🤯 {metadata['title']}\n\n"
         f"Follow MindBlownFacts for daily "
@@ -19,7 +19,7 @@ def post_facebook_video(video_path, metadata):
     )
 
     url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/videos"
-    
+
     with open(video_path, "rb") as f:
         r = requests.post(
             url,
@@ -33,27 +33,40 @@ def post_facebook_video(video_path, metadata):
         )
 
     if r.status_code == 200:
-        video_id = r.json().get("id")
-        print(f"✅ Facebook posted! ID: {video_id}")
-        return video_id
+        print(f"✅ Facebook posted! ID: {r.json().get('id')}")
+        return r.json()
     else:
         raise Exception(f"Failed: {r.text}")
 
 
 def main():
-    with open(OUTPUT_DIR / "metadata.json") as f:
+    # Find which video file exists
+    possible_files = [
+        OUTPUT_DIR / "final_video_1.mp4",
+        OUTPUT_DIR / "final_video_2.mp4",
+        OUTPUT_DIR / "short_final.mp4",
+        OUTPUT_DIR / "final_video.mp4",
+    ]
+
+    video_path = None
+    for f in possible_files:
+        if f.exists():
+            video_path = f
+            print(f"Found video: {f}")
+            break
+
+    if not video_path:
+        raise FileNotFoundError("No video file found in output folder!")
+
+    # Find metadata
+    meta_path = OUTPUT_DIR / "metadata.json"
+    if not meta_path.exists():
+        meta_path = OUTPUT_DIR / "metadata_short.json"
+
+    with open(meta_path) as f:
         metadata = json.load(f)
-    
-    # Post reel (60 sec) to Facebook
-    reel_path  = OUTPUT_DIR / "reel.mp4"
-    video_path = OUTPUT_DIR / "final_video.mp4"
-    
-    # Try short reel first
-    if reel_path.exists():
-        post_facebook_video(str(reel_path), metadata)
-    else:
-        post_facebook_video(str(video_path), metadata)
-    
+
+    post_facebook_video(str(video_path), metadata)
     print("🎉 Facebook done!")
 
 

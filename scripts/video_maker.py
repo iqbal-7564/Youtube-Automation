@@ -20,6 +20,31 @@ FONT_BOLD  = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_REG   = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 # ─── TOPIC CATEGORIES ─────────────────────────────────────
+# ─── DETECT VOICE ENGINE ONCE ─────────────────────────────
+def detect_voice_engine():
+    """Test ElevenLabs once - use same engine for whole video"""
+    print("🎙️ Testing voice engine...")
+    try:
+        r = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
+            headers={"xi-api-key": ELEVENLABS_API_KEY,
+                     "Content-Type": "application/json"},
+            json={"text": "test",
+                  "model_id": "eleven_monolingual_v1",
+                  "voice_settings": {"stability": 0.5,
+                                     "similarity_boost": 0.75}},
+            timeout=10,
+        )
+        if len(r.content) > 500:
+            print("✅ Using ElevenLabs voice!")
+            return "elevenlabs"
+    except:
+        pass
+    print("✅ Using Google TTS voice!")
+    return "gtts"
+
+VOICE_ENGINE = detect_voice_engine()
+
 FACTS_TOPICS = [
     "Amazon Rainforest","Deep Ocean","Ancient Egypt",
     "Space and Universe","Human Body","Historical Mysteries",
@@ -186,25 +211,29 @@ Rules:
 
 # ─── VOICE GENERATION ─────────────────────────────────────
 def generate_voice(text, index):
-    print(f"🎙️  Voice: {index}")
+    print(f"🎙️ Voice [{VOICE_ENGINE}]: {index}")
     out_path = OUTPUT_DIR / f"voice_{index}.mp3"
 
-    # Try ElevenLabs first
-    try:
+    if VOICE_ENGINE == "elevenlabs":
         r = requests.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
             headers={"xi-api-key": ELEVENLABS_API_KEY,
                      "Content-Type": "application/json"},
-            json={"text": text, "model_id": "eleven_monolingual_v1",
-                  "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}},
+            json={"text": text,
+                  "model_id": "eleven_monolingual_v1",
+                  "voice_settings": {"stability": 0.5,
+                                     "similarity_boost": 0.75}},
             timeout=30,
         )
-        if len(r.content) > 1000:
-            with open(out_path, "wb") as f:
-                f.write(r.content)
-            return str(out_path)
-    except:
-        pass
+        with open(out_path, "wb") as f:
+            f.write(r.content)
+        return str(out_path)
+
+    else:  # gTTS
+        from gtts import gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.save(str(out_path))
+        return str(out_path)
 
     # Fallback to FREE Google TTS
     try:
