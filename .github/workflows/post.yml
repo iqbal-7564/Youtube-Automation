@@ -73,6 +73,7 @@ jobs:
 
       - name: Save database
         run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add -f state.db
           git diff --staged --quiet || git commit -m "update state"
           git push --force
