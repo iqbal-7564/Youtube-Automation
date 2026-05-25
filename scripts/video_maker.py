@@ -3,6 +3,7 @@ import json
 import random
 import requests
 import subprocess
+import asyncio
 from pathlib import Path
 from datetime import datetime
 
@@ -19,11 +20,33 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 FONT_BOLD  = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_REG   = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
-# ─── TOPIC CATEGORIES ─────────────────────────────────────
+# ─── EDGE TTS ASYNC ───────────────────────────────────────
+async def edge_tts_generate(text, out_path):
+    import edge_tts
+    communicate = edge_tts.Communicate(
+        text,
+        "en-US-ChristopherNeural",
+        rate="+5%",
+        volume="+10%"
+    )
+    await communicate.save(out_path)
+
 # ─── DETECT VOICE ENGINE ONCE ─────────────────────────────
 def detect_voice_engine():
-    """Test ElevenLabs once - use same engine for whole video"""
+    """Test Edge TTS first - best free natural voice"""
     print("🎙️ Testing voice engine...")
+
+    # Test Edge TTS (best free option)
+    try:
+        test_path = str(OUTPUT_DIR / "voice_test.mp3")
+        asyncio.run(edge_tts_generate("test", test_path))
+        if os.path.exists(test_path) and os.path.getsize(test_path) > 500:
+            print("✅ Using Edge TTS voice (Natural!)")
+            return "edge"
+    except Exception as e:
+        print(f"Edge TTS failed: {e}")
+
+    # Test ElevenLabs second
     try:
         r = requests.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
@@ -38,22 +61,42 @@ def detect_voice_engine():
         if len(r.content) > 500:
             print("✅ Using ElevenLabs voice!")
             return "elevenlabs"
-    except:
-        pass
-    print("✅ Using Google TTS voice!")
+    except Exception as e:
+        print(f"ElevenLabs failed: {e}")
+
+    print("✅ Using gTTS voice (fallback)")
     return "gtts"
 
 VOICE_ENGINE = detect_voice_engine()
 
-FACTS_TOPICS = [
-    "Amazon Rainforest","Deep Ocean","Ancient Egypt",
-    "Space and Universe","Human Body","Historical Mysteries",
-    "Dangerous Places on Earth","Bizarre Natural Phenomena",
-    "Mind Blowing Science Facts","Strangest Laws in the World",
-    "Most Expensive Things Ever","Unsolved Mysteries of Earth",
-    "Incredible Human Achievements","Strange Countries",
-    "Secrets of the Ancient World",
+# ─── TOPIC FORMATS ────────────────────────────────────────
+VIDEO_FORMATS = [
+    ("Top 10 {topic} Facts That Will Shock You!",
+     ["Amazon Rainforest","Deep Ocean","Ancient Egypt","Space","Human Body"]),
+    ("You Won't Believe These {topic} Facts!",
+     ["Wild Animals","Ocean Creatures","Dangerous Plants","Weird Insects"]),
+    ("Scientists Are SHOCKED By These {topic} Discoveries!",
+     ["Space Universe","Deep Sea","Ancient Civilizations","Human Brain"]),
+    ("The Dark Truth About {topic} Nobody Tells You!",
+     ["Social Media","Fast Food","Big Companies","Modern Technology"]),
+    ("Mind Blowing Facts About {topic} That Changed History!",
+     ["Ancient Egypt","Roman Empire","World War","Medieval Times"]),
+    ("These {topic} Facts Will Keep You Up At Night!",
+     ["Deep Ocean","Space Black Holes","Volcanoes","Earthquakes"]),
+    ("Why {topic} Is More Incredible Than You Think!",
+     ["Human Body","Animal Kingdom","Planet Earth","Ocean Life"]),
+    ("{topic} Secrets That Experts Don't Want You To Know!",
+     ["Big Pharma","Tech Giants","Government","Ancient History"]),
+    ("The Most Incredible {topic} Facts Ever Discovered!",
+     ["Universe","Prehistoric Life","Lost Civilizations","Nature"]),
+    ("Unbelievable {topic} Facts That Sound Fake But Are TRUE!",
+     ["Animal Facts","Science Facts","History Facts","Nature Facts"]),
 ]
+
+def get_random_format():
+    fmt = random.choice(VIDEO_FORMATS)
+    topic = random.choice(fmt[1])
+    return topic, fmt[0]
 
 ANIMAL_TOPICS = [
     "Wild Animals","Cute Baby Animals","Ocean Creatures",
@@ -70,7 +113,7 @@ MOTIVATION_TOPICS = [
 
 # ─── DETECT VIDEO TYPE BY TIME ────────────────────────────
 def get_video_type():
-    hour = datetime.utcnow().hour
+    hour  = datetime.utcnow().hour
     vtype = os.environ.get("VIDEO_TYPE", "")
     if vtype:
         return vtype
@@ -101,13 +144,13 @@ def get_trending_topic(category="facts"):
     except Exception as e:
         print(f"Trends failed: {e}")
 
-    # Fallback to our topic lists
     if category == "animals":
         return random.choice(ANIMAL_TOPICS)
     elif category == "motivation":
         return random.choice(MOTIVATION_TOPICS)
     else:
-        return random.choice(FACTS_TOPICS)
+        topic, _ = get_random_format()
+        return topic
 
 # ─── GROQ AI ──────────────────────────────────────────────
 def call_groq(prompt):
@@ -141,118 +184,104 @@ def clean_json(text):
     text = re.sub(r',\s*]', ']', text)
     return text.strip()
 
-# ─── GENERATE SHORT SCRIPT (60 sec) ───────────────────────
+# ─── GENERATE SHORT SCRIPT ────────────────────────────────
 def generate_short_script(topic):
     print(f"✍️  Writing SHORT script: {topic}")
     prompt = f"""Write a 60-second YouTube Shorts script about one shocking fact about "{topic}".
-
 Return ONLY valid JSON:
 {{
-  "title": "Shocking fact title with emoji max 60 chars",
-  "hook": "First 3 seconds - shocking statement to grab attention",
-  "fact": "The main shocking fact explained in 4-5 sentences. Make it dramatic and unbelievable.",
+  "title": "Shocking fact title max 60 chars",
+  "hook": "First 3 seconds shocking statement",
+  "fact": "Main shocking fact 4-5 sentences dramatic and unbelievable",
   "calltoaction": "Follow MindBlownFacts for daily shocking facts!",
   "search_query": "2 word video search term",
   "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8","tag9","tag10"]
 }}
-
-Rules:
-- Hook must be SHOCKING first sentence
-- Fact must be TRUE and SURPRISING
-- Simple English only
-- Return ONLY JSON"""
-
+Return ONLY JSON"""
     text = call_groq(prompt)
     return json.loads(clean_json(text))
 
-# ─── GENERATE VIDEO SCRIPT (7-8 min TOP 10) ───────────────
+# ─── GENERATE VIDEO SCRIPT ────────────────────────────────
 def generate_video_script(topic, video_num=1):
     print(f"✍️  Writing VIDEO script: {topic}")
-
-    categories = {
-        1: "facts/science/countries",
-        2: "animals/nature/funny"
-    }
+    categories = {1: "facts/science/countries", 2: "animals/nature/funny"}
     category = categories.get(video_num, "facts")
-
-    prompt = f"""Write a YouTube Top 10 countdown video script about "{topic}" for {category} content.
-
+    prompt = f"""Write a YouTube Top 10 countdown script about "{topic}" for {category} content.
 Return ONLY valid JSON:
 {{
-  "title": "Top 10 [Most Shocking/Incredible/Unbelievable] Facts About {topic} That Will Blow Your Mind!",
-  "hook": "Dramatic opening 2-3 sentences. Mention #1 is most shocking but save it for last to keep watching!",
+  "title": "Top 10 Most Shocking Facts About {topic} That Will Blow Your Mind!",
+  "hook": "Dramatic opening 2-3 sentences. Mention #1 is most shocking but save for last!",
   "facts": [
-    {{"number": 10, "title": "Short dramatic title", "fact": "2-3 shocking sentences about this fact", "search_query": "2 word search"}},
-    {{"number": 9, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 8, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 7, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 6, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 5, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 4, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 3, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 2, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
-    {{"number": 1, "title": "Most shocking fact title", "fact": "3-4 sentences - most dramatic shocking fact saved for last!", "search_query": "2 word search"}}
+    {{"number": 10, "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 9,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 8,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 7,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 6,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 5,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 4,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 3,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 2,  "title": "Short dramatic title", "fact": "2-3 shocking sentences", "search_query": "2 word search"}},
+    {{"number": 1,  "title": "Most shocking fact",   "fact": "3-4 sentences most dramatic saved for last!", "search_query": "2 word search"}}
   ],
-  "midpoint_tease": "At fact #5 say: Stay till the end - #1 will completely shock you!",
+  "midpoint_tease": "Stay till the end - number 1 will completely shock you!",
   "outro": "Subscribe to MindBlownFacts for daily mind blowing facts! Comment which fact shocked you most!",
-  "description": "Write 200 word SEO description about {topic} with keywords",
+  "description": "200 word SEO description about {topic} with keywords",
   "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8","tag9","tag10","tag11","tag12","tag13","tag14","tag15","tag16","tag17","tag18","tag19","tag20"]
 }}
-
-Rules:
-- Countdown from 10 to 1
-- #1 must be most shocking
-- Add cliffhanger at midpoint
-- All facts must be TRUE
-- Return ONLY JSON"""
-
+Return ONLY JSON"""
     text = call_groq(prompt)
     return json.loads(clean_json(text))
 
-# ─── VOICE GENERATION ─────────────────────────────────────
+# ─── VOICE GENERATION (ONE ENGINE WHOLE VIDEO) ────────────
 def generate_voice(text, index):
     print(f"🎙️ Voice [{VOICE_ENGINE}]: {index}")
-    out_path = OUTPUT_DIR / f"voice_{index}.mp3"
+    out_path = str(OUTPUT_DIR / f"voice_{index}.mp3")
 
-    if VOICE_ENGINE == "elevenlabs":
-        r = requests.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
-            headers={"xi-api-key": ELEVENLABS_API_KEY,
-                     "Content-Type": "application/json"},
-            json={"text": text,
-                  "model_id": "eleven_monolingual_v1",
-                  "voice_settings": {"stability": 0.5,
-                                     "similarity_boost": 0.75}},
-            timeout=30,
-        )
-        with open(out_path, "wb") as f:
-            f.write(r.content)
-        return str(out_path)
+    if VOICE_ENGINE == "edge":
+        try:
+            asyncio.run(edge_tts_generate(text, out_path))
+            if os.path.exists(out_path) and os.path.getsize(out_path) > 500:
+                return out_path
+        except Exception as e:
+            print(f"Edge TTS error: {e}")
 
-    else:  # gTTS
-        from gtts import gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
-        tts.save(str(out_path))
-        return str(out_path)
+    elif VOICE_ENGINE == "elevenlabs":
+        try:
+            r = requests.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
+                headers={"xi-api-key": ELEVENLABS_API_KEY,
+                         "Content-Type": "application/json"},
+                json={"text": text,
+                      "model_id": "eleven_monolingual_v1",
+                      "voice_settings": {"stability": 0.5,
+                                         "similarity_boost": 0.75}},
+                timeout=30,
+            )
+            if len(r.content) > 1000:
+                with open(out_path, "wb") as f:
+                    f.write(r.content)
+                return out_path
+        except Exception as e:
+            print(f"ElevenLabs error: {e}")
 
-    # Fallback to FREE Google TTS
-    try:
-        from gtts import gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
-        tts.save(str(out_path))
-        print(f"✅ gTTS voice: {index}")
-        return str(out_path)
-    except Exception as e:
-        print(f"gTTS failed: {e}")
+    else:  # gtts
+        try:
+            from gtts import gTTS
+            tts = gTTS(text=text, lang='en', slow=False)
+            tts.save(out_path)
+            return out_path
+        except Exception as e:
+            print(f"gTTS error: {e}")
 
     # Silent fallback
+    print(f"⚠️ Using silence for {index}")
     subprocess.run([
         "ffmpeg", "-y", "-f", "lavfi",
         "-i", "anullsrc=r=44100:cl=mono",
         "-t", "3", "-q:a", "9",
-        "-acodec", "libmp3lame", str(out_path)
+        "-acodec", "libmp3lame", out_path
     ], capture_output=True)
-    return str(out_path)
+    return out_path
 
 # ─── DURATION ─────────────────────────────────────────────
 def get_duration(path):
@@ -274,7 +303,6 @@ def download_video(query, index):
     out_path = OUTPUT_DIR / f"clip_raw_{index}.mp4"
     url = None
 
-    # Pexels
     try:
         r = requests.get(
             f"https://api.pexels.com/videos/search?query={query}&per_page=5&orientation=landscape",
@@ -289,7 +317,6 @@ def download_video(query, index):
     except:
         pass
 
-    # Pixabay fallback
     if not url:
         try:
             r = requests.get(
@@ -305,7 +332,6 @@ def download_video(query, index):
         except:
             pass
 
-    # Nature fallback
     if not url:
         try:
             r = requests.get(
@@ -327,7 +353,7 @@ def download_video(query, index):
                 f.write(chunk)
     return str(out_path)
 
-# ─── DOWNLOAD BACKGROUND MUSIC ────────────────────────────
+# ─── BACKGROUND MUSIC ─────────────────────────────────────
 def download_music():
     print("🎵 Getting background music...")
     music_path = OUTPUT_DIR / "music.mp3"
@@ -346,25 +372,19 @@ def download_music():
                 return str(music_path)
     except:
         pass
-
-    # Generate simple background music with FFmpeg
     subprocess.run([
         "ffmpeg", "-y", "-f", "lavfi",
-        "-i", "aevalsrc=0.1*sin(440*2*PI*t):s=44100",
+        "-i", "aevalsrc=0.05*sin(330*2*PI*t):s=44100",
         "-t", "600", str(music_path)
     ], capture_output=True)
     return str(music_path)
 
-# ─── BUILD SHORT CLIP (vertical 1080x1920) ────────────────
+# ─── BUILD SHORT ──────────────────────────────────────────
 def build_short(video_path, voice_path, hook, fact, title):
     print("📱 Building YouTube Short...")
-    duration = get_duration(voice_path) + 0.5
-    out_path = OUTPUT_DIR / "short_final.mp4"
-
-    safe_title = title.replace("'","").replace('"',"")[:45]
-    safe_hook  = hook.replace("'","").replace('"',"")[:40]
-
-    # Wrap fact text
+    duration  = get_duration(voice_path) + 0.5
+    out_path  = OUTPUT_DIR / "short_final.mp4"
+    safe_hook = hook.replace("'","").replace('"',"")[:40]
     words = fact.split()
     lines, current = [], ""
     for word in words:
@@ -376,7 +396,6 @@ def build_short(video_path, voice_path, hook, fact, title):
     if current:
         lines.append(current.strip())
     safe_fact = "\n".join(lines[:4]).replace("'","").replace('"',"")
-
     cmd = [
         "ffmpeg", "-y",
         "-stream_loop", "-1", "-i", video_path,
@@ -390,7 +409,7 @@ def build_short(video_path, voice_path, hook, fact, title):
             f"drawbox=x=0:y=ih-300:w=iw:h=300:color=black@0.8:t=fill,"
             f"drawtext=text='MindBlownFacts':fontcolor=yellow:fontsize=45:"
             f"x=(w-text_w)/2:y=20:fontfile={FONT_BOLD},"
-            f"drawtext=text='{safe_hook}':fontcolor=white:fontsize=42:"
+            f"drawtext=text='{safe_hook}':fontcolor=white:fontsize=40:"
             f"x=(w-text_w)/2:y=90:fontfile={FONT_BOLD}:shadowcolor=black:shadowx=2:shadowy=2,"
             f"drawtext=text='{safe_fact}':fontcolor=white:fontsize=34:"
             f"x=40:y=h-280:fontfile={FONT_REG}:shadowcolor=black:shadowx=2:shadowy=2:line_spacing=8,"
@@ -406,11 +425,10 @@ def build_short(video_path, voice_path, hook, fact, title):
     subprocess.run(cmd, check=True, capture_output=True)
     return str(out_path)
 
-# ─── BUILD FACT CLIP (horizontal with music) ──────────────
+# ─── BUILD FACT CLIP ──────────────────────────────────────
 def build_fact_clip(video_path, voice_path, number, title, fact, music_path=None):
     print(f"🎞️  Building fact #{number}")
-    duration = get_duration(voice_path) + 0.5
-
+    duration   = get_duration(voice_path) + 0.5
     words = fact.split()
     lines, current = [], ""
     for word in words:
@@ -423,10 +441,8 @@ def build_fact_clip(video_path, voice_path, number, title, fact, music_path=None
         lines.append(current.strip())
     safe_fact  = "\n".join(lines[:3]).replace("'","").replace('"',"")
     safe_title = title.replace("'","").replace('"',"")[:35]
-
-    out_path = OUTPUT_DIR / f"clip_{number}.mp4"
-    temp_path = OUTPUT_DIR / f"clip_nomusic_{number}.mp4"
-
+    out_path   = OUTPUT_DIR / f"clip_{number}.mp4"
+    temp_path  = OUTPUT_DIR / f"clip_nomusic_{number}.mp4"
     cmd = [
         "ffmpeg", "-y",
         "-stream_loop", "-1", "-i", video_path,
@@ -452,13 +468,10 @@ def build_fact_clip(video_path, voice_path, number, title, fact, music_path=None
         str(temp_path),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
-
-    # Add background music if available
     if music_path and os.path.exists(music_path):
         cmd2 = [
             "ffmpeg", "-y",
-            "-i", str(temp_path),
-            "-i", music_path,
+            "-i", str(temp_path), "-i", music_path,
             "-filter_complex",
             "[1:a]volume=0.08[music];[0:a][music]amix=inputs=2:duration=first[aout]",
             "-map", "0:v", "-map", "[aout]",
@@ -472,35 +485,34 @@ def build_fact_clip(video_path, voice_path, number, title, fact, music_path=None
     else:
         import shutil
         shutil.copy(str(temp_path), str(out_path))
-
     return str(out_path)
 
-# ─── BUILD INTRO ──────────────────────────────────────────
-def build_intro(title, hook_audio, topic):
-    print("🎬 Building intro...")
-    duration  = get_duration(hook_audio) + 0.5
-    out_path  = OUTPUT_DIR / "clip_intro.mp4"
+# ─── BUILD INTRO (with real video background) ─────────────
+def build_intro(title, hook_audio, topic, video_path):
+    print("🎬 Building intro with video background...")
+    duration   = get_duration(hook_audio) + 0.5
+    out_path   = OUTPUT_DIR / "clip_intro.mp4"
     safe_title = title.replace("'","").replace('"',"")[:50]
-
     cmd = [
         "ffmpeg", "-y",
-        "-f", "lavfi", "-i", "color=c=0x0a0a0a:s=1920x1080:r=25",
+        "-stream_loop", "-1", "-i", video_path,
         "-i", hook_audio,
         "-filter_complex",
         (
-            f"[0:v]"
-            f"drawtext=text='MindBlownFacts':fontcolor=yellow:fontsize=65:"
-            f"x=(w-text_w)/2:y=h/6:fontfile={FONT_BOLD},"
-            f"drawtext=text='{safe_title}':fontcolor=white:fontsize=44:"
-            f"x=(w-text_w)/2:y=h/2-50:fontfile={FONT_BOLD}:"
+            f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,"
+            f"crop=1920:1080,"
+            f"zoompan=z='min(zoom+0.001,1.3)':d={int(duration*25)}:s=1920x1080:fps=25,"
+            f"drawbox=x=0:y=0:w=iw:h=ih:color=black@0.55:t=fill,"
+            f"drawtext=text='MindBlownFacts':fontcolor=yellow:fontsize=55:"
+            f"x=(w-text_w)/2:y=80:fontfile={FONT_BOLD},"
+            f"drawtext=text='{safe_title}':fontcolor=white:fontsize=46:"
+            f"x=(w-text_w)/2:y=h/2-60:fontfile={FONT_BOLD}:"
             f"shadowcolor=black:shadowx=3:shadowy=3,"
-            f"drawtext=text='Countdown from 10 to 1...':fontcolor=orange:fontsize=36:"
-            f"x=(w-text_w)/2:y=h/2+60:fontfile={FONT_REG},"
-            f"drawtext=text='Number 1 Will SHOCK You!':fontcolor=red:fontsize=40:"
-            f"x=(w-text_w)/2:y=h*0.75:fontfile={FONT_BOLD}[v]"
+            f"drawtext=text='Number 1 Will SHOCK You!':fontcolor=red:fontsize=42:"
+            f"x=(w-text_w)/2:y=h/2+40:fontfile={FONT_BOLD}[v]"
         ),
         "-map", "[v]", "-map", "1:a",
-        "-t", str(duration),
+        "-t", str(min(duration, 5.0)),
         "-c:v", "libx264", "-preset", "fast",
         "-c:a", "aac", "-shortest",
         str(out_path),
@@ -508,12 +520,11 @@ def build_intro(title, hook_audio, topic):
     subprocess.run(cmd, check=True, capture_output=True)
     return str(out_path)
 
-# ─── BUILD MIDPOINT TEASE ─────────────────────────────────
+# ─── BUILD TEASE ──────────────────────────────────────────
 def build_tease(tease_audio):
     print("🎬 Building midpoint tease...")
     duration = get_duration(tease_audio) + 0.3
     out_path = OUTPUT_DIR / "clip_tease.mp4"
-
     cmd = [
         "ffmpeg", "-y",
         "-f", "lavfi", "-i", "color=c=0x1a0000:s=1920x1080:r=25",
@@ -540,7 +551,6 @@ def build_outro(outro_audio):
     print("🎬 Building outro...")
     duration = get_duration(outro_audio) + 0.5
     out_path = OUTPUT_DIR / "clip_outro.mp4"
-
     cmd = [
         "ffmpeg", "-y",
         "-f", "lavfi", "-i", "color=c=0x0a0a0a:s=1920x1080:r=25",
@@ -587,7 +597,6 @@ def make_thumbnail(title, color="0x1a1a2e"):
     print("🖼️  Making thumbnail...")
     out_path = OUTPUT_DIR / "thumbnail.jpg"
     safe = title.replace("'","").replace('"',"")[:45]
-
     cmd = [
         "ffmpeg", "-y",
         "-f", "lavfi", "-i", f"color=c={color}:s=1280x720:r=1",
@@ -611,15 +620,12 @@ def make_thumbnail(title, color="0x1a1a2e"):
 
 # ─── SAVE METADATA ────────────────────────────────────────
 def save_metadata(title, description, tags, topic, video_type, is_short=False):
-    # Add chapters for long videos
     chapters = ""
     if not is_short:
         chapters = "\n\n📌 CHAPTERS:\n00:00 Introduction\n"
         for i in range(10, 0, -1):
             mins = (11 - i) * 42
             chapters += f"{mins//60:02d}:{mins%60:02d} #{i} - Fact {11-i}\n"
-
-    # Full SEO description
     full_desc = (
         f"🤯 {title}\n\n"
         f"{description}\n"
@@ -633,7 +639,6 @@ def save_metadata(title, description, tags, topic, video_type, is_short=False):
         f"#MindBlownFacts #Facts #DidYouKnow "
         f"#{topic.replace(' ','')} #Shocking #Viral #Educational"
     )
-
     metadata = {
         "title":       title,
         "description": full_desc,
@@ -649,22 +654,18 @@ def save_metadata(title, description, tags, topic, video_type, is_short=False):
     return metadata
 
 # ═══════════════════════════════════════════════════════════
-# MAKE SHORT (60 sec)
+# MAKE SHORT
 # ═══════════════════════════════════════════════════════════
 def make_short():
     print("\n📱 MAKING YOUTUBE SHORT\n" + "="*50)
     topic  = get_trending_topic("facts")
     script = generate_short_script(topic)
-
     full_text = f"{script['hook']} {script['fact']} {script['calltoaction']}"
-    voice     = generate_voice(full_text, "short")
-    video     = download_video(script["search_query"], "short")
-    final     = build_short(video, voice, script["hook"],
-                            script["fact"], script["title"])
-
-    tags = script.get("tags", ["facts","mindblownfacts","shorts","viral","didyouknow"])
-    tags += ["Shorts","YouTubeShorts","mindblown","shocking","facts"]
-
+    voice  = generate_voice(full_text, "short")
+    video  = download_video(script["search_query"], "short")
+    final  = build_short(video, voice, script["hook"], script["fact"], script["title"])
+    tags   = script.get("tags", ["facts","mindblownfacts","shorts","viral","didyouknow"])
+    tags  += ["Shorts","YouTubeShorts","mindblown","shocking","facts"]
     save_metadata(
         script["title"],
         f"🤯 {script['fact']}\n\nFollow MindBlownFacts for daily shocking facts!",
@@ -674,60 +675,46 @@ def make_short():
     return final
 
 # ═══════════════════════════════════════════════════════════
-# MAKE VIDEO (7-8 min Top 10)
+# MAKE VIDEO
 # ═══════════════════════════════════════════════════════════
 def make_video(video_num=1):
     print(f"\n🎬 MAKING VIDEO {video_num}\n" + "="*50)
+    topic, title_template = get_random_format()
+    print(f"Format: {title_template}")
+    script = generate_video_script(topic, video_num)
+    music  = download_music()
 
-    category = "animals" if video_num == 2 else "facts"
-    topic    = get_trending_topic(category)
-    script   = generate_video_script(topic, video_num)
-    music    = download_music()
-
-    # Generate all voices
-    hook_audio   = generate_voice(script["hook"], "hook")
-    tease_audio  = generate_voice(script["midpoint_tease"], "tease")
-    outro_audio  = generate_voice(script["outro"], "outro")
-    fact_audios  = [generate_voice(f["fact"], f["number"]) for f in script["facts"]]
-
-    # Download videos
+    hook_audio  = generate_voice(script["hook"], "hook")
+    tease_audio = generate_voice(script["midpoint_tease"], "tease")
+    outro_audio = generate_voice(script["outro"], "outro")
+    fact_audios = [generate_voice(f["fact"], f["number"]) for f in script["facts"]]
     fact_videos = [download_video(f["search_query"], f["number"]) for f in script["facts"]]
 
-    # Build clips
-    intro_clip  = build_intro(script["title"], hook_audio, topic)
-    fact_clips  = []
+    intro_clip = build_intro(script["title"], hook_audio, topic, fact_videos[0])
+    fact_clips = []
     for i, fact in enumerate(script["facts"]):
-        clip = build_fact_clip(
-            fact_videos[i], fact_audios[i],
-            fact["number"], fact["title"], fact["fact"], music
-        )
+        clip = build_fact_clip(fact_videos[i], fact_audios[i],
+                               fact["number"], fact["title"], fact["fact"], music)
         fact_clips.append(clip)
-        # Add midpoint tease after fact #5
         if fact["number"] == 5:
-            tease_clip = build_tease(tease_audio)
-            fact_clips.append(tease_clip)
+            fact_clips.append(build_tease(tease_audio))
 
     outro_clip = build_outro(outro_audio)
+    all_clips  = [intro_clip] + fact_clips + [outro_clip]
+    fname      = f"final_video_{video_num}.mp4"
+    final      = concat_clips(all_clips, fname)
 
-    # Combine
-    all_clips = [intro_clip] + fact_clips + [outro_clip]
-    fname     = f"final_video_{video_num}.mp4"
-    final     = concat_clips(all_clips, fname)
-
-    # Thumbnail
     colors = {1: "0x1a1a2e", 2: "0x0d1f0d"}
     make_thumbnail(script["title"], colors.get(video_num, "0x1a1a2e"))
 
     tags = script.get("tags", [])
     tags += ["facts","mindblownfacts","didyouknow","top10",
-             "shocking","viral","educational",topic.lower().replace(" ","")]
-
+             "shocking","viral","educational", topic.lower().replace(" ","")]
     save_metadata(
         script["title"],
         script.get("description", f"Top 10 shocking facts about {topic}"),
         tags, topic, f"video{video_num}"
     )
-
     print(f"\n✅ VIDEO {video_num} DONE: {final}")
     return final
 
@@ -738,14 +725,12 @@ def main():
     vtype = get_video_type()
     print(f"\n🎯 Video Type: {vtype}")
     print(f"🕐 UTC Hour: {datetime.utcnow().hour}")
-
     if vtype == "short":
         make_short()
     elif vtype == "video2":
         make_video(2)
     else:
         make_video(1)
-
     print("\n🎉 ALL DONE!")
 
 if __name__ == "__main__":

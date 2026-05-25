@@ -33,7 +33,7 @@ jobs:
           ffmpeg -version | head -1
 
       - name: Install packages
-        run: pip install requests gtts
+        run: pip install requests gtts edge-tts
 
       - name: Create Video
         env:
