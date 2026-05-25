@@ -73,7 +73,7 @@ jobs:
           git config user.name "autoposter"
           git config user.email "bot@github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git pull --rebase origin main
           git add -f state.db
           git diff --staged --quiet || git commit -m "update state"
-          git pull --rebase origin main
           git push
