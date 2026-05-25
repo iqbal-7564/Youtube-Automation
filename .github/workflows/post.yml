@@ -14,6 +14,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -41,20 +43,31 @@ jobs:
       - name: Run pipeline
         run: python main.py
         env:
-          GROQ_API_KEY:    ${{ secrets.GROQ_API_KEY }}
-          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
-          FB_PAGE_TOKEN:   ${{ secrets.FB_PAGE_TOKEN }}
-          FB_PAGE_ID:      ${{ secrets.FB_PAGE_ID }}
-          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          IMGBB_API_KEY:   ${{ secrets.IMGBB_API_KEY }}
-          FB_APP_ID:       ${{ secrets.FB_APP_ID }}
-          FB_APP_SECRET:   ${{ secrets.FB_APP_SECRET }}
+          GROQ_API_KEY:             ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2:           ${{ secrets.GROQ_API_KEY_2 }}
+          FB_PAGE_TOKEN:            ${{ secrets.FB_PAGE_TOKEN }}
+          FB_PAGE_ID:               ${{ secrets.FB_PAGE_ID }}
+          PIXABAY_API_KEY:          ${{ secrets.PIXABAY_API_KEY }}
+          IMGBB_API_KEY:            ${{ secrets.IMGBB_API_KEY }}
+          FB_APP_ID:                ${{ secrets.FB_APP_ID }}
+          FB_APP_SECRET:            ${{ secrets.FB_APP_SECRET }}
+          IG_USER_ID:               ${{ secrets.IG_USER_ID }}
+          TELEGRAM_BOT_TOKEN:       ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID:      ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          TWITTER_API_KEY:          ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET:       ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN:     ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
           TZ: Asia/Karachi
 
-      - name: Save database
+      - name: Configure Git
         run: |
           git config user.name "autoposter"
           git config user.email "bot@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Save database
+        run: |
           git add -f state.db
           git diff --staged --quiet || git commit -m "update state"
           git push

@@ -48,6 +48,8 @@ BLOCKED_KEYWORDS = [
     "grammy", "oscar", "emmy", "golden globe", "red carpet",
     "star wars", "marvel", "disney", "anime", "sitcom",
     "reality show", "talk show", "comedy special",
+    "meghan", "markle", "royal gossip",
+"nightmare", "exposed",
 
     # Gossip
     "rumour", "rumor", "gossip", "breakup", "divorce",
@@ -82,6 +84,7 @@ BLOCKED_KEYWORDS = [
 "sexual",
 "sexuality",
 "intercourse",
+
 ]
 
 def _is_blocked(text, keyword):
