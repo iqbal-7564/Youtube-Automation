@@ -121,42 +121,51 @@ def download_video(query, index):
 # ─── STEP 3: VOICE ────────────────────────────────────────
 def generate_voice(text, index):
     print(f"Generating voice: {index}")
-    for attempt in range(3):  # retry 3 times
-        try:
-            r = requests.post(
-                f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
-                headers={
-                    "xi-api-key": ELEVENLABS_API_KEY,
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "text": text,
-                    "model_id": "eleven_monolingual_v1",
-                    "voice_settings": {
-                        "stability": 0.5,
-                        "similarity_boost": 0.75
-                    }
-                },
-                timeout=30,
-            )
-            out_path = OUTPUT_DIR / f"voice_{index}.mp3"
-            if len(r.content) > 1000:  # valid audio check
-                with open(out_path, "wb") as f:
-                    f.write(r.content)
-                return str(out_path)
-            else:
-                print(f"⚠️ Empty audio attempt {attempt+1}, retrying...")
-        except Exception as e:
-            print(f"⚠️ Voice error: {e}, retrying...")
-
-    # Fallback - generate silent audio
-    print(f"⚠️ Using silent fallback for {index}")
     out_path = OUTPUT_DIR / f"voice_{index}.mp3"
+    
+    try:
+        # Try ElevenLabs first (better quality)
+        r = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
+            headers={
+                "xi-api-key": ELEVENLABS_API_KEY,
+                "Content-Type": "application/json"
+            },
+            json={
+                "text": text,
+                "model_id": "eleven_monolingual_v1",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.75
+                }
+            },
+            timeout=30,
+        )
+        if len(r.content) > 1000:
+            with open(out_path, "wb") as f:
+                f.write(r.content)
+            print(f"✅ ElevenLabs voice: {index}")
+            return str(out_path)
+    except Exception as e:
+        print(f"ElevenLabs failed: {e}")
+
+    # Fallback to FREE Google TTS
+    try:
+        from gtts import gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.save(str(out_path))
+        print(f"✅ Google voice: {index}")
+        return str(out_path)
+    except Exception as e:
+        print(f"gTTS failed: {e}")
+
+    # Last resort - silence
+    print(f"⚠️ Using silence for {index}")
     subprocess.run([
         "ffmpeg", "-y", "-f", "lavfi",
         "-i", "anullsrc=r=44100:cl=mono",
-        "-t", "3",
-        "-q:a", "9", "-acodec", "libmp3lame",
+        "-t", "3", "-q:a", "9",
+        "-acodec", "libmp3lame",
         str(out_path)
     ], capture_output=True)
     return str(out_path)
