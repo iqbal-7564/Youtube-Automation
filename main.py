@@ -10,15 +10,11 @@ from fetcher      import fetch_articles
 from deduplicator import deduplicate
 from scorer       import score_article
 from generator    import generate_post, generate_image
-from publisher import post_to_facebook, post_to_instagram, post_to_twitter
+from publisher    import post_to_facebook, post_to_instagram, post_to_twitter
 
 PKT            = pytz.timezone("Asia/Karachi")
 FB_DAILY_LIMIT = 10
 IG_DAILY_LIMIT = 5
-# IG_POST_HOURS  = {8, 11, 14, 17, 20}
-
-# def should_post_instagram():
-#     return datetime.now(PKT).hour in IG_POST_HOURS
 
 def run_pipeline():
     now = datetime.now(PKT)
@@ -30,12 +26,12 @@ def run_pipeline():
     try:
         fb_count = get_today_count(conn, "facebook")
         ig_count = get_today_count(conn, "instagram")
-        post_ig = ig_count < IG_DAILY_LIMIT
+        post_ig  = ig_count < IG_DAILY_LIMIT
 
-        print(f"FB: {fb_count}/10 | IG: {ig_count}/5 | IG hour: {post_ig}")
+        print(f"FB: {fb_count}/10 | IG: {ig_count}/5 | IG eligible: {post_ig}")
 
         if fb_count >= FB_DAILY_LIMIT:
-            print(f"Daily limit reached ({fb_count}/10). Stopping.")
+            print(f"Daily FB limit reached ({fb_count}/10). Stopping.")
             return
 
         articles = fetch_articles()
@@ -74,7 +70,7 @@ def run_pipeline():
 
             content = generate_post(article)
             if not content:
-                print("Content generation failed. Trying next article...")
+                print("Content generation failed. Trying next...")
                 continue
 
             print(f"Post: {content['post_text'][:100]}...")
@@ -92,50 +88,42 @@ def run_pipeline():
                 image_path = None
 
             if not image_path:
-                print("Image failed. Trying next article...")
+                print("Image failed. Trying next...")
                 continue
 
-            # Post to Facebook
-            success = post_to_facebook(content["post_text"], image_path)
+            fb_success = post_to_facebook(content["post_text"], image_path)
 
-            if success is None:
+            if fb_success is None:
                 print("Fatal token error. Stopping.")
                 return
-            elif success:
+            elif fb_success:
                 mark_posted(conn, article["hash"], article["title"], "facebook")
                 fb_count += 1
                 print(f"[FB {fb_count}/10] Posted")
 
                 post_to_twitter(content["post_text"], image_path)
-                print(f"[Twitter] Posted")
-                ig_success = post_to_instagram(content["post_text"], image_path)
-                if ig_success:
-                 mark_posted(conn, article["hash"], article["title"], "instagram")
-                 ig_count += 1
-                print(f"[IG {ig_count}/5] Posted")
+                mark_posted(conn, article["hash"], article["title"], "twitter")
+                print("[Twitter] Posted")
 
-                # Post to Instagram at specific hours only
                 if post_ig:
-                    ig_success = post_to_instagram(
-                        content["post_text"],
-                        image_path
-                    )
+                    ig_success = post_to_instagram(content["post_text"], image_path)
                     if ig_success:
                         mark_posted(conn, article["hash"], article["title"], "instagram")
                         ig_count += 1
                         print(f"[IG {ig_count}/5] Posted")
-                    post_ig = False
+                    else:
+                        print("[IG] Post failed.")
 
                 try:
                     os.unlink(image_path)
-                except:
+                except Exception:
                     pass
                 break
             else:
-                print("Facebook failed. Trying next article...")
+                print("Facebook failed. Trying next...")
                 try:
                     os.unlink(image_path)
-                except:
+                except Exception:
                     pass
                 continue
 
