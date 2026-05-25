@@ -1,0 +1,63 @@
+name: MindBlownFacts Daily Video
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 6AM UTC = 11AM Pakistan time
+  workflow_dispatch:        # Manual trigger for testing
+
+jobs:
+  create-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-dejavu
+          ffmpeg -version | head -1
+
+      - name: Install Python packages
+        run: pip install requests
+
+      - name: Create Video
+        env:
+          GROQ_API_KEY_1:     ${{ secrets.GROQ_API_KEY_1 }}
+          GROQ_API_KEY_2:     ${{ secrets.GROQ_API_KEY_2 }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY:     ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY:    ${{ secrets.PIXABAY_API_KEY }}
+        run: |
+          echo "Starting video creation..."
+          python scripts/video_maker.py
+          ls -lh output/
+
+      - name: Upload to YouTube
+        env:
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: python scripts/youtube_upload.py
+
+      - name: Post Facebook Reel
+        continue-on-error: true
+        env:
+          FB_PAGE_ID:    ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+        run: python scripts/facebook_reel.py
+
+      - name: Done!
+        run: |
+          echo "================================"
+          echo "VIDEO AUTOMATION COMPLETE!"
+          echo "YouTube  : Uploaded"
+          echo "Facebook : Posted"
+          echo "================================"
