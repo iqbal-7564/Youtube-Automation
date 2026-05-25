@@ -36,7 +36,7 @@ def call_groq(prompt):
             r = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                json={"model":"llama3-8b-8192","messages":[{"role":"user","content":prompt}],"temperature":0.8,"max_tokens":1500},
+                json={"model":"llama-3.3-70b-versatile","messages":[{"role":"user","content":prompt}],"temperature":0.8,"max_tokens":1500},
                 timeout=30,
             )
             if r.status_code == 200:
@@ -49,14 +49,29 @@ def call_groq(prompt):
 # ─── STEP 1: SCRIPT ───────────────────────────────────────
 def generate_script(topic):
     print(f"Writing script: {topic}")
-    prompt = f"""Write a YouTube script about "{topic}" with 8 facts.
-Return ONLY valid JSON:
-{{"title":"10 MIND BLOWING Facts About {topic} That Will Shock You!","intro":"One punchy hook sentence max 15 words","facts":[{{"number":1,"fact":"shocking fact 2-3 sentences max 40 words","search_query":"2 word search"}},{{"number":2,"fact":"...","search_query":"..."}},{{"number":3,"fact":"...","search_query":"..."}},{{"number":4,"fact":"...","search_query":"..."}},{{"number":5,"fact":"...","search_query":"..."}},{{"number":6,"fact":"...","search_query":"..."}},{{"number":7,"fact":"...","search_query":"..."}},{{"number":8,"fact":"...","search_query":"..."}}],"outro":"Follow MindBlownFacts for daily shocking facts!"}}
-Return ONLY JSON no other text."""
+    prompt = f"""Write 8 shocking facts about "{topic}". 
+Return ONLY this JSON format:
+{{
+  "title": "10 MIND BLOWING Facts About {topic}!",
+  "intro": "Hook sentence here",
+  "facts": [
+    {{"number": 1, "fact": "fact here", "search_query": "nature"}},
+    {{"number": 2, "fact": "fact here", "search_query": "ocean"}},
+    {{"number": 3, "fact": "fact here", "search_query": "forest"}},
+    {{"number": 4, "fact": "fact here", "search_query": "sky"}},
+    {{"number": 5, "fact": "fact here", "search_query": "city"}},
+    {{"number": 6, "fact": "fact here", "search_query": "mountain"}},
+    {{"number": 7, "fact": "fact here", "search_query": "river"}},
+    {{"number": 8, "fact": "fact here", "search_query": "wildlife"}}
+  ],
+  "outro": "Follow MindBlownFacts for more!"
+}}"""
+
     text = call_groq(prompt).strip()
     if "```" in text:
         text = text.split("```")[1]
-        if text.startswith("json"): text = text[4:]
+        if text.startswith("json"):
+            text = text[4:]
     import re
     text = re.sub(r',\s*}', '}', text)
     text = re.sub(r',\s*]', ']', text)
