@@ -1,7 +1,10 @@
 import os
+import sys
 import pytz
 from datetime import datetime
 from dotenv import load_dotenv
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 load_dotenv()
 
@@ -73,8 +76,8 @@ def run_pipeline():
                 print("Content generation failed. Trying next...")
                 continue
 
-            print(f"Post: {content['post_text'][:100]}...")
-            print(f"Keywords: {content['image_keywords']}")
+            print(f"Post: {content.get('post_text','')[:100]}...")
+            print(f"Keywords: {content.get('image_keywords','')}")
 
             try:
                 image_path = generate_image(

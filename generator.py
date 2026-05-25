@@ -220,6 +220,10 @@ Return ONLY this JSON:
                     continue
                 text   = text.replace("```json", "").replace("```", "").strip()
                 result = json.loads(text)
+                if not result.get("post_text") or not result.get("image_keywords"):
+                    print(f"  Incomplete JSON — missing required fields, retrying")
+                    time.sleep(3)
+                    continue
                 print(f"  Keywords: {result.get('image_keywords')}")
                 print(f"  Headline: {result.get('image_headline')}")
                 return result
