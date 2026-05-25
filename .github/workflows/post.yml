@@ -76,4 +76,4 @@ jobs:
           git pull --rebase origin main
           git add -f state.db
           git diff --staged --quiet || git commit -m "update state"
-          git push
+          git push --force
