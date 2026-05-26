@@ -1,42 +1,28 @@
-import os, json, time, requests, random
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
-from groq import Groq
+import os, json, time, requests, random, tempfile, textwrap
+from groq       import Groq
 from langdetect import detect
-from dotenv import load_dotenv
-from PIL import Image, ImageDraw, ImageFont
-import tempfile
-import textwrap
+from dotenv     import load_dotenv
+from PIL        import Image, ImageDraw, ImageFont
 
 load_dotenv()
+
+# Create Groq clients ONCE at module level
+_client_1 = Groq(api_key=os.getenv("GROQ_API_KEY"))   if os.getenv("GROQ_API_KEY")   else None
+_client_2 = Groq(api_key=os.getenv("GROQ_API_KEY_2")) if os.getenv("GROQ_API_KEY_2") else None
 
 _FONT_BOLD = [
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-    "arialbd.ttf",
-    "arial.ttf",
+    "arialbd.ttf", "arial.ttf",
 ]
-
 _FONT_REGULAR = [
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "arial.ttf",
 ]
 
-def _http_get(url, params=None, hard_timeout=12):
-    def _call():
-        return requests.get(url, params=params, timeout=(5, hard_timeout))
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        fut = ex.submit(_call)
-        try:
-            return fut.result(timeout=hard_timeout + 3)
-        except (FuturesTimeout, Exception):
-            return None
-
 def _load_font(size, bold=False):
-    paths = _FONT_BOLD if bold else _FONT_REGULAR
-    for path in paths:
+    for path in (_FONT_BOLD if bold else _FONT_REGULAR):
         try:
             return ImageFont.truetype(path, size)
         except:
@@ -45,14 +31,22 @@ def _load_font(size, bold=False):
 
 def _text_width(draw, text, font):
     try:
-        bbox = draw.textbbox((0, 0), text, font=font)
-        return bbox[2] - bbox[0]
+        bb = draw.textbbox((0, 0), text, font=font)
+        return bb[2] - bb[0]
     except AttributeError:
         return draw.textsize(text, font=font)[0]
 
-def _draw_shadow_text(draw, pos, text, font, fill="white", shadow=(15, 15, 15)):
+def _draw_rounded_rect(draw, bbox, radius, fill):
+    """Compatible with ALL Pillow versions"""
+    try:
+        draw.rounded_rectangle(bbox, radius=radius, fill=fill)
+    except AttributeError:
+        draw.rectangle(bbox, fill=fill)
+
+def _shadow_text(draw, pos, text, font, fill="white", shadow=(0, 0, 0)):
     x, y = pos
-    draw.text((x + 2, y + 2), text, fill=shadow, font=font)
+    for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1),(0,2),(2,0)]:
+        draw.text((x+dx, y+dy), text, fill=shadow, font=font)
     draw.text((x, y), text, fill=fill, font=font)
 
 def detect_language(article):
@@ -63,248 +57,266 @@ def detect_language(article):
 
 def get_post_length(score, level):
     if level == 1 and score >= 100:
-        return "up to 50 lines — major breaking story, explain fully"
+        return "8-10 sentences — major breaking story"
     elif level == 1 and score >= 80:
-        return "up to 20 lines — important breaking news, explain in detail"
+        return "6-8 sentences — important breaking news"
     elif level <= 2 and score >= 60:
-        return "7 lines — important news, cover key facts"
+        return "4-6 sentences — important news"
     else:
-        return "4 to 5 lines — brief and punchy"
+        return "3-4 sentences — brief and punchy"
 
 def add_text_overlay(image_path, headline, source_type="world", is_breaking=False):
+    tmp_path = None
     try:
         img = Image.open(image_path).convert("RGB")
         img = img.resize((1200, 630), Image.LANCZOS)
         w, h = img.size
 
         if source_type == "pakistan":
-            accent   = (0, 150, 0)
-            tag_text = "PAKISTAN NEWS"
+            accent   = (0, 160, 72)
+            tag_text = "🇵🇰  PAKISTAN NEWS"
         else:
-            accent   = (200, 20, 20)
-            tag_text = "WORLD NEWS"
+            accent   = (210, 30, 30)
+            tag_text = "🌍  WORLD NEWS"
 
-        font_headline = _load_font(44, bold=True)
-        font_tag      = _load_font(21, bold=True)
-        font_breaking = _load_font(21, bold=True)
-        font_brand_b  = _load_font(21, bold=True)
-        font_brand    = _load_font(21)
+        font_tag      = _load_font(22, bold=True)
+        font_breaking = _load_font(22, bold=True)
+        font_headline = _load_font(46, bold=True)
+        font_brand_b  = _load_font(20, bold=True)
+        font_brand    = _load_font(20)
 
-        overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-        ov      = ImageDraw.Draw(overlay)
-        start   = h // 2
-        for i in range(h - start):
-            alpha = int((i / (h - start)) ** 0.6 * 245)
+        # Dark gradient bottom 60%
+        overlay    = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        ov         = ImageDraw.Draw(overlay)
+        grad_start = int(h * 0.35)
+        for i in range(h - grad_start):
+            t     = i / (h - grad_start)
+            alpha = int((t ** 0.5) * 230)
             ov.rectangle(
-                [(0, start + i), (w, start + i + 1)],
+                [(0, grad_start + i), (w, grad_start + i + 1)],
                 fill=(0, 0, 0, alpha)
             )
+
+        # Vignette top
+        for i in range(120):
+            alpha = int((1 - i / 120) * 80)
+            ov.rectangle([(0, i), (w, i+1)], fill=(0, 0, 0, alpha))
+
         img  = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
         draw = ImageDraw.Draw(img)
 
-        tag_w = _text_width(draw, tag_text, font_tag) + 26
-        tx, ty = 20, 20
-        draw.rectangle([(tx, ty), (tx + tag_w, ty + 38)], fill=accent)
-        draw.text((tx + 13, ty + 8), tag_text, fill="white", font=font_tag)
+        # Top bar
+        bar_h = 48
+        draw.rectangle([(0, 0), (w, bar_h)], fill=(0, 0, 0))
 
+        # Tag pill — compatible all Pillow versions
+        tag_w = _text_width(draw, tag_text, font_tag) + 32
+        _draw_rounded_rect(draw, [(16, 8), (16 + tag_w, bar_h - 8)],
+                           radius=6, fill=accent)
+        draw.text((32, 14), tag_text, fill="white", font=font_tag)
+
+        # Breaking badge
         if is_breaking:
-            bx      = tx + tag_w + 10
-            br_text = "BREAKING"
-            br_w    = _text_width(draw, br_text, font_breaking) + 26
-            draw.rectangle([(bx, ty), (bx + br_w, ty + 38)], fill=(215, 0, 0))
-            draw.text((bx + 13, ty + 8), br_text, fill="white", font=font_breaking)
+            bx     = 16 + tag_w + 12
+            br_txt = "⚡ BREAKING"
+            br_w   = _text_width(draw, br_txt, font_breaking) + 24
+            _draw_rounded_rect(draw, [(bx, 8), (bx + br_w, bar_h - 8)],
+                               radius=6, fill=(220, 0, 0))
+            draw.text((bx + 12, 14), br_txt, fill="white", font=font_breaking)
 
-        line_y = h - 222
-        draw.rectangle([(20, line_y), (72, line_y + 4)], fill=accent)
-        draw.rectangle([(76, line_y + 1), (w - 20, line_y + 2)], fill=(140, 140, 140))
+        # Accent line
+        line_y = h - 230
+        draw.rectangle([(16, line_y), (80, line_y + 5)], fill=accent)
+        draw.rectangle([(85, line_y + 2), (w - 16, line_y + 3)],
+                        fill=(200, 200, 200))
 
-        wrapped = textwrap.wrap(headline, width=46)[:3]
-        y_text  = line_y + 15
+        # Headline
+        wrapped = textwrap.wrap(headline, width=42)[:3]
+        y_text  = line_y + 16
         for line in wrapped:
-            _draw_shadow_text(draw, (20, y_text), line, font_headline)
-            y_text += 58
+            _shadow_text(draw, (16, y_text), line, font_headline)
+            y_text += 60
 
+        # Branding bar
         bar_y = h - 52
-        draw.rectangle([(0, bar_y), (w, h)], fill=(8, 8, 8))
-        draw.text((20, bar_y + 14), "VISIONARY MINDS", fill=accent, font=font_brand_b)
-        sep_x = 20 + _text_width(draw, "VISIONARY MINDS", font_brand_b) + 10
-        draw.text(
-            (sep_x, bar_y + 14),
-            "|  Authentic News, Every Hour",
-            fill=(165, 165, 165),
-            font=font_brand
-        )
+        draw.rectangle([(0, bar_y), (w, h)], fill=(10, 10, 10))
+        draw.text((20, bar_y + 14), "VISIONARY MINDS",
+                  fill=accent, font=font_brand_b)
+        sep_x = 20 + _text_width(draw, "VISIONARY MINDS", font_brand_b) + 12
+        draw.text((sep_x, bar_y + 14),
+                  "|  Authentic News, Every Hour",
+                  fill=(180, 180, 180), font=font_brand)
 
-        output = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-        img.save(output.name, "JPEG", quality=95)
-        output.close()
+        out      = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        tmp_path = out.name
+        img.save(tmp_path, "JPEG", quality=97, optimize=True)
+        out.close()
         print(f"  Image overlay applied successfully")
-        return output.name
+        return tmp_path
 
     except Exception as e:
         print(f"  Overlay error: {e}")
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
         return image_path
 
-# ─── AI Providers ────────────────────────────────────────
+# ─── AI Providers ─────────────────────────────────────────
 
-def call_groq_1(prompt):
-    key = os.getenv("GROQ_API_KEY")
-    if not key:
-        raise Exception("GROQ_API_KEY not set")
-    client = Groq(api_key=key)
+def _call_groq(client, prompt):
     r = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=600,
     )
     return r.choices[0].message.content
-
-def call_groq_2(prompt):
-    key = os.getenv("GROQ_API_KEY_2")
-    if not key:
-        raise Exception("GROQ_API_KEY_2 not set")
-    client = Groq(api_key=key)
-    r = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return r.choices[0].message.content
-
-# ─── Generate Post ────────────────────────────────────────
 
 def generate_post(article):
     lang       = detect_language(article)
     lang_names = {"ur": "Urdu", "ar": "Arabic", "hi": "Hindi", "fa": "Persian"}
     instruction = (
-        f"Article is in {lang_names.get(lang, 'another language')}. Translate to English."
+        f"Article is in {lang_names.get(lang, 'another language')}. Translate fully to English."
         if lang != "en" else "Article is in English."
     )
 
-    source_label = "🇵🇰 Pakistan" if article["source_type"] == "pakistan" else "🌍 World News"
+    source_label = "🇵🇰 Pakistan" if article["source_type"] == "pakistan" else "🌍 World"
     score        = article.get("score", 50)
     level        = article.get("level", 3)
     post_length  = get_post_length(score, level)
 
-    prompt = f"""News social media manager. Write Facebook post.
+    prompt = f"""Professional news social media writer. Write an engaging post.
 
 Title: {article['title']}
-Details: {article['summary'][:500]}
-Category: {source_label}
+Details: {article['summary'][:600]}
+Region: {source_label}
 {instruction}
 
-Rules:
+RULES:
 - English only
-- Start with most important fact directly
-- No filler phrases
-- Factual and professional
+- Open with single most important fact — no filler
+- Factual, clear, authoritative
 - {post_length}
-- 5-7 specific hashtags at end
-- Include #Pakistan for Pakistan news
-- NO sexual content
+- End with sharp closing line
+- 5-7 specific hashtags on last line
+- #Pakistan for Pakistan news
+- ZERO sexual or inappropriate content
 
-Return ONLY this JSON:
-{{"post_text":"complete post with hashtags","image_keywords":"2-3 specific scene words like 'pakistan flood rescue' or 'kyiv missile damage'. Never use: news, breaking, photorealistic","image_headline":"6-8 word factual headline"}}"""
+Return ONLY valid JSON:
+{{"post_text":"full post with hashtags on last line","image_keywords":"3-4 SPECIFIC words describing actual scene/location. Example: 'pakistan army mountains operation', 'gaza city destroyed rubble', 'islamabad court protest crowd'. NEVER use: news breaking media photorealistic","image_headline":"7-9 word factual punchy headline for image"}}"""
 
-    providers = [
-        ("Groq Account 1", call_groq_1),
-        ("Groq Account 2", call_groq_2),
-    ]
+    providers = [("Groq-1", _client_1), ("Groq-2", _client_2)]
 
-    for provider_name, provider_func in providers:
+    for name, client in providers:
+        if not client:
+            continue
         for attempt in range(3):
             try:
-                print(f"  {provider_name} attempt {attempt+1}...")
-                text = provider_func(prompt)
+                print(f"  {name} attempt {attempt+1}...")
+                text = _call_groq(client, prompt)
                 if not text or not text.strip():
-                    print(f"  Empty response from {provider_name}")
                     time.sleep(3)
                     continue
-                text   = text.replace("```json", "").replace("```", "").strip()
+                text   = text.replace("```json","").replace("```","").strip()
                 result = json.loads(text)
                 if not result.get("post_text") or not result.get("image_keywords"):
-                    print(f"  Incomplete JSON — missing required fields, retrying")
-                    time.sleep(3)
+                    time.sleep(2)
                     continue
-                print(f"  Keywords: {result.get('image_keywords')}")
-                print(f"  Headline: {result.get('image_headline')}")
+                print(f"  Keywords: {result['image_keywords']}")
+                print(f"  Headline: {result.get('image_headline','')}")
                 return result
-
             except json.JSONDecodeError as e:
                 print(f"  JSON error: {e}")
                 time.sleep(3)
             except Exception as e:
-                error_msg = str(e)
-                if "429" in error_msg or "rate_limit" in error_msg.lower():
-                    print(f"  {provider_name} rate limit — switching to next account")
+                msg = str(e)
+                if "429" in msg or "rate_limit" in msg.lower():
+                    print(f"  {name} rate limit — switching")
                     break
-                print(f"  {provider_name} error: {e}")
+                print(f"  {name} error: {e}")
                 time.sleep(5)
-
     return None
 
 # ─── Generate Image ───────────────────────────────────────
 
 def generate_image(keywords, headline, source_type="world", is_breaking=False):
-    clean_keywords = keywords.lower()
-    remove_words   = ["news", "breaking", "media", "photorealistic",
-                      "powerful", "scene", "photo", "image"]
-    for word in remove_words:
-        clean_keywords = clean_keywords.replace(word, "").strip()
+    clean = keywords.lower()
+    for w in ["news","breaking","media","photorealistic","powerful",
+              "scene","photo","image","a ","an ","the "]:
+        clean = clean.replace(w, " ").strip()
+    clean = " ".join(clean.split())
 
-    search_terms = [
-        clean_keywords,
-        " ".join(clean_keywords.split()[:2]),
-        clean_keywords.split()[0] if clean_keywords.split() else "world",
-        "pakistan" if source_type == "pakistan" else "world crisis"
-    ]
+    parts        = [p.strip() for p in clean.replace(",", " ").split() if p.strip()]
+    search_terms = []
+    if len(parts) >= 3:
+        search_terms.append(" ".join(parts[:3]))
+    if len(parts) >= 2:
+        search_terms.append(" ".join(parts[:2]))
+    if parts:
+        search_terms.append(parts[0])
+    search_terms.append(
+        "pakistan protest crowd" if source_type == "pakistan"
+        else "war crisis military"
+    )
 
-    print(f"  Searching image: {clean_keywords}")
+    print(f"  Searching image: {clean}")
 
     for term in search_terms:
         if not term.strip():
             continue
+        tmp_path = None
         try:
-            r = _http_get(
+            r = requests.get(
                 "https://pixabay.com/api/",
                 params={
                     "key":        os.getenv("PIXABAY_API_KEY"),
                     "q":          term,
                     "image_type": "photo",
-                    "per_page":   10,
+                    "per_page":   15,
                     "min_width":  1200,
+                    "min_height": 600,
                     "safesearch": "true",
-                    "order":      "popular"
-                }
+                    "order":      "popular",
+                },
+                timeout=12
             )
-            if r is None:
-                print(f"  Pixabay timeout for '{term}'")
+            if r.status_code != 200:
                 continue
             data = r.json()
+            if not data.get("hits"):
+                continue
 
-            if data.get("hits"):
-                hit      = random.choice(data["hits"])
-                img_url  = hit["largeImageURL"]
-                print(f"  Image found for '{term}'")
+            top_hits = data["hits"][:5]
+            hit      = random.choice(top_hits)
+            img_url  = hit["largeImageURL"]
+            print(f"  Image found for '{term}'")
 
-                img_resp = _http_get(img_url, hard_timeout=20)
-                if img_resp is None:
-                    continue
-                img_data = img_resp.content
-                if len(img_data) > 5000:
-                    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-                    tmp.write(img_data)
-                    tmp.close()
-                    final_path = add_text_overlay(
-                        tmp.name, headline, source_type, is_breaking
-                    )
-                    if final_path != tmp.name:
-                        try:
-                            os.unlink(tmp.name)
-                        except:
-                            pass
-                    return final_path
+            img_resp = requests.get(img_url, timeout=20)
+            if img_resp.status_code != 200 or len(img_resp.content) < 5000:
+                continue
+
+            tmp      = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            tmp_path = tmp.name
+            tmp.write(img_resp.content)
+            tmp.close()
+
+            final = add_text_overlay(tmp_path, headline, source_type, is_breaking)
+            if final != tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+            return final
 
         except Exception as e:
             print(f"  Image error '{term}': {e}")
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
             continue
 
     return None

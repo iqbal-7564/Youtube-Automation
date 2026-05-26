@@ -1,12 +1,13 @@
 import feedparser
 import hashlib
-from html import unescape
 import re
-from datetime import datetime, timedelta
+import requests
+from html import unescape
+from datetime import datetime, timedelta, timezone
 
 PAKISTAN_SOURCES = [
-    "https://www.geo.tv/rss/1/0",    # Geo News — 50 articles
-    "https://arynews.tv/feed/",       # ARY News — 224 articles
+    "https://www.geo.tv/rss/1/0",
+    "https://arynews.tv/feed/",
 ]
 
 WORLD_SOURCES = [
@@ -25,73 +26,88 @@ WORLD_SOURCES = [
     "https://www.smh.com.au/rss/world.xml",
 ]
 
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; NewsPoster/1.0)"}
+
 def clean_text(text):
     text = re.sub(r"<[^>]+>", "", text)
     text = unescape(text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
-def is_fresh(entry):
+def is_fresh(entry, hours=8):
     if not hasattr(entry, "published_parsed") or not entry.published_parsed:
         return False
     try:
-        published = datetime(*entry.published_parsed[:6])
-        age = datetime.utcnow() - published
-        return age <= timedelta(hours=6)
+        published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+        age       = datetime.now(timezone.utc) - published
+        return age <= timedelta(hours=hours)
     except:
         return False
 
+def fetch_feed(url, timeout=10):
+    """Fetch RSS with proper timeout using requests"""
+    try:
+        r    = requests.get(url, headers=HEADERS, timeout=timeout)
+        feed = feedparser.parse(r.text)
+        return feed
+    except requests.Timeout:
+        print(f"  ✗ Timeout: {url}")
+        return None
+    except Exception as e:
+        print(f"  ✗ Error {url}: {e}")
+        return None
+
 def fetch_articles():
-    articles = []
+    articles  = []
     seen_urls = set()
 
     print("Fetching Pakistan sources...")
     for url in PAKISTAN_SOURCES:
-        try:
-            feed = feedparser.parse(url)
-            count = 0
-            for entry in feed.entries:
-                if not is_fresh(entry):
-                    continue
-                if entry.link in seen_urls:
-                    continue
-                seen_urls.add(entry.link)
-                articles.append({
-                    "title":       clean_text(entry.title),
-                    "summary":     clean_text(entry.get("summary", entry.title)),
-                    "url":         entry.link,
-                    "source_type": "pakistan",
-                    "source_url":  url,
-                    "hash":        hashlib.md5(entry.link.encode()).hexdigest()
-                })
-                count += 1
-            print(f"  ✓ {url.split('/')[2]} → {count} articles")
-        except Exception as e:
-            print(f"  ✗ Error {url}: {e}")
+        feed = fetch_feed(url)
+        if not feed:
+            continue
+        count = 0
+        for entry in feed.entries:
+            if not is_fresh(entry):
+                continue
+            link = getattr(entry, "link", None)
+            if not link or link in seen_urls:
+                continue
+            seen_urls.add(link)
+            articles.append({
+                "title":       clean_text(entry.title),
+                "summary":     clean_text(entry.get("summary", entry.title)),
+                "url":         link,
+                "source_type": "pakistan",
+                "source_url":  url,
+                "hash":        hashlib.md5(link.encode()).hexdigest()
+            })
+            count += 1
+        print(f"  ✓ {url.split('/')[2]} → {count} articles")
 
     print("Fetching World sources...")
     for url in WORLD_SOURCES:
-        try:
-            feed = feedparser.parse(url)
-            count = 0
-            for entry in feed.entries:
-                if not is_fresh(entry):
-                    continue
-                if entry.link in seen_urls:
-                    continue
-                seen_urls.add(entry.link)
-                articles.append({
-                    "title":       clean_text(entry.title),
-                    "summary":     clean_text(entry.get("summary", entry.title)),
-                    "url":         entry.link,
-                    "source_type": "world",
-                    "source_url":  url,
-                    "hash":        hashlib.md5(entry.link.encode()).hexdigest()
-                })
-                count += 1
-            print(f"  ✓ {url.split('/')[2]} → {count} articles")
-        except Exception as e:
-            print(f"  ✗ Error {url}: {e}")
+        feed = fetch_feed(url)
+        if not feed:
+            continue
+        count = 0
+        for entry in feed.entries:
+            if not is_fresh(entry):
+                continue
+            link = getattr(entry, "link", None)
+            if not link or link in seen_urls:
+                continue
+            seen_urls.add(link)
+            articles.append({
+                "title":       clean_text(entry.title),
+                "summary":     clean_text(entry.get("summary", entry.title)),
+                "url":         link,
+                "source_type": "world",
+                "source_url":  url,
+                "hash":        hashlib.md5(link.encode()).hexdigest()
+            })
+            count += 1
+        print(f"  ✓ {url.split('/')[2]} → {count} articles")
 
     print(f"\nTotal fetched: {len(articles)} articles")
     return articles
