@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: autoposter
+      group: autoposter-${{ github.event_name }}
       cancel-in-progress: false
 
     steps:
