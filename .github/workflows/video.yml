@@ -71,14 +71,6 @@ jobs:
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           VIDEO_TYPE:            ${{ github.event.inputs.video_type }}
         run: python scripts/youtube_upload.py
-
-      - name: Post Facebook
-        continue-on-error: true
-        env:
-          FB_PAGE_ID:    ${{ secrets.FB_PAGE_ID }}
-          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
-        run: python scripts/facebook_reel.py
-
       - name: Save History
         continue-on-error: true
         run: |
