@@ -15,7 +15,7 @@ on:
 jobs:
   create-and-upload:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 75
 
     steps:
       - name: Checkout
@@ -35,6 +35,21 @@ jobs:
       - name: Install packages
         run: pip install requests gtts edge-tts
 
+      - name: Check Tokens
+        continue-on-error: true
+        env:
+          FB_PAGE_TOKEN:         ${{ secrets.FB_PAGE_TOKEN }}
+          FB_PAGE_ID:            ${{ secrets.FB_PAGE_ID }}
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:      ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:          ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:        ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:        ${{ secrets.EMAIL_RECEIVER }}
+        run: python scripts/check_tokens.py
+
       - name: Create Video
         env:
           GROQ_API_KEY_1:     ${{ secrets.GROQ_API_KEY_1 }}
@@ -44,9 +59,9 @@ jobs:
           PIXABAY_API_KEY:    ${{ secrets.PIXABAY_API_KEY }}
           VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
         run: |
-          echo "Starting video creation..."
+          echo "🎬 Starting video creation..."
           python scripts/video_maker.py
-          echo "Video created!"
+          echo "✅ Video created!"
           ls -lh output/
 
       - name: Upload YouTube
@@ -54,6 +69,7 @@ jobs:
           YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          VIDEO_TYPE:            ${{ github.event.inputs.video_type }}
         run: python scripts/youtube_upload.py
 
       - name: Post Facebook
@@ -63,8 +79,71 @@ jobs:
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
         run: python scripts/facebook_reel.py
 
-      - name: Done!
+      - name: Save History
+        continue-on-error: true
         run: |
-          echo "================================"
-          echo "AUTOMATION COMPLETE!"
-          echo "================================"
+          git config user.name "MindBlownFacts Bot"
+          git config user.email "bot@mindblownfacts.com"
+          git add format_history.json upload_log.json analytics.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "bot: update history [skip ci]"
+          git push 2>/dev/null || true
+
+      - name: Notify Success
+        if: success()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
+          VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
+        run: |
+          python -c "
+          import os, sys
+          sys.path.insert(0, 'scripts')
+          from notify import notify_success
+          vtype = os.environ.get('VIDEO_TYPE','video1')
+          notify_success(vtype, 'Video posted successfully!', '')
+          "
+
+      - name: Notify Failure
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
+          VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
+        run: |
+          python -c "
+          import os, sys
+          sys.path.insert(0, 'scripts')
+          from notify import notify_failure
+          vtype = os.environ.get('VIDEO_TYPE','video1')
+          notify_failure(vtype, 'Workflow failed! Check GitHub Actions.')
+          "
+
+  weekly-report:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 4 * * 0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Weekly Analytics
+        continue-on-error: true
+        env:
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:      ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:          ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:        ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:        ${{ secrets.EMAIL_RECEIVER }}
+        run: python scripts/analytics.py
