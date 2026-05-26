@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: autoposter-${{ github.event_name }}
-      cancel-in-progress: false
+      group: autoposter
+      cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
 
     steps:
       - uses: actions/checkout@v4
