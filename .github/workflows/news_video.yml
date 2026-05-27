@@ -1,0 +1,157 @@
+name: VisionaryMinds News Video Pipeline
+
+on:
+  schedule:
+    - cron: '0 7 * * *'    # 07:00 UTC — morning Shorts run
+    - cron: '0 12 * * *'   # 12:00 UTC — standard (midday, highest global traffic)
+    - cron: '0 17 * * *'   # 17:00 UTC — evening Shorts run
+  workflow_dispatch:
+    inputs:
+      intent_override:
+        description: 'Force intent (WAR/DISASTER/POLITICS/ECONOMY/SPORTS) — blank = auto'
+        required: false
+        default: ''
+
+jobs:
+  news-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    # Enforce 4-hour minimum between runs (GitHub cron resolution is 1 min)
+    # The queue.json mechanism inside the pipeline handles in-run cooldown
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-dejavu fonts-liberation libass-dev
+          ffmpeg -version | head -1
+          echo "Font check:"
+          fc-list | grep -i dejavu | head -3 || true
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests gtts edge-tts feedparser rapidfuzz
+
+      - name: Create runtime directories
+        run: |
+          mkdir -p pipeline/temp/voice    \
+                   pipeline/temp/visuals  \
+                   pipeline/temp/subtitles \
+                   pipeline/temp/scenes   \
+                   pipeline/output        \
+                   pipeline/logs
+
+      - name: Run News Video Pipeline
+        env:
+          GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
+          GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
+          ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          NEWSAPI_KEY:           ${{ secrets.NEWSAPI_KEY }}
+        run: |
+          echo "=== VisionaryMinds News Video Pipeline ==="
+          echo "Schedule: ${{ github.event.schedule }}"
+          echo "Trigger:  ${{ github.event_name }}"
+          python pipeline/main.py
+          echo ""
+          echo "=== Output files ==="
+          ls -lh pipeline/output/ 2>/dev/null || echo "(no output files)"
+
+      - name: Save logs to repository
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.name  "VisionaryMinds Bot"
+          git config user.email "bot@visionaryminds.com"
+          git add pipeline/logs/ 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "bot: update pipeline logs [skip ci]"
+          git push 2>/dev/null || true
+
+      - name: Notify — Success
+        if: success()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'scripts')
+          from notify import notify_success
+          notify_success('news_video', 'VisionaryMinds news video pipeline completed!', '')
+          "
+
+      - name: Notify — Failure
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'scripts')
+          from notify import notify_failure
+          notify_failure('news_video', 'VisionaryMinds pipeline failed — check GitHub Actions.')
+          "
+
+  # ── Analytics refresh (runs only on the 12:00 UTC job) ───────────────────────
+  analytics-refresh:
+    runs-on: ubuntu-latest
+    needs: news-video
+    if: github.event.schedule == '0 12 * * *' && always()
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+
+      - name: Fetch YouTube Analytics
+        continue-on-error: true
+        env:
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: |
+          python -c "
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'pipeline/scripts')
+          from analytics import fetch_analytics_feedback
+          hints = fetch_analytics_feedback(Path('pipeline/logs'))
+          print('Feedback hints:', hints)
+          "
+
+      - name: Save analytics data
+        continue-on-error: true
+        run: |
+          git config user.name  "VisionaryMinds Bot"
+          git config user.email "bot@visionaryminds.com"
+          git add pipeline/logs/analytics_data.json 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "bot: update analytics data [skip ci]"
+          git push 2>/dev/null || true
