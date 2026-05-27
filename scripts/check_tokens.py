@@ -1,7 +1,6 @@
 import os
 import requests
-import json
-from datetime import datetime
+from datetime import datetime, timezone
 from notify import send_telegram
 
 FB_PAGE_TOKEN         = os.environ.get("FB_PAGE_TOKEN")
@@ -29,7 +28,7 @@ def check_facebook_token():
 
         expires = data.get("expires_at", 0)
         if expires:
-            days_left = (expires - datetime.utcnow().timestamp()) / 86400
+            days_left = (expires - datetime.now(timezone.utc).timestamp()) / 86400
             if days_left < 10:
                 send_telegram(f"⚠️ Facebook token expires in {int(days_left)} days! Refresh soon!")
             else:
@@ -70,7 +69,7 @@ def check_youtube_token():
 def check_quota():
     """Estimate GitHub Actions minutes used"""
     print("🔍 Checking estimated usage...")
-    now  = datetime.utcnow()
+    now  = datetime.now(timezone.utc)
     days = now.day
     # 2 videos/day × 20 min each = 40 min/day
     estimated = days * 40

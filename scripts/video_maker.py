@@ -19,8 +19,23 @@ PIXABAY_API_KEY    = os.environ.get("PIXABAY_API_KEY")
 VOICE_ID     = "21m00Tcm4TlvDq8ikWAM"
 OUTPUT_DIR   = Path("output")
 OUTPUT_DIR.mkdir(exist_ok=True)
-FONT_BOLD    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-FONT_REG     = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+def _resolve_font(candidates):
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return candidates[0]  # let ffmpeg error with a clear path if none found
+
+FONT_BOLD = _resolve_font([
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",   # Linux (CI)
+    "C:/Windows/Fonts/arialbd.ttf",                            # Windows
+    "/Library/Fonts/Arial Bold.ttf",                           # macOS
+])
+FONT_REG = _resolve_font([
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",         # Linux (CI)
+    "C:/Windows/Fonts/arial.ttf",                              # Windows
+    "/Library/Fonts/Arial.ttf",                                # macOS
+])
 
 HISTORY_FILE = Path("format_history.json")
 MAX_TITLE    = 95
@@ -46,7 +61,8 @@ def load_history():
         try:
             with open(HISTORY_FILE) as f:
                 return json.load(f)
-        except: pass
+        except Exception as e:
+            print(f"Warning: could not load history file: {e}")
     return {"used_formats": [], "used_topics": []}
 
 def save_history(h):
@@ -150,7 +166,8 @@ def get_trending_topic():
             titles = re.findall(r'<title><!\[CDATA\[(.*?)\]\]></title>', r.text)
             safe   = [t for t in titles if len(t)>4 and 'Trending' not in t and is_safe_topic(t)]
             trending.extend(safe[:5])
-    except: pass
+    except Exception as e:
+        print(f"Trending fetch failed: {e}")
     if trending:
         t = random.choice(trending)
         print(f"Trending: {t}")
@@ -223,7 +240,8 @@ def detect_voice_engine():
         if len(r.content) > 500:
             print("ElevenLabs selected")
             return "elevenlabs"
-    except: pass
+    except Exception as e:
+        print(f"ElevenLabs test failed: {e}")
     print("gTTS selected")
     return "gtts"
 
@@ -360,7 +378,8 @@ def generate_voice_single(text, out_path):
         try:
             asyncio.run(edge_tts_generate(text, out_path))
             if validate_file(out_path, 500): return True
-        except: pass
+        except Exception as e:
+            print(f"Edge TTS voice failed: {e}")
 
     if engine in ("edge","elevenlabs"):
         try:
@@ -374,13 +393,15 @@ def generate_voice_single(text, out_path):
             if len(r.content) > 1000:
                 with open(out_path,"wb") as f: f.write(r.content)
                 return True
-        except: pass
+        except Exception as e:
+            print(f"ElevenLabs voice failed: {e}")
 
     try:
         from gtts import gTTS
         gTTS(text=text, lang='en', slow=False).save(out_path)
         return True
-    except: pass
+    except Exception as e:
+        print(f"gTTS voice failed: {e}")
 
     # FIX: silent fallback includes audio stream so downstream mixing works
     subprocess.run([
@@ -466,7 +487,8 @@ def download_video(query, index, retries=3):
                 files = sorted(video["video_files"], key=lambda x:x.get("width",0))
                 url   = next((f["link"] for f in files if f.get("width",0)>=1280),
                              files[-1]["link"] if files else None)
-        except: pass
+        except Exception as e:
+            print(f"Pexels video search failed for '{q}': {e}")
 
         if not url:
             try:
@@ -479,7 +501,8 @@ def download_video(query, index, retries=3):
                     v = random.choice(hits[:5]).get("videos",{})
                     c = v.get("large") or v.get("medium") or v.get("small")
                     if c: url = c["url"]
-            except: pass
+            except Exception as e:
+                print(f"Pixabay video search failed for '{q}': {e}")
 
         if url:
             try:
@@ -488,7 +511,8 @@ def download_video(query, index, retries=3):
                     for chunk in r.iter_content(8192): f.write(chunk)
                 if validate_file(str(out_path), 10000):
                     return str(out_path)
-            except: pass
+            except Exception as e:
+                print(f"Video download failed for '{q}': {e}")
 
     # FIX: black fallback now includes silent audio stream so mixing never fails
     subprocess.run([
@@ -516,7 +540,8 @@ def download_thumb_image(topic):
                 with open(out_path,"wb") as f: f.write(ir.content)
                 if validate_file(str(out_path), 5000):
                     return str(out_path)
-        except: pass
+        except Exception as e:
+            print(f"Thumbnail download failed for '{q}': {e}")
     return None
 
 # ─── MUSIC ────────────────────────────────────────────────
@@ -545,7 +570,8 @@ def download_music():
                             with open(music_path,"wb") as f: f.write(mr.content)
                             print(f"Music ready: {mood}")
                             return str(music_path)
-                    except: pass
+                    except Exception as e:
+                        print(f"Music download failed: {e}")
     except Exception as e:
         print(f"Music API error: {e}")
 

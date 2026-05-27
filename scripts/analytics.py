@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from notify import send_telegram
 
 OUTPUT_DIR            = Path("output")
@@ -17,16 +17,19 @@ def get_access_token():
         "client_secret": YOUTUBE_CLIENT_SECRET,
         "refresh_token": YOUTUBE_REFRESH_TOKEN,
         "grant_type":    "refresh_token",
-    })
-    return r.json().get("access_token")
+    }, timeout=15)
+    data = r.json()
+    if "access_token" not in data:
+        raise Exception(f"Token error: {data.get('error_description', data)}")
+    return data["access_token"]
 
 def load_analytics():
     if ANALYTICS_FILE.exists():
         try:
             with open(ANALYTICS_FILE) as f:
                 return json.load(f)
-        except:
-            pass
+        except Exception as e:
+            print(f"Failed to load analytics file: {e}")
     return {"videos": [], "total_views": 0, "best_video": None}
 
 def save_analytics(data):
@@ -131,7 +134,7 @@ def generate_weekly_report():
 
         # Save analytics
         analytics["channel"]    = channel
-        analytics["last_check"] = datetime.utcnow().isoformat()
+        analytics["last_check"] = datetime.now(timezone.utc).isoformat()
         analytics["videos"]     = videos[:10]
         save_analytics(analytics)
 

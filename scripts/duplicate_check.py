@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 YOUTUBE_CLIENT_ID     = os.environ.get("YOUTUBE_CLIENT_ID")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET")
@@ -15,16 +15,19 @@ def get_access_token():
         "client_secret": YOUTUBE_CLIENT_SECRET,
         "refresh_token": YOUTUBE_REFRESH_TOKEN,
         "grant_type":    "refresh_token",
-    })
-    return r.json().get("access_token")
+    }, timeout=15)
+    data = r.json()
+    if "access_token" not in data:
+        raise Exception(f"Token error: {data.get('error_description', data)}")
+    return data["access_token"]
 
 def load_upload_log():
     if UPLOAD_LOG_FILE.exists():
         try:
             with open(UPLOAD_LOG_FILE) as f:
                 return json.load(f)
-        except:
-            pass
+        except Exception as e:
+            print(f"Failed to load upload log: {e}")
     return {"uploads": []}
 
 def save_upload_log(log):
@@ -34,7 +37,7 @@ def save_upload_log(log):
 def already_uploaded_today(video_type):
     """Check if this video type already uploaded today"""
     log   = load_upload_log()
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     for upload in log.get("uploads", []):
         if upload.get("date") == today and upload.get("type") == video_type:
             print(f"⚠️ Already uploaded {video_type} today! Skipping.")
@@ -45,8 +48,8 @@ def log_upload(video_type, title, video_id):
     """Log successful upload"""
     log = load_upload_log()
     log["uploads"].append({
-        "date":     datetime.utcnow().strftime("%Y-%m-%d"),
-        "time":     datetime.utcnow().strftime("%H:%M"),
+        "date":     datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "time":     datetime.now(timezone.utc).strftime("%H:%M"),
         "type":     video_type,
         "title":    title,
         "video_id": video_id,
@@ -76,7 +79,8 @@ def get_recent_titles():
         for item in r.json().get("items", []):
             titles.append(item["snippet"]["title"].lower())
         return titles
-    except:
+    except Exception as e:
+        print(f"Failed to fetch recent titles: {e}")
         return []
 
 def is_duplicate_title(new_title, recent_titles):

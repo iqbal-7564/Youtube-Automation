@@ -75,8 +75,24 @@ def upload_thumbnail(video_id, thumb_path, token):
         print(f"⚠️ Thumbnail failed: {r.status_code} {r.text[:200]}")
 
 
-def create_playlist(token, title, description):
-    """Create a playlist and return its ID, or None on failure."""
+def find_or_create_playlist(token, title, description):
+    """Return an existing playlist ID matching title, or create a new one."""
+    try:
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/playlists",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"part": "snippet", "mine": "true", "maxResults": "50"},
+            timeout=15,
+        )
+        if r.status_code == 200:
+            for item in r.json().get("items", []):
+                if item["snippet"]["title"].lower() == title.lower():
+                    pid = item["id"]
+                    print(f"✅ Reusing existing playlist: {pid}")
+                    return pid
+    except Exception as e:
+        print(f"Playlist lookup error: {e}")
+
     try:
         r = requests.post(
             "https://www.googleapis.com/youtube/v3/playlists?part=snippet,status",
@@ -88,20 +104,21 @@ def create_playlist(token, title, description):
                 "snippet": {"title": title[:100], "description": description},
                 "status":  {"privacyStatus": "public"},
             },
-            timeout=15
+            timeout=15,
         )
         if r.status_code in (200, 201):
             pid = r.json()["id"]
             print(f"✅ Playlist created: {pid}")
             return pid
+        print(f"⚠️ Playlist creation failed: {r.status_code} {r.text[:200]}")
     except Exception as e:
-        print(f"Playlist error: {e}")
+        print(f"Playlist create error: {e}")
     return None
 
 
 def add_to_playlist(token, video_id, playlist_id):
     try:
-        requests.post(
+        r = requests.post(
             "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet",
             headers={
                 "Authorization": f"Bearer {token}",
@@ -115,7 +132,10 @@ def add_to_playlist(token, video_id, playlist_id):
             },
             timeout=15
         )
-        print("✅ Added to playlist!")
+        if r.status_code in (200, 201):
+            print("✅ Added to playlist!")
+        else:
+            print(f"⚠️ Add to playlist failed: {r.status_code} {r.text[:200]}")
     except Exception as e:
         print(f"Add to playlist error: {e}")
 
@@ -283,7 +303,7 @@ def main():
         upload_thumbnail(vid_id, OUTPUT_DIR / "thumbnail.jpg", token)
         add_pinned_comment(token, vid_id)
 
-        pl = create_playlist(token, "MindBlownFacts Shorts", "Daily shocking facts in 60 seconds!")
+        pl = find_or_create_playlist(token, "MindBlownFacts Shorts", "Daily shocking facts in 60 seconds!")
         if pl:
             add_to_playlist(token, vid_id, pl)
 
@@ -323,7 +343,7 @@ def main():
 
         topic    = meta.get("topic", "Facts")
         pl_title = f"{topic} Facts - MindBlownFacts"
-        pl = create_playlist(token, pl_title, f"All videos about {topic}")
+        pl = find_or_create_playlist(token, pl_title, f"All videos about {topic}")
         if pl:
             add_to_playlist(token, vid_id, pl)
 

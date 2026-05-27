@@ -4,7 +4,7 @@ import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ─── CONFIG ───────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -77,7 +77,7 @@ def notify(subject, telegram_msg, email_html):
 
 # ─── NOTIFICATION TYPES ───────────────────────────────────
 def notify_success(video_type, title, youtube_url=""):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     telegram_msg = (
         f"✅ <b>MindBlownFacts - Video Posted!</b>\n\n"
@@ -113,7 +113,7 @@ def notify_success(video_type, title, youtube_url=""):
     )
 
 def notify_failure(video_type, error):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     telegram_msg = (
         f"❌ <b>MindBlownFacts - WORKFLOW FAILED!</b>\n\n"
@@ -159,7 +159,7 @@ def notify_failure(video_type, error):
     )
 
 def notify_token_warning(service, days_left=0):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     telegram_msg = (
         f"⚠️ <b>TOKEN WARNING - Action Required!</b>\n\n"
@@ -195,7 +195,7 @@ def notify_token_warning(service, days_left=0):
     )
 
 def notify_weekly_report(channel_stats, best_video):
-    now = datetime.utcnow().strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     subs   = int(channel_stats.get("subscribers", 0))
     views  = int(channel_stats.get("total_views", 0))
     videos = channel_stats.get("video_count", 0)

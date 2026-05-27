@@ -4,8 +4,8 @@ import requests
 from pathlib import Path
 
 OUTPUT_DIR    = Path("output")
-FB_PAGE_ID    = os.environ["FB_PAGE_ID"]
-FB_PAGE_TOKEN = os.environ["FB_PAGE_TOKEN"]
+FB_PAGE_ID    = os.environ.get("FB_PAGE_ID")
+FB_PAGE_TOKEN = os.environ.get("FB_PAGE_TOKEN")
 
 def post_facebook_video(video_path, metadata):
     print("Posting to Facebook...")
@@ -40,6 +40,9 @@ def post_facebook_video(video_path, metadata):
 
 
 def main():
+    if not FB_PAGE_ID or not FB_PAGE_TOKEN:
+        raise EnvironmentError("FB_PAGE_ID and FB_PAGE_TOKEN environment variables must be set.")
+
     # Find which video file exists
     possible_files = [
         OUTPUT_DIR / "final_video_1.mp4",
