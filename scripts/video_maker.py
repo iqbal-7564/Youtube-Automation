@@ -7,7 +7,7 @@ import asyncio
 import re
 import shutil
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ─── CONFIG ───────────────────────────────────────────────
 GROQ_API_KEY_1     = os.environ.get("GROQ_API_KEY_1")
@@ -22,26 +22,13 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 FONT_BOLD    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_REG     = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
-# PERSISTENT history - stored in repo root not output dir
 HISTORY_FILE = Path("format_history.json")
 MAX_TITLE    = 95
 MAX_VOICE    = 380
 
-# ─── DEFICIENCY FIXES ─────────────────────────────────────
-# FIX 1: zoompan removed - too slow, causes timeout
-# FIX 2: fade integrated into clip build - not separate pass
-# FIX 3: history stored persistently in repo
-# FIX 4: teaser montage added - first 15 sec
-# FIX 5: no intro logo - content from second 0
-# FIX 6: better hook script prompt
-# FIX 7: sound effects added
-# FIX 8: music fallback improved
-# FIX 9: chunk voice text properly
-# FIX 10: validate all files before use
-
 # ─── CLEANUP ──────────────────────────────────────────────
 def cleanup_temp():
-    print("🧹 Cleaning temp files...")
+    print("Cleaning temp files...")
     patterns = [
         "clip_nm_*.mp4","clip_raw_*.mp4","voice_*.mp3",
         "clips_list.txt","voice_test.mp3","thumb_bg.jpg",
@@ -53,14 +40,14 @@ def cleanup_temp():
             try: f.unlink()
             except: pass
 
-# ─── HISTORY (persistent in repo) ─────────────────────────
+# ─── HISTORY ──────────────────────────────────────────────
 def load_history():
     if HISTORY_FILE.exists():
         try:
             with open(HISTORY_FILE) as f:
                 return json.load(f)
         except: pass
-    return {"used_formats":[], "used_topics":[]}
+    return {"used_formats": [], "used_topics": []}
 
 def save_history(h):
     with open(HISTORY_FILE, "w") as f:
@@ -152,7 +139,7 @@ def is_safe_topic(text):
     return not any(b in text.lower() for b in BAD_WORDS)
 
 def get_trending_topic():
-    print("🔥 Finding trending...")
+    print("Finding trending...")
     trending = []
     try:
         r = requests.get(
@@ -166,11 +153,11 @@ def get_trending_topic():
     except: pass
     if trending:
         t = random.choice(trending)
-        print(f"🔥 Trending: {t}")
+        print(f"Trending: {t}")
         return t
     cat   = random.choice(list(TOPICS.keys()))
     topic = random.choice(TOPICS[cat])
-    print(f"📌 Fallback: {topic}")
+    print(f"Fallback: {topic}")
     return topic
 
 # ─── FORMAT & TOPIC PICKER ────────────────────────────────
@@ -212,16 +199,19 @@ async def edge_tts_generate(text, out_path):
     )
     await communicate.save(out_path)
 
+# FIX: lazy-init — engine detected once on first use, not at import time
+_VOICE_ENGINE = None
+
 def detect_voice_engine():
-    print("🎙️ Testing voice...")
+    print("Testing voice engine...")
     try:
         test = str(OUTPUT_DIR/"voice_test.mp3")
         asyncio.run(edge_tts_generate("test", test))
         if validate_file(test, 500):
-            print("✅ Edge TTS")
+            print("Edge TTS selected")
             return "edge"
     except Exception as e:
-        print(f"Edge: {e}")
+        print(f"Edge TTS failed: {e}")
     try:
         r = requests.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
@@ -231,13 +221,17 @@ def detect_voice_engine():
             timeout=10,
         )
         if len(r.content) > 500:
-            print("✅ ElevenLabs")
+            print("ElevenLabs selected")
             return "elevenlabs"
     except: pass
-    print("✅ gTTS")
+    print("gTTS selected")
     return "gtts"
 
-VOICE_ENGINE = detect_voice_engine()
+def get_voice_engine():
+    global _VOICE_ENGINE
+    if _VOICE_ENGINE is None:
+        _VOICE_ENGINE = detect_voice_engine()
+    return _VOICE_ENGINE
 
 # ─── GROQ ─────────────────────────────────────────────────
 def call_groq(prompt):
@@ -255,8 +249,8 @@ def call_groq(prompt):
             if r.status_code == 200:
                 return r.json()["choices"][0]["message"]["content"]
         except Exception as e:
-            print(f"Groq: {e}")
-    raise Exception("Groq failed!")
+            print(f"Groq error: {e}")
+    raise Exception("All Groq keys failed!")
 
 def clean_json(text):
     text = text.strip()
@@ -274,9 +268,7 @@ def clean_json(text):
 
 # ─── SCRIPTS ──────────────────────────────────────────────
 def generate_script(topic, title, fmt):
-    print(f"✍️  Script: {title[:55]}...")
-
-    # FIX: Better hook prompt - no welcome, immediate shock
+    print(f"Script: {title[:55]}...")
     prompt = f"""Write YouTube video script titled "{title}" about "{topic}".
 Style: {fmt['style']}
 
@@ -317,11 +309,10 @@ Return ONLY JSON"""
         except Exception as e:
             print(f"Script attempt {attempt+1}: {e}")
 
-    # Fallback
     return {
         "title": title,
         "hook": f"This {topic} fact will completely change how you see the world. And fact number 1 is even more shocking.",
-        "facts": [{"number":i+1,"title":f"Fact {i+1}","fact":f"Scientists discovered that {topic} has properties that completely defy human understanding and change everything we know.","search_query":topic.split()[0].lower()} for i in range(8)],
+        "facts": [{"number":i+1,"title":f"Fact {i+1}","fact":f"Scientists discovered that {topic} has properties that completely defy human understanding.","search_query":topic.split()[0].lower()} for i in range(8)],
         "midpoint_tease": f"The next fact about {topic} will completely change how you see the world.",
         "outro": "Subscribe MindBlownFacts for daily shocking facts!",
         "description": f"Shocking facts about {topic} that will blow your mind.",
@@ -330,7 +321,7 @@ Return ONLY JSON"""
     }
 
 def generate_short_script(topic):
-    print(f"✍️  Short: {topic}")
+    print(f"Short script: {topic}")
     prompt = f"""Write viral 60-second YouTube Shorts script about "{topic}".
 CRITICAL: First sentence must be the most shocking thing ever heard about {topic}.
 Return ONLY valid JSON:
@@ -350,7 +341,7 @@ Return ONLY JSON"""
                 result["title"] = fix_title(result.get("title",f"Shocking {topic} Facts"))
                 return result
         except Exception as e:
-            print(f"Short {attempt+1}: {e}")
+            print(f"Short attempt {attempt+1}: {e}")
     return {
         "title": fix_title(f"Shocking {topic} Facts"),
         "hook":  f"Scientists just discovered something about {topic} that changes everything!",
@@ -362,13 +353,16 @@ Return ONLY JSON"""
 
 # ─── VOICE ────────────────────────────────────────────────
 def generate_voice_single(text, out_path):
-    text = text[:MAX_VOICE]
-    if VOICE_ENGINE == "edge":
+    text   = text[:MAX_VOICE]
+    engine = get_voice_engine()  # FIX: lazy-init, not module-level
+
+    if engine == "edge":
         try:
             asyncio.run(edge_tts_generate(text, out_path))
             if validate_file(out_path, 500): return True
         except: pass
-    if VOICE_ENGINE in ("edge","elevenlabs"):
+
+    if engine in ("edge","elevenlabs"):
         try:
             r = requests.post(
                 f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}",
@@ -381,20 +375,23 @@ def generate_voice_single(text, out_path):
                 with open(out_path,"wb") as f: f.write(r.content)
                 return True
         except: pass
+
     try:
         from gtts import gTTS
         gTTS(text=text, lang='en', slow=False).save(out_path)
         return True
     except: pass
-    # Silent fallback
-    subprocess.run(["ffmpeg","-y","-f","lavfi",
-                   "-i","anullsrc=r=44100:cl=mono",
-                   "-t","3","-q:a","9","-acodec","libmp3lame",out_path],
-                   capture_output=True)
+
+    # FIX: silent fallback includes audio stream so downstream mixing works
+    subprocess.run([
+        "ffmpeg","-y","-f","lavfi",
+        "-i","anullsrc=r=44100:cl=mono",
+        "-t","3","-q:a","9","-acodec","libmp3lame", out_path
+    ], capture_output=True)
     return False
 
 def generate_voice(text, index):
-    print(f"🎙️ Voice: {index}")
+    print(f"Voice: {index}")
     out_path = str(OUTPUT_DIR / f"voice_{index}.mp3")
     chunks   = chunk_text(text, MAX_VOICE)
     if len(chunks) == 1:
@@ -433,7 +430,6 @@ def get_duration(path):
 
 # ─── SOUND EFFECTS ────────────────────────────────────────
 def make_whoosh():
-    """Generate whoosh sound effect with ffmpeg"""
     out = str(OUTPUT_DIR / "sfx_whoosh.mp3")
     subprocess.run([
         "ffmpeg","-y","-f","lavfi",
@@ -443,7 +439,6 @@ def make_whoosh():
     return out if validate_file(out) else None
 
 def make_impact():
-    """Generate impact sound effect"""
     out = str(OUTPUT_DIR / "sfx_impact.mp3")
     subprocess.run([
         "ffmpeg","-y","-f","lavfi",
@@ -454,7 +449,7 @@ def make_impact():
 
 # ─── VIDEO DOWNLOAD ───────────────────────────────────────
 def download_video(query, index, retries=3):
-    print(f"🎬 Video: {query}")
+    print(f"Video: {query}")
     out_path = OUTPUT_DIR / f"clip_raw_{index}.mp4"
     queries  = [query, query.split()[0] if " " in query else query, "nature", "landscape"]
 
@@ -495,10 +490,13 @@ def download_video(query, index, retries=3):
                     return str(out_path)
             except: pass
 
-    # Black fallback
+    # FIX: black fallback now includes silent audio stream so mixing never fails
     subprocess.run([
-        "ffmpeg","-y","-f","lavfi","-i","color=c=black:s=1920x1080:r=25",
-        "-t","15","-c:v","libx264",str(out_path)
+        "ffmpeg","-y",
+        "-f","lavfi","-i","color=c=black:s=1920x1080:r=25",
+        "-f","lavfi","-i","anullsrc=r=44100:cl=stereo",
+        "-t","15","-c:v","libx264","-c:a","aac",
+        str(out_path)
     ], capture_output=True)
     return str(out_path)
 
@@ -523,12 +521,11 @@ def download_thumb_image(topic):
 
 # ─── MUSIC ────────────────────────────────────────────────
 def download_music():
-    print("🎵 Music...")
+    print("Music...")
     music_path = OUTPUT_DIR / "music.mp3"
     moods = ["cinematic","inspiring","dramatic","epic","mysterious","ambient","tension"]
     mood  = random.choice(moods)
 
-    # Try Pixabay music API
     try:
         r = requests.get(
             f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={mood}&media_type=music&per_page=15",
@@ -546,14 +543,12 @@ def download_music():
                         mr = requests.get(audio_url, timeout=30)
                         if len(mr.content) > 10000:
                             with open(music_path,"wb") as f: f.write(mr.content)
-                            print(f"✅ Music: {mood}")
+                            print(f"Music ready: {mood}")
                             return str(music_path)
                     except: pass
     except Exception as e:
-        print(f"Music API: {e}")
+        print(f"Music API error: {e}")
 
-    # Generate ambient music with ffmpeg
-    # Soft cinematic tone
     subprocess.run([
         "ffmpeg","-y","-f","lavfi",
         "-i","aevalsrc=0.03*sin(220*2*PI*t)+0.02*sin(330*2*PI*t)+0.01*sin(440*2*PI*t):s=44100",
@@ -561,41 +556,28 @@ def download_music():
     ], capture_output=True)
     return str(music_path)
 
-# ─────────────────────────────────────────────────────────
-# BUILD VIDEO CLIPS (NO zoompan - FAST!)
-# FIX: Removed zoompan - was causing 60+ min timeouts!
-# Using scale+crop for slight zoom effect (instant processing)
-# ─────────────────────────────────────────────────────────
-
+# ─── VIDEO FILTERS ────────────────────────────────────────
 def build_scale_filter(width=1920, height=1080, zoom=1.05):
-    """Fast zoom alternative to zoompan"""
     w = int(width * zoom)
     h = int(height * zoom)
     x = (w - width) // 2
     y = (h - height) // 2
     return f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={width}:{height}:{x}:{y}"
 
-# ─── TEASER MONTAGE (FIX: no boring intro!) ───────────────
+# ─── TEASER MONTAGE ───────────────────────────────────────
 def build_teaser(fact_videos, hook_audio, title, fmt):
-    """
-    FIX: First 15 seconds = quick preview of ALL facts
-    People see exciting content immediately!
-    No more logo - content from second ZERO!
-    """
-    print("🎬 Building teaser montage...")
+    print("Building teaser montage...")
     color_hex  = fmt.get("accent","FFD700")
     safe_title = safe_text(title, 48)
     hook_dur   = get_duration(hook_audio)
     clip_dur   = max(1.5, hook_dur / max(len(fact_videos), 1))
-    clip_dur   = min(clip_dur, 2.5)  # Max 2.5 sec per preview clip
+    clip_dur   = min(clip_dur, 2.5)
 
-    # Build each preview clip
     preview_clips = []
-    for i, vpath in enumerate(fact_videos[:6]):  # Use first 6 videos
-        pc = OUTPUT_DIR / f"teaser_{i}.mp4"
-        # Fast cut from random point in video
+    for i, vpath in enumerate(fact_videos[:6]):
+        pc   = OUTPUT_DIR / f"teaser_{i}.mp4"
         skip = random.uniform(2, 8)
-        cmd = [
+        cmd  = [
             "ffmpeg","-y",
             "-ss",str(skip),"-i",vpath,
             "-vf",(
@@ -614,10 +596,8 @@ def build_teaser(fact_videos, hook_audio, title, fmt):
             preview_clips.append(str(pc))
 
     if not preview_clips:
-        # Fallback - use first video
         preview_clips = [fact_videos[0]] if fact_videos else []
 
-    # Concat preview clips
     teaser_video = OUTPUT_DIR / "teaser_video.mp4"
     if len(preview_clips) > 1:
         lf = OUTPUT_DIR / "teaser_list.txt"
@@ -632,8 +612,7 @@ def build_teaser(fact_videos, hook_audio, title, fmt):
     else:
         shutil.copy(preview_clips[0], str(teaser_video))
 
-    # Add hook audio + title overlay on teaser
-    out_path = OUTPUT_DIR / "clip_intro.mp4"
+    out_path  = OUTPUT_DIR / "clip_intro.mp4"
     total_dur = get_duration(str(teaser_video))
     hook_dur  = min(get_duration(hook_audio), total_dur)
 
@@ -657,9 +636,12 @@ def build_teaser(fact_videos, hook_audio, title, fmt):
         "-c:a","aac","-shortest",
         str(out_path)
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Teaser build failed: {e}")
+        raise
 
-    # Cleanup teaser temp files
     for pc in preview_clips:
         try: Path(pc).unlink()
         except: pass
@@ -668,9 +650,9 @@ def build_teaser(fact_videos, hook_audio, title, fmt):
 
     return str(out_path)
 
-# ─── BUILD FACT CLIP (FAST - no zoompan) ──────────────────
+# ─── BUILD FACT CLIP ──────────────────────────────────────
 def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path=None, whoosh=None):
-    print(f"🎞️  Clip #{number}")
+    print(f"Clip #{number}")
     duration   = get_duration(voice_path) + 0.3
     color_hex  = fmt.get("accent","FFD700")
     safe_title = safe_text(title, 34)
@@ -683,7 +665,6 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
     if cur: lines.append(cur.strip())
     safe_fact = "\n".join(lines[:3]).replace("'","").replace('"',"")
 
-    # Alternate: some clips zoom in, some zoom out (visual variety)
     if number % 3 == 0:
         scale_f = build_scale_filter(zoom=1.08)
     elif number % 3 == 1:
@@ -693,9 +674,8 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
 
     temp_path = OUTPUT_DIR / f"clip_nm_{number}.mp4"
     out_path  = OUTPUT_DIR / f"clip_{number}.mp4"
-
-    # FIX: Fade integrated into one pass (not separate)
     fade_out  = max(0, duration - 0.4)
+
     vf = (
         f"[0:v]{scale_f},"
         f"fade=t=in:st=0:d=0.3,fade=t=out:st={fade_out:.2f}:d=0.3,"
@@ -713,7 +693,6 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
         f"[1:a]afade=t=in:st=0:d=0.3,afade=t=out:st={fade_out:.2f}:d=0.3[a]"
     )
 
-    # Add whoosh sound effect at start
     if whoosh and validate_file(whoosh):
         cmd = [
             "ffmpeg","-y",
@@ -741,9 +720,9 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
             "-c:v","libx264","-preset","fast","-c:a","aac","-shortest",
             str(temp_path)
         ]
+
     result = subprocess.run(cmd, capture_output=True)
     if result.returncode != 0:
-        # Simplified fallback without effects
         subprocess.run([
             "ffmpeg","-y",
             "-stream_loop","-1","-i",video_path,
@@ -755,7 +734,6 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
             str(temp_path)
         ], capture_output=True)
 
-    # Add background music
     if music_path and validate_file(music_path, 1000):
         cmd2 = [
             "ffmpeg","-y",
@@ -775,7 +753,7 @@ def build_fact_clip(video_path, voice_path, number, title, fact, fmt, music_path
 
 # ─── BUILD TEASE ──────────────────────────────────────────
 def build_tease(tease_audio, fmt, video_path=None):
-    print("🎬 Tease...")
+    print("Tease clip...")
     duration  = get_duration(tease_audio) + 0.2
     out_path  = OUTPUT_DIR / "clip_tease.mp4"
     color_hex = fmt.get("accent","FFD700")
@@ -823,7 +801,7 @@ def build_tease(tease_audio, fmt, video_path=None):
 
 # ─── BUILD OUTRO ──────────────────────────────────────────
 def build_outro(outro_audio, fmt):
-    print("🎬 Outro...")
+    print("Outro...")
     duration  = get_duration(outro_audio) + 0.5
     out_path  = OUTPUT_DIR / "clip_outro.mp4"
     color_hex = fmt.get("accent","FFD700")
@@ -853,7 +831,7 @@ def build_outro(outro_audio, fmt):
 
 # ─── BUILD SHORT ──────────────────────────────────────────
 def build_short(video_path, voice_path, hook, fact, title):
-    print("📱 Building Short...")
+    print("Building Short...")
     duration  = get_duration(voice_path) + 0.4
     out_path  = OUTPUT_DIR / "short_final.mp4"
     safe_hook = safe_text(hook, 36)
@@ -891,15 +869,19 @@ def build_short(video_path, voice_path, hook, fact, title):
         "-c:v","libx264","-preset","fast","-c:a","aac","-shortest",
         str(out_path)
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        print(f"build_short failed: {e}")
+        raise
     return str(out_path)
 
 # ─── CONCAT ───────────────────────────────────────────────
 def concat_clips(clip_paths, output_name="final_video.mp4"):
-    print("🔗 Joining clips...")
+    print("Joining clips...")
     valid = [c for c in clip_paths if validate_file(c, 1000)]
     if not valid:
-        raise Exception("No valid clips!")
+        raise Exception("No valid clips to concat!")
 
     lf = OUTPUT_DIR / "clips_list.txt"
     with open(lf,"w") as f:
@@ -907,22 +889,26 @@ def concat_clips(clip_paths, output_name="final_video.mp4"):
             f.write(f"file '{os.path.abspath(c)}'\n")
 
     out_path = OUTPUT_DIR / output_name
-    subprocess.run([
-        "ffmpeg","-y","-f","concat","-safe","0",
-        "-i",str(lf),
-        "-c:v","libx264","-preset","fast","-c:a","aac",
-        str(out_path)
-    ], check=True, capture_output=True)
+    try:
+        subprocess.run([
+            "ffmpeg","-y","-f","concat","-safe","0",
+            "-i",str(lf),
+            "-c:v","libx264","-preset","fast","-c:a","aac",
+            str(out_path)
+        ], check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Concat failed: {e}")
+        raise
 
     if not validate_file(str(out_path), 100000):
-        raise Exception(f"Output invalid: {out_path}")
+        raise Exception(f"Output file invalid or too small: {out_path}")
 
-    print(f"✅ Final: {os.path.getsize(str(out_path))//1024//1024}MB")
+    print(f"Final video: {os.path.getsize(str(out_path))//1024//1024}MB")
     return str(out_path)
 
 # ─── THUMBNAIL ────────────────────────────────────────────
 def make_thumbnail(title, topic, fmt):
-    print("🖼️  Thumbnail...")
+    print("Thumbnail...")
     out_path  = OUTPUT_DIR / "thumbnail.jpg"
     thumb_bg  = download_thumb_image(topic)
     color_hex = fmt.get("accent","FFD700")
@@ -973,49 +959,56 @@ def save_metadata(title, script, topic, fmt, video_type, is_short=False):
     keywords = script.get("seo_keywords",[topic,"facts","shocking"])
     kw_str   = ", ".join(keywords)
 
+    # FIX: guard against fmt being None or missing keys
+    style = fmt.get("style", "facts") if fmt else "facts"
+    fmt_id = fmt.get("id", "unknown") if fmt else "unknown"
+
     chapters = ""
     if not is_short:
-        chapters = "\n\n📌 CHAPTERS:\n00:00 Introduction\n"
-        for i,fact in enumerate(script.get("facts",[]),1):
+        chapters = "\n\n CHAPTERS:\n00:00 Introduction\n"
+        for i, fact in enumerate(script.get("facts",[]),1):
             mins = i*48
             ft   = safe_text(fact.get("title",f"Fact {i}"), 38)
             chapters += f"{mins//60:02d}:{mins%60:02d} - {ft}\n"
 
     desc      = script.get("description",f"Shocking facts about {topic}")
     full_desc = (
-        f"🤯 {title}\n\n{desc}\n\nKeywords: {kw_str}\n"
+        f"{title}\n\n{desc}\n\nKeywords: {kw_str}\n"
         f"{chapters}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔔 SUBSCRIBE for daily mind-blowing content!\n"
-        f"👍 LIKE if this shocked you!\n"
-        f"💬 COMMENT which fact surprised you most!\n"
-        f"📤 SHARE with friends!\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"SUBSCRIBE for daily mind-blowing content!\n"
+        f"LIKE if this shocked you!\n"
+        f"COMMENT which fact surprised you most!\n"
+        f"SHARE with friends!\n"
         f"#MindBlownFacts #Facts #DidYouKnow #{topic.replace(' ','')} #Shocking #Viral"
     )[:4900]
 
     tags = list(dict.fromkeys(
         script.get("tags",[]) +
         ["mindblownfacts","facts","didyouknow","shocking","viral",
-         "educational",fmt["style"],topic.lower().replace(" ","")]
+         "educational", style, topic.lower().replace(" ","")]
     ))[:30]
 
     metadata = {
-        "title":title,"description":full_desc,"tags":tags,
-        "topic":topic,"format":fmt["id"],
-        "video_type":video_type,"is_short":is_short,
+        "title":       title,
+        "description": full_desc,
+        "tags":        tags,
+        "topic":       topic,
+        "format":      fmt_id,
+        "video_type":  video_type,
+        "is_short":    is_short,
     }
     fname = "metadata_short.json" if is_short else "metadata.json"
     with open(OUTPUT_DIR/fname,"w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"✅ SEO metadata saved!")
+    print("SEO metadata saved!")
     return metadata
 
 # ─── VIDEO TYPE ───────────────────────────────────────────
 def get_video_type():
-    hour  = datetime.utcnow().hour
-    vtype = os.environ.get("VIDEO_TYPE","")
-    if vtype: return vtype
+    vtype = os.environ.get("VIDEO_TYPE", "").strip()
+    if vtype in ("short", "video1", "video2"):
+        return vtype
+    hour = datetime.now(timezone.utc).hour
     if hour < 6:  return "short"
     if hour < 11: return "video1"
     return "video2"
@@ -1024,54 +1017,64 @@ def get_video_type():
 # MAKE SHORT
 # ═══════════════════════════════════════════════════════════
 def make_short():
-    print("\n📱 SHORT\n"+"="*50)
+    print("\nSHORT\n" + "="*50)
     cleanup_temp()
     history = load_history()
     topic   = get_trending_topic()
     script  = generate_short_script(topic)
-    fmt     = random.choice(VIDEO_FORMATS)
+    fmt     = random.choice(VIDEO_FORMATS)  # FIX: now actually used below
 
     full_text = f"{script['hook']} {script['fact']} {script['calltoaction']}"
-    voice = generate_voice(full_text, "short")
-    video = download_video(script["search_query"], "short")
-    final = build_short(video, voice, script["hook"], script["fact"], script["title"])
 
-    save_metadata(script["title"], script, topic, fmt, "short", is_short=True)
+    try:
+        voice = generate_voice(full_text, "short")
+        video = download_video(script["search_query"], "short")
+        final = build_short(video, voice, script["hook"], script["fact"], script["title"])
+    except Exception as e:
+        print(f"make_short failed: {e}")
+        cleanup_temp()
+        raise
+
+    if not os.path.exists(final):
+        raise FileNotFoundError(f"Short output missing: {final}")
+
+    save_metadata(script["title"], script, topic, fmt, "short", is_short=True)  # FIX: pass fmt dict
+
+    # FIX: actually update history before saving
+    history["used_topics"].append(topic)
+    history["used_topics"] = history["used_topics"][-30:]
     save_history(history)
-    print(f"\n✅ SHORT DONE!")
+
+    print(f"\nSHORT DONE: {final}")
     return final
 
 # ═══════════════════════════════════════════════════════════
 # MAKE VIDEO
 # ═══════════════════════════════════════════════════════════
 def make_video(video_num=1):
-    print(f"\n🎬 VIDEO {video_num}\n"+"="*50)
+    print(f"\nVIDEO {video_num}\n" + "="*50)
     cleanup_temp()
-    history              = load_history()
-    fmt, history         = pick_format(history)
+    history               = load_history()
+    fmt, history          = pick_format(history)
     topic, title, history = pick_topic(fmt, history)
 
-    print(f"📌 Format: {fmt['id']}")
-    print(f"📌 Topic : {topic}")
-    print(f"📌 Title : {title}")
+    print(f"Format: {fmt['id']}")
+    print(f"Topic : {topic}")
+    print(f"Title : {title}")
 
     script      = generate_script(topic, title, fmt)
     music       = download_music()
     whoosh      = make_whoosh()
 
-    # Generate voices
     hook_audio  = generate_voice(script["hook"],           "hook")
     tease_audio = generate_voice(script["midpoint_tease"], "tease")
     outro_audio = generate_voice(script["outro"],          "outro")
     fact_audios = [generate_voice(f["fact"], f["number"]) for f in script["facts"]]
 
-    # Download videos
     fact_videos = [download_video(f["search_query"], f["number"]) for f in script["facts"]]
 
-    # FIX: Teaser montage instead of logo intro!
     intro_clip  = build_teaser(fact_videos, hook_audio, title, fmt)
 
-    # Build fact clips
     fact_clips  = []
     mid         = len(script["facts"]) // 2
     for i, fact in enumerate(script["facts"]):
@@ -1082,7 +1085,6 @@ def make_video(video_num=1):
         )
         fact_clips.append(clip)
         if i == mid:
-            # Use midpoint video as tease background
             tease = build_tease(tease_audio, fmt,
                                fact_videos[mid] if mid < len(fact_videos) else None)
             fact_clips.append(tease)
@@ -1096,7 +1098,7 @@ def make_video(video_num=1):
     save_metadata(title, script, topic, fmt, f"video{video_num}")
     save_history(history)
 
-    print(f"\n✅ VIDEO {video_num} DONE!")
+    print(f"\nVIDEO {video_num} DONE: {final}")
     return final
 
 # ═══════════════════════════════════════════════════════════
@@ -1104,7 +1106,7 @@ def make_video(video_num=1):
 # ═══════════════════════════════════════════════════════════
 def main():
     vtype = get_video_type()
-    print(f"\n🎯 Type: {vtype} | UTC: {datetime.utcnow().hour}:00")
+    print(f"\nType: {vtype} | UTC: {datetime.now(timezone.utc).hour}:00")  # FIX: no utcnow()
     try:
         if vtype == "short":
             make_short()
@@ -1112,9 +1114,9 @@ def main():
             make_video(2)
         else:
             make_video(1)
-        print("\n🎉 ALL DONE!")
+        print("\nALL DONE!")
     except Exception as e:
-        print(f"\n❌ FAILED: {e}")
+        print(f"\nFAILED: {e}")
         import traceback
         traceback.print_exc()
         raise

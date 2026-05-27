@@ -2,9 +2,10 @@ name: MindBlownFacts Daily Videos
 
 on:
   schedule:
-    - cron: '0 4 * * *'    # 9AM Pakistan = Short
-    - cron: '0 8 * * *'    # 1PM Pakistan = Video 1
-    - cron: '0 13 * * *'   # 6PM Pakistan = Video 2
+    - cron: '0 4 * * *'    # 9AM Pakistan  = Short
+    - cron: '0 8 * * *'    # 1PM Pakistan  = Video 1
+    - cron: '0 13 * * *'   # 6PM Pakistan  = Video 2
+    - cron: '0 4 * * 0'    # Sunday 9AM PK = Weekly Report
   workflow_dispatch:
     inputs:
       video_type:
@@ -16,6 +17,9 @@ jobs:
   create-and-upload:
     runs-on: ubuntu-latest
     timeout-minutes: 75
+
+    # Skip this job on the weekly-report cron (Sunday 9AM)
+    if: github.event.schedule != '0 4 * * 0'
 
     steps:
       - name: Checkout
@@ -34,6 +38,28 @@ jobs:
 
       - name: Install packages
         run: pip install requests gtts edge-tts
+
+      # ─── KEY FIX: Resolve VIDEO_TYPE for both schedule and manual triggers ───
+      - name: Resolve Video Type
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TYPE="${{ github.event.inputs.video_type }}"
+            # Fallback if somehow empty on dispatch
+            if [ -z "$TYPE" ]; then
+              TYPE="video1"
+            fi
+          else
+            SCHEDULE="${{ github.event.schedule }}"
+            case "$SCHEDULE" in
+              "0 4 * * *")  TYPE="short"  ;;
+              "0 8 * * *")  TYPE="video1" ;;
+              "0 13 * * *") TYPE="video2" ;;
+              *)             TYPE="video1" ;;
+            esac
+          fi
+          echo "video_type=$TYPE" >> $GITHUB_OUTPUT
+          echo "✅ Resolved VIDEO_TYPE=$TYPE"
 
       - name: Check Tokens
         continue-on-error: true
@@ -57,9 +83,9 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           PEXELS_API_KEY:     ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:    ${{ secrets.PIXABAY_API_KEY }}
-          VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
+          VIDEO_TYPE:         ${{ steps.resolve.outputs.video_type }}
         run: |
-          echo "🎬 Starting video creation..."
+          echo "🎬 Starting video creation for type: $VIDEO_TYPE"
           python scripts/video_maker.py
           echo "✅ Video created!"
           ls -lh output/
@@ -69,8 +95,9 @@ jobs:
           YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          VIDEO_TYPE:            ${{ github.event.inputs.video_type }}
+          VIDEO_TYPE:            ${{ steps.resolve.outputs.video_type }}
         run: python scripts/youtube_upload.py
+
       - name: Save History
         continue-on-error: true
         run: |
@@ -89,13 +116,13 @@ jobs:
           EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
-          VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
+          VIDEO_TYPE:         ${{ steps.resolve.outputs.video_type }}
         run: |
           python -c "
           import os, sys
           sys.path.insert(0, 'scripts')
           from notify import notify_success
-          vtype = os.environ.get('VIDEO_TYPE','video1')
+          vtype = os.environ.get('VIDEO_TYPE', 'video1')
           notify_success(vtype, 'Video posted successfully!', '')
           "
 
@@ -108,18 +135,19 @@ jobs:
           EMAIL_SENDER:       ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVER:     ${{ secrets.EMAIL_RECEIVER }}
-          VIDEO_TYPE:         ${{ github.event.inputs.video_type }}
+          VIDEO_TYPE:         ${{ steps.resolve.outputs.video_type }}
         run: |
           python -c "
           import os, sys
           sys.path.insert(0, 'scripts')
           from notify import notify_failure
-          vtype = os.environ.get('VIDEO_TYPE','video1')
+          vtype = os.environ.get('VIDEO_TYPE', 'video1')
           notify_failure(vtype, 'Workflow failed! Check GitHub Actions.')
           "
 
   weekly-report:
     runs-on: ubuntu-latest
+    # Only run on Sunday cron, not any other schedule or dispatch
     if: github.event.schedule == '0 4 * * 0'
     steps:
       - uses: actions/checkout@v4

@@ -1,6 +1,4 @@
 .env
+output/
 __pycache__/
 *.pyc
-*.db
-!state.db
-/tmp/
