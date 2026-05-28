@@ -13,12 +13,10 @@ from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 _PIPELINE_DIR = Path(__file__).parent
-_ROOT_DIR     = _PIPELINE_DIR.parent
 
-# pipeline/scripts must be at index 0 — wins over any same-named module in root/scripts
+# Only pipeline/scripts on sys.path — no root/scripts to avoid name collisions
+# (e.g. root scripts/analytics.py vs pipeline/scripts/analytics.py)
 sys.path.insert(0, str(_PIPELINE_DIR / "scripts"))
-# root/scripts at index 1 — only used for notify.py and other helpers not in pipeline
-sys.path.insert(1, str(_ROOT_DIR / "scripts"))
 
 TEMP_DIR   = _PIPELINE_DIR / "temp"
 OUTPUT_DIR = _PIPELINE_DIR / "output"
@@ -41,23 +39,23 @@ logging.basicConfig(
 )
 log = logging.getLogger("pipeline.main")
 
-# ── Lazy imports (after sys.path is set) ──────────────────────────────────────
-from topic_selector    import select_topic
-from script_generator  import generate_script
-from timeline_builder  import build_timeline
-from voice_generator   import generate_voices
-from scene_planner     import plan_scenes
-from visual_fetcher    import fetch_visuals
+# ── Imports (after sys.path is set) ───────────────────────────────────────────
+from topic_selector     import select_topic
+from script_generator   import generate_script
+from timeline_builder   import build_timeline
+from voice_generator    import generate_voices
+from scene_planner      import plan_scenes
+from visual_fetcher     import fetch_visuals
 from subtitle_generator import generate_subtitles
-from video_assembler   import assemble_video
-from audio_processor   import process_audio
-from encoder           import encode_video
-from quality_gate      import run_quality_gate
-from uploader          import upload_video
-from analytics         import log_result
+from video_assembler    import assemble_video
+from audio_processor    import process_audio
+from encoder            import encode_video
+from quality_gate       import run_quality_gate
+from uploader           import upload_video
+from news_analytics     import log_result
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _save(timeline: dict) -> None:
     TIMELINE_PATH.write_text(json.dumps(timeline, indent=2, ensure_ascii=False))
@@ -75,15 +73,7 @@ def _log_quality_failure(gate: dict, topic: dict) -> None:
     path.write_text(json.dumps(existing[-100:], indent=2))
 
 
-def _notify(msg: str) -> None:
-    try:
-        from notify import notify_failure
-        notify_failure("News Video Pipeline", msg)
-    except Exception:
-        pass
-
-
-# ── Pipeline ──────────────────────────────────────────────────────────────────
+# ── Pipeline ───────────────────────────────────────────────────────────────────
 
 def run_pipeline() -> bool:
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -163,7 +153,6 @@ def run_pipeline() -> bool:
         if not gate["passed"]:
             log.error("  GATE FAILED: %s", gate["fail_reason"])
             _log_quality_failure(gate, topic)
-            _notify(f"Quality gate failed: {gate['fail_reason']}")
             return False
         log.info("  All 7 checks passed")
 
@@ -188,7 +177,6 @@ def run_pipeline() -> bool:
     except Exception as exc:
         log.error("PIPELINE FAILED: %s", exc)
         log.error(traceback.format_exc())
-        _notify(str(exc))
         return False
 
 

@@ -1,14 +1,12 @@
 """
 STEP 9 — Audio Processing
 
-Merges all per-scene voice files (with 150 ms silence between them),
-then applies:
+Merges all per-scene voice files, then applies:
   1. Loudness normalisation  → -14 LUFS  (YouTube standard)
   2. Noise gate              → afftdn
   3. Peak limiter            → -1.0 dBFS ceiling
 
 Output: temp/voice/normalized_voice.aac
-This file is merged with the assembled video in Step 10 (encoder).
 """
 
 import logging
@@ -17,8 +15,6 @@ import subprocess
 from pathlib import Path
 
 log = logging.getLogger(__name__)
-
-_SILENCE_MS = 150   # padding between segments
 
 
 def process_audio(voice_dir: Path, temp_dir: Path) -> Path:
@@ -29,7 +25,7 @@ def process_audio(voice_dir: Path, temp_dir: Path) -> Path:
     if not files:
         raise RuntimeError(f"No voice_*.mp3 files in {voice_dir}")
 
-    log.info("  Merging %d voice segments (+%dms padding each)", len(files), _SILENCE_MS)
+    log.info("  Merging %d voice segments", len(files))
 
     merged     = voice_dir / "merged_voice.mp3"
     normalized = voice_dir / "normalized_voice.aac"
@@ -40,46 +36,35 @@ def process_audio(voice_dir: Path, temp_dir: Path) -> Path:
     return normalized
 
 
-# ── Merge with silence padding ────────────────────────────────────────────────
-
 def _merge(files: list[Path], output: Path) -> None:
+    """Concatenate all voice files into one MP3.
+    Uses filter_complex concat (handles mixed sample-rates / channel counts).
+    """
     if len(files) == 1:
         shutil.copy(files[0], output)
         return
 
-    # Build filter_complex: interleave 150ms silence between each segment
     inputs: list[str] = []
     for f in files:
         inputs += ["-i", str(f)]
 
-    filter_parts: list[str] = []
-    all_labels:   list[str] = []
+    n              = len(files)
+    concat_inputs  = "".join(f"[{i}:a]" for i in range(n))
+    concat_filter  = f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
 
-    for i in range(len(files)):
-        all_labels.append(f"[{i}:a]")
-        if i < len(files) - 1:
-            lbl = f"[sil{i}]"
-            filter_parts.append(
-                f"aevalsrc=0:channel_layout=mono:sample_rate=44100"
-                f":duration={_SILENCE_MS / 1000}{lbl}"
-            )
-            all_labels.append(lbl)
-
-    n = len(all_labels)
-    filter_parts.append(f"{''.join(all_labels)}concat=n={n}:v=0:a=1[outa]")
-
-    cmd = (
+    _run(
         ["ffmpeg", "-y"]
         + inputs
-        + ["-filter_complex", ";".join(filter_parts),
-           "-map", "[outa]",
-           "-c:a", "libmp3lame", "-q:a", "2",
-           str(output)]
+        + [
+            "-filter_complex", concat_filter,
+            "-map", "[outa]",
+            "-c:a", "libmp3lame", "-q:a", "2",
+            "-ar", "44100", "-ac", "2",
+            str(output),
+        ],
+        "merge",
     )
-    _run(cmd, "merge+pad")
 
-
-# ── Normalise → gate → limit ──────────────────────────────────────────────────
 
 def _normalize(src: Path, out: Path) -> None:
     af = (

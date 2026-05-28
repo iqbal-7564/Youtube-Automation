@@ -63,7 +63,6 @@ def encode_video(
         "-ar",       "44100",
         "-ac",       "2",
         "-movflags", "+faststart",
-        "-shortest",
         str(output_path),
     ]
 
