@@ -12,6 +12,7 @@ If all 3 fail, the slot is logged and skipped with an alert.
 
 import json
 import logging
+import subprocess
 import sys
 import traceback
 from datetime import datetime
@@ -77,6 +78,34 @@ def _log_quality_failure(gate: dict, topic: dict, attempt: int) -> None:
         **gate,
     })
     path.write_text(json.dumps(existing[-100:], indent=2))
+
+
+def _probe_duration(path: Path) -> float:
+    """Return actual file duration in seconds via ffprobe."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_format", str(path)],
+            capture_output=True, text=True, timeout=15,
+        )
+        return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
+    except Exception:
+        return 0.0
+
+
+def _sync_timeline_to_assembled(timeline: dict, assembled: Path) -> None:
+    """
+    Update total_duration_seconds/ms in the timeline to match the assembled
+    video's actual length. The assembler adds pre-roll, hook card, and end card
+    on top of the content duration; without this sync the encoder cap and the
+    quality gate both use the wrong expected value.
+    """
+    dur = _probe_duration(assembled)
+    if dur > 0 and abs(dur - timeline["total_duration_seconds"]) > 0.1:
+        log.info("  Timeline synced: %.2fs → %.2fs (assembler additions)",
+                 timeline["total_duration_seconds"], dur)
+        timeline["total_duration_seconds"] = round(dur, 2)
+        timeline["total_duration_ms"]      = int(dur * 1000)
 
 
 def _tts_degraded(timeline: dict) -> bool:
@@ -150,6 +179,11 @@ def run_pipeline() -> bool:
         assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
         log.info("  Assembled: %s", assembled.name)
 
+        # Sync timeline duration to assembled file (pre-roll + hook card + end
+        # card are added by the assembler and are not in the original timeline).
+        _sync_timeline_to_assembled(timeline, assembled)
+        _save(timeline)
+
         # ── 9: Audio Processing ──────────────────────────────────────────────
         log.info("[9/14] Audio Processing")
         norm_audio = process_audio(TEMP_DIR / "voice", TEMP_DIR)
@@ -186,6 +220,8 @@ def run_pipeline() -> bool:
                 for sc in timeline["scenes"]:
                     sc["transition"] = "cut"
                 assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
+                _sync_timeline_to_assembled(timeline, assembled)
+                _save(timeline)
                 encode_video(assembled, norm_audio, output_path, profile,
                              timeline["total_duration_seconds"])
 
