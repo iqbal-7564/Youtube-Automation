@@ -1,0 +1,17 @@
+[
+  {
+    "video_id": "2dMiG7r9l-8",
+    "intent": "SPACE",
+    "title": "Black Holes Shine",
+    "hook_text": "Black holes shine brighter than stars",
+    "total_duration_seconds": 52.42,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-28T19:52:09.083875",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  }
+]
