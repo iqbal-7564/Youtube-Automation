@@ -28,5 +28,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "szA72kwXdto",
+    "intent": "HISTORY",
+    "title": "Khan's Hidden Legacy",
+    "hook_text": "Genghis Khan's DNA is everywhere.",
+    "total_duration_seconds": 62.63,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-28T22:48:34.618691",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
