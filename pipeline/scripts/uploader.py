@@ -214,8 +214,14 @@ def _upload_thumb(video_id: str, thumb: Path, token: str) -> None:
             )
         if r.ok:
             log.info("  Thumbnail uploaded")
+        elif r.status_code == 403:
+            log.warning(
+                "  Thumbnail 403 — channel not verified OR token lacks "
+                "youtube scope. Verify channel at YouTube Studio → "
+                "Settings → Channel → Feature eligibility."
+            )
         else:
-            log.warning("  Thumbnail HTTP %d", r.status_code)
+            log.warning("  Thumbnail HTTP %d: %s", r.status_code, r.text[:120])
     except Exception as exc:
         log.warning("  Thumbnail: %s", exc)
 
@@ -266,7 +272,14 @@ def _upload_captions(video_id: str, subtitles_dir: Path, timeline: dict, token: 
             timeout=15,
         )
         if r.status_code != 200:
-            log.warning("  Caption init HTTP %d", r.status_code)
+            if r.status_code == 403:
+                log.warning(
+                    "  Caption 403 — token lacks youtube.force-ssl scope. "
+                    "Re-generate the OAuth refresh token with scopes: "
+                    "youtube, youtube.force-ssl, youtube.upload"
+                )
+            else:
+                log.warning("  Caption init HTTP %d: %s", r.status_code, r.text[:120])
             return
 
         upload_url = r.headers.get("Location", "")
@@ -309,7 +322,14 @@ def _post_pinned_comment(video_id: str, question: str, token: str) -> None:
             timeout=15,
         )
         if not r.ok:
-            log.warning("  Comment HTTP %d", r.status_code)
+            if r.status_code == 403:
+                log.warning(
+                    "  Comment 403 — token lacks youtube.force-ssl scope. "
+                    "Re-generate the OAuth refresh token with scopes: "
+                    "youtube, youtube.force-ssl, youtube.upload"
+                )
+            else:
+                log.warning("  Comment HTTP %d: %s", r.status_code, r.text[:120])
             return
 
         comment_id = r.json().get("snippet", {}).get("topLevelComment", {}).get("id", "")
