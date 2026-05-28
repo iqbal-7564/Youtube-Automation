@@ -1,12 +1,13 @@
 """
-STEP 7 — Subtitle Generation
+STEP 5 — Subtitle Generation  (moved before scene planning)
 
-Reads subtitle_lines directly from master timeline — no re-estimation.
-Writes one SRT file per scene to temp/subtitles/sub_{scene_id}.srt.
+Subtitle lines in the timeline carry ABSOLUTE timestamps (position in the
+full content timeline).  SRT files written here use RELATIVE timestamps
+(scene-start = 0) so the subtitles filter applied to individual scene MP4s
+shows text at the correct time within that clip.
 
-Shorts profile: MarginV is set to 75% of frame height from top so captions
-land in the clear zone between the top UI bar and the bottom overlay buttons
-(like/share/subscribe). Standard profile keeps captions at the bottom.
+Shorts profile: MarginV is placed at 75 % of frame height — clear of
+YouTube's bottom-UI overlay (like / share / subscribe buttons).
 """
 
 import logging
@@ -16,6 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def _ms_to_srt(ms: int) -> str:
+    ms   = max(0, ms)
     h,  ms = divmod(ms, 3_600_000)
     m,  ms = divmod(ms,    60_000)
     s,  ms = divmod(ms,     1_000)
@@ -24,12 +26,9 @@ def _ms_to_srt(ms: int) -> str:
 
 def generate_subtitles(timeline: dict, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    video_end_ms = timeline["total_duration_ms"]
-    profile      = timeline.get("profile", "standard")
-    H            = timeline.get("height", 1080)
+    profile = timeline.get("profile", "standard")
+    H       = timeline.get("height", 1080)
 
-    # Shorts: place captions at 75% from top (clear of bottom UI overlay)
-    # Standard: place captions near bottom with safe margin
     if profile == "shorts":
         margin_v = int(H * 0.75)
     else:
@@ -42,30 +41,33 @@ def generate_subtitles(timeline: dict, out_dir: Path) -> None:
             path.write_text("", encoding="utf-8")
             continue
 
-        lines  = sc["subtitle_lines"]
-        sc_end = sc["end_ms"]
+        lines    = sc["subtitle_lines"]
+        sc_start = sc["start_ms"]   # absolute scene start in full timeline
+        sc_dur   = sc["duration_ms"]
         srt: list[str] = []
 
         for idx, ln in enumerate(lines, start=1):
-            start_ms = ln["start_ms"]
-            end_ms   = min(ln["end_ms"], sc_end, video_end_ms)
-            dur      = end_ms - start_ms
+            # Convert absolute timeline timestamps → relative to this scene
+            rel_start = max(0, ln["start_ms"] - sc_start)
+            rel_end   = min(ln["end_ms"] - sc_start, sc_dur)
 
-            if dur < 300:
-                end_ms = start_ms + 300
+            if rel_end <= rel_start:
+                continue                     # subtitle falls outside scene window
+            if rel_end - rel_start < 300:
+                rel_end = rel_start + 300    # enforce minimum display time
 
             srt += [
                 str(idx),
-                f"{_ms_to_srt(start_ms)} --> {_ms_to_srt(end_ms)}",
+                f"{_ms_to_srt(rel_start)} --> {_ms_to_srt(rel_end)}",
                 ln["text"],
                 "",
             ]
 
         path.write_text("\n".join(srt), encoding="utf-8")
-        log.debug("SRT scene %d: %d lines (marginV=%d)", sc["scene_id"], len(lines), margin_v)
+        log.debug("SRT scene %d: %d lines (relative, marginV=%d)",
+                  sc["scene_id"], len(lines), margin_v)
 
     log.info("SRT files written for %d scenes (profile=%s, marginV=%d)",
              len(timeline["scenes"]), profile, margin_v)
 
-    # Store margin_v in timeline so video_assembler can pick it up
     timeline["_subtitle_margin_v"] = margin_v

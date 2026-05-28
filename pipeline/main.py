@@ -157,22 +157,25 @@ def run_pipeline() -> bool:
             log.warning("  ⚠  TTS DEGRADED: one or more scenes used gTTS/silence. "
                         "Check ELEVENLABS_API_KEY / edge-tts availability.")
 
-        # ── 5: Scene Planning ────────────────────────────────────────────────
-        log.info("[5/14] Scene Planning")
+        # ── 5: Subtitle Generation (uses voice-exact scene durations) ─────────
+        # Must run BEFORE scene planning so SRT files are available for burn-in.
+        # Must run AFTER voice so subtitle timings match actual audio lengths.
+        log.info("[5/14] Subtitle Generation")
+        generate_subtitles(timeline, TEMP_DIR / "subtitles")
+        log.info("  SRT files written (relative timestamps, %d scenes)",
+                 len(timeline["scenes"]))
+
+        # ── 6: Scene Planning ────────────────────────────────────────────────
+        log.info("[6/14] Scene Planning")
         timeline = plan_scenes(timeline, topic["intent"])
         _save(timeline)
         log.info("  Keywords assigned to %d scenes", len(timeline["scenes"]))
 
-        # ── 6: Visual Fetch + Validation ─────────────────────────────────────
-        log.info("[6/14] Visual Fetch")
+        # ── 7: Visual Fetch + Validation ─────────────────────────────────────
+        log.info("[7/14] Visual Fetch")
         timeline = fetch_visuals(timeline, TEMP_DIR / "visuals")
         _save(timeline)
         log.info("  Visuals ready for %d scenes", len(timeline["scenes"]))
-
-        # ── 7: Subtitle Generation ───────────────────────────────────────────
-        log.info("[7/14] Subtitle Generation")
-        generate_subtitles(timeline, TEMP_DIR / "subtitles")
-        log.info("  SRT files written")
 
         # ── 8: Video Assembly ────────────────────────────────────────────────
         log.info("[8/14] Video Assembly")

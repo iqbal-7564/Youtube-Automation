@@ -162,12 +162,16 @@ def _audio_level(path: Path):
 
 
 def _subtitles(subtitles_dir: Path, timeline: dict):
-    total_end = timeline["total_duration_ms"]
+    # subtitle_lines carry ABSOLUTE timeline timestamps.
+    # Check that each line ends before its own scene ends (not the full video),
+    # because SRT files are relative and applied per-scene clip.
     for sc in timeline["scenes"]:
+        sc_end = sc["end_ms"]
         for ln in sc.get("subtitle_lines", []):
-            if ln["end_ms"] > total_end + 500:
-                return False, (f"subtitle extends past video end "
-                               f"(scene {sc['scene_id']}, end={ln['end_ms']}ms)")
+            if ln["end_ms"] > sc_end + 500:
+                return False, (f"subtitle extends past scene end "
+                               f"(scene {sc['scene_id']}, "
+                               f"sub_end={ln['end_ms']}ms sc_end={sc_end}ms)")
             if ln["end_ms"] - ln["start_ms"] < 300:
                 return False, (f"subtitle < 300ms "
                                f"(scene {sc['scene_id']})")

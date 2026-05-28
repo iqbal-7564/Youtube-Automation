@@ -308,6 +308,18 @@ def _concat(scene_files: list[tuple[Path, dict]], assembled: Path, is_shorts: bo
     else:
         segments = _apply_transitions(scene_files, assembled.parent)
 
+    # Validate every segment before handing to ffmpeg
+    expected_total = 0.0
+    for p, sc in scene_files:
+        dur = _duration(p)
+        expected_total += dur
+        if not p.exists() or p.stat().st_size < 500:
+            log.error("Segment missing/empty: %s", p.name)
+        else:
+            log.debug("Segment %s: %.3fs  %.1f KB", p.name, dur,
+                      p.stat().st_size / 1024)
+    log.info("  Concat: %d segments, expected total %.2fs", len(segments), expected_total)
+
     if len(segments) == 1:
         shutil.copy(segments[0], assembled)
         return
@@ -437,7 +449,8 @@ def _base_cmd(vis: Path, out: Path, dur_s: float,
     if clip_type == "black" or not vis.exists():
         return ["ffmpeg", "-y", "-f", "lavfi",
                 "-i", f"color=c=black:size={W}x{H}:rate=30", "-t", str(dur_s)]
-    return ["ffmpeg", "-y", "-i", str(vis), "-t", str(dur_s)]
+    # Loop video so clips shorter than dur_s are cycled to fill the scene.
+    return ["ffmpeg", "-y", "-stream_loop", "-1", "-i", str(vis), "-t", str(dur_s)]
 
 
 def _duration(path: Path) -> float:

@@ -3,25 +3,19 @@ STEP 4 — Voice Generation
 
 Generates one audio file per scene (voice_{scene_id}.mp3).
 Measures ACTUAL duration with ffprobe, then updates the master timeline.
-If actual duration drifts > 500ms from estimate, scene visual duration adjusts
-(audio is never stretched — visual window expands/contracts instead).
+If actual duration drifts > 500ms from estimate, scene visual duration adjusts.
 
 Engine priority: edge-tts → ElevenLabs → gTTS → silence fallback
-ElevenLabs voice settings are tuned per emotion tag:
-  excited    → low stability, higher style (dynamic delivery)
-  mysterious → high stability, slow rate (eerie, deliberate)
-  dramatic   → medium stability, high similarity (powerful)
-  neutral    → default settings
+ElevenLabs voice settings are tuned per emotion tag.
 
-300 ms of silence is appended to each voice file to give viewers a
-breathing moment between scenes. CORE→PAYOFF boundary gets 600 ms.
+300 ms of silence is appended ONCE (only when the file is freshly generated).
+Cached voice files are reused as-is so silence does not accumulate on reruns.
 """
 
 import asyncio
 import json
 import logging
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -29,10 +23,9 @@ import requests
 
 log = logging.getLogger(__name__)
 
-_EL_VOICE_ID = "pNInz6obpgDQGcFmaJgB"   # Adam — authoritative news style
+_EL_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
 _EDGE_VOICE  = "en-US-GuyNeural"
 
-# ElevenLabs voice settings per emotion
 _EL_SETTINGS: dict[str, dict] = {
     "excited":    {"stability": 0.35, "similarity_boost": 0.90, "style": 0.70, "use_speaker_boost": True},
     "mysterious": {"stability": 0.85, "similarity_boost": 0.80, "style": 0.10, "use_speaker_boost": False},
@@ -40,7 +33,6 @@ _EL_SETTINGS: dict[str, dict] = {
     "neutral":    {"stability": 0.75, "similarity_boost": 0.85, "style": 0.00, "use_speaker_boost": True},
 }
 
-# edge-tts rate per emotion
 _EDGE_RATE: dict[str, str] = {
     "excited":    "+5%",
     "mysterious": "-10%",
@@ -48,8 +40,7 @@ _EDGE_RATE: dict[str, str] = {
     "neutral":    "-5%",
 }
 
-# Silence padding between scenes (ms)
-_SCENE_PAD_MS           = 300
+_SCENE_PAD_MS            = 300
 _SECTION_BOUNDARY_PAD_MS = 600   # CORE → PAYOFF transition
 
 
@@ -61,20 +52,22 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
         path    = voice_dir / f"voice_{sc['scene_id']}.mp3"
         emotion = sc.get("emotion", "neutral")
 
-        if not (path.exists() and path.stat().st_size > 500):
-            engine = _generate(sc["script_text"], path, emotion)
-            sc["tts_engine"] = engine
-        else:
-            sc.setdefault("tts_engine", "cached")
-
-        # Append inter-scene silence
-        is_core_payoff_boundary = (
+        is_core_payoff = (
             sc["segment_label"] == "CORE" and
             i + 1 < len(scenes) and
             scenes[i + 1]["segment_label"] == "PAYOFF"
         )
-        pad_ms = _SECTION_BOUNDARY_PAD_MS if is_core_payoff_boundary else _SCENE_PAD_MS
-        _append_silence(path, pad_ms / 1000)
+        pad_s = (_SECTION_BOUNDARY_PAD_MS if is_core_payoff else _SCENE_PAD_MS) / 1000
+
+        is_fresh = not (path.exists() and path.stat().st_size > 500)
+        if is_fresh:
+            engine = _generate(sc["script_text"], path, emotion)
+            sc["tts_engine"] = engine
+            # Silence padding appended ONLY to freshly generated files.
+            # Cached files already have silence from their original generation.
+            _append_silence(path, pad_s)
+        else:
+            sc.setdefault("tts_engine", "cached")
 
         actual_ms = _duration_ms(path)
         if actual_ms > 0:
@@ -85,7 +78,7 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
                 sc["duration_ms"] = actual_ms
                 sc["end_ms"]      = sc["start_ms"] + actual_ms
 
-    # Re-anchor all scene timestamps sequentially after any adjustments
+    # Re-anchor all scene timestamps sequentially
     t = 0
     for sc in scenes:
         sc["start_ms"]       = t
@@ -97,19 +90,16 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
     timeline["total_duration_ms"]      = t
     timeline["total_duration_seconds"] = round(t / 1000, 2)
 
-    # Recalculate profile based on actual duration
     if timeline["total_duration_seconds"] <= 60:
         timeline["profile"], timeline["width"], timeline["height"] = "shorts",   1080, 1920
     else:
         timeline["profile"], timeline["width"], timeline["height"] = "standard", 1920, 1080
 
-    # Rescale subtitle timestamps to match new scene windows
     for sc in scenes:
         sc["subtitle_lines"] = _rescale_subs(
             sc["subtitle_lines"], sc["start_ms"], sc["end_ms"]
         )
 
-    # Log TTS engine usage so quality gate can check
     engines_used = [sc.get("tts_engine", "") for sc in scenes]
     degraded = [e for e in engines_used if e in ("gtts", "silence")]
     if degraded:
@@ -128,7 +118,7 @@ def _generate(text: str, out: Path, emotion: str) -> str:
         return "elevenlabs"
     if _gtts(text, out):
         return "gtts"
-    _silence(out, max(1.0, len(text.split()) / 2.8))
+    _silence_file(out, max(1.0, len(text.split()) / 2.8))
     log.error("All TTS engines failed — silence for: %s", text[:50])
     return "silence"
 
@@ -140,7 +130,6 @@ def _edge_tts(text: str, out: Path, emotion: str) -> bool:
             import edge_tts
             comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate)
             await comm.save(str(out))
-
         asyncio.run(_run())
         return out.exists() and out.stat().st_size > 500
     except Exception as exc:
@@ -157,11 +146,8 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
         r = requests.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
             headers={"xi-api-key": key, "Content-Type": "application/json"},
-            json={
-                "text":     text,
-                "model_id": "eleven_monolingual_v1",
-                "voice_settings": settings,
-            },
+            json={"text": text, "model_id": "eleven_monolingual_v1",
+                  "voice_settings": settings},
             timeout=30,
         )
         if r.ok:
@@ -183,7 +169,7 @@ def _gtts(text: str, out: Path) -> bool:
     return False
 
 
-def _silence(out: Path, duration_s: float) -> None:
+def _silence_file(out: Path, duration_s: float) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-f", "lavfi",
          "-i", "anullsrc=r=44100:cl=stereo",
@@ -193,7 +179,6 @@ def _silence(out: Path, duration_s: float) -> None:
 
 
 def _append_silence(path: Path, duration_s: float) -> None:
-    """Append silence to an existing audio file in-place."""
     if not path.exists():
         return
     tmp = path.with_suffix(".tmp.mp3")
@@ -201,9 +186,11 @@ def _append_silence(path: Path, duration_s: float) -> None:
         subprocess.run(
             ["ffmpeg", "-y",
              "-i", str(path),
-             "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={duration_s}",
-             "-filter_complex", "[0:a][1:a]concat=n=2:v=0:a=1[outa]",
+             "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
+             "-filter_complex",
+             f"[0:a][1:a]concat=n=2:v=0:a=1[outa]",
              "-map", "[outa]",
+             "-t", str(_duration_s(path) + duration_s),
              "-c:a", "libmp3lame", "-q:a", "2",
              str(tmp)],
             capture_output=True, timeout=30,
@@ -212,6 +199,7 @@ def _append_silence(path: Path, duration_s: float) -> None:
             tmp.replace(path)
     except Exception as exc:
         log.debug("append_silence: %s", exc)
+    finally:
         if tmp.exists():
             tmp.unlink(missing_ok=True)
 
@@ -219,8 +207,13 @@ def _append_silence(path: Path, duration_s: float) -> None:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _duration_ms(path: Path) -> int:
+    ms = int(_duration_s(path) * 1000)
+    return ms
+
+
+def _duration_s(path: Path) -> float:
     if not path.exists():
-        return 0
+        return 0.0
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
@@ -231,13 +224,13 @@ def _duration_ms(path: Path) -> int:
         for stream in data.get("streams", []):
             dur = stream.get("duration")
             if dur:
-                return int(float(dur) * 1000)
+                return float(dur)
         fmt_dur = data.get("format", {}).get("duration")
         if fmt_dur:
-            return int(float(fmt_dur) * 1000)
+            return float(fmt_dur)
     except Exception:
         pass
-    return 0
+    return 0.0
 
 
 def _rescale_subs(lines: list, new_start: int, new_end: int) -> list:
