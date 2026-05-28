@@ -1,16 +1,20 @@
-name: MindBlownFacts Video Pipeline
+name: Visionary Minds Video Pipeline
 
 on:
   schedule:
-    - cron: '0 7 * * *'    # 07:00 UTC — morning Shorts run
-    - cron: '0 12 * * *'   # 12:00 UTC — standard (midday, highest global traffic)
-    - cron: '0 17 * * *'   # 17:00 UTC — evening Shorts run
+    - cron: '0 7 * * *'    # 07:00 UTC — Shorts (~60s)
+    - cron: '0 12 * * *'   # 12:00 UTC — Standard (3-5 min, highest global traffic)
+    - cron: '0 17 * * *'   # 17:00 UTC — Shorts (~60s)
   workflow_dispatch:
     inputs:
       intent_override:
-        description: 'Force intent (WAR/DISASTER/POLITICS/ECONOMY/SPORTS) — blank = auto'
+        description: 'Force category (SPACE/SCIENCE/HISTORY/ANIMALS/NATURE/GEOGRAPHY/OCEAN/CULTURE)'
         required: false
         default: ''
+      video_format:
+        description: 'Video format: shorts | standard | long'
+        required: false
+        default: 'shorts'
 
 jobs:
   news-video:
@@ -45,8 +49,22 @@ jobs:
                    pipeline/output         \
                    pipeline/logs
 
-      - name: Run News Video Pipeline
+      - name: Resolve video format
+        id: fmt
+        run: |
+          # Manual dispatch overrides schedule logic
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "format=${{ github.event.inputs.video_format || 'shorts' }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "0 12 * * *" ]; then
+            echo "format=standard" >> $GITHUB_OUTPUT
+          else
+            echo "format=shorts" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Video Pipeline
         env:
+          VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
+          INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override || '' }}
           GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
@@ -56,7 +74,7 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         run: |
-          echo "=== MindBlownFacts Video Pipeline ==="
+          echo "=== Visionary Minds Video Pipeline — format=$VIDEO_FORMAT ==="
           python pipeline/main.py
           echo ""
           echo "=== Output files ==="

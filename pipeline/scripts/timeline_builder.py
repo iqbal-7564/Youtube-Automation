@@ -75,13 +75,21 @@ _SHORTS_HOOK_CAP_MS = 2_500
 
 
 def build_timeline(script: dict, intent: str = "") -> dict:
+    import os
     intent_upper = intent.upper()
     persona_ms   = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
 
-    # Pre-pass: decide profile estimate from script word count
-    total_words = sum(len(s["text"].split()) for s in script["segments"])
-    est_total_s = total_words / _WPS
-    is_shorts_est = est_total_s <= 65   # small buffer for drift
+    # VIDEO_FORMAT env var takes priority; fall back to word-count estimate
+    video_format = os.getenv("VIDEO_FORMAT", "").lower()
+    if video_format == "shorts":
+        is_shorts_est = True
+    elif video_format in ("standard", "long"):
+        is_shorts_est = False
+    else:
+        # Auto-detect from script word count
+        total_words   = sum(len(s["text"].split()) for s in script["segments"])
+        est_total_s   = total_words / _WPS
+        is_shorts_est = est_total_s <= 65
 
     scene_interval = _SCENE_INTERVAL_SHORTS if is_shorts_est else _SCENE_INTERVAL_STANDARD
 

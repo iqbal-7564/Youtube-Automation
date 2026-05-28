@@ -72,7 +72,43 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
     },
 }
 
-_SYSTEM_TMPL = """You are a world-class educational YouTube Shorts scriptwriter for the channel "Visionary Minds".
+# ── Format profiles ──────────────────────────────────────────────────────────
+# VIDEO_FORMAT env var controls target length.
+# shorts   → 130-180 words  (~60s)
+# standard → 450-600 words  (~3-4 min)
+# long     → 900-1200 words (~6-8 min)
+
+_FORMAT_PROFILES: dict[str, dict] = {
+    "shorts": {
+        "word_target":   "130-180 words total",
+        "duration_hint": "~60 seconds",
+        "core_depth":    "4-6 short sentences. One fact per sentence.",
+        "max_tokens":    1500,
+    },
+    "standard": {
+        "word_target":   "450-600 words total",
+        "duration_hint": "3-5 minutes",
+        "core_depth":    (
+            "12-18 sentences spread across 3 sub-topics. Go deeper on each fact. "
+            "Include real numbers, comparisons, and a counterintuitive twist. "
+            "Vary sentence length: short punch. Longer explanatory follow-up. Short again."
+        ),
+        "max_tokens":    3000,
+    },
+    "long": {
+        "word_target":   "900-1200 words total",
+        "duration_hint": "7-10 minutes",
+        "core_depth":    (
+            "25-35 sentences covering 5-6 distinct angles on the topic. "
+            "Each angle gets 4-6 sentences: state the fact, explain the mechanism, "
+            "give a real-world comparison, reveal the surprising implication. "
+            "Include historical context, modern research, and a future implication."
+        ),
+        "max_tokens":    5000,
+    },
+}
+
+_SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "Visionary Minds".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 Content: real-world facts — science, history, nature, space, animals, geography, ocean, culture.
 
@@ -83,11 +119,13 @@ HOOK    (0-3s)  : {hook_rule}
                   NEVER start with "Did you know", "Welcome back", "Today we discuss", "In today's video".
 TENSION (3-15s) : {tension_rule}
 CORE    (15-45s): {core_rule}
+                  DEPTH: {core_depth}
+                  Mark the single most surprising sentence with [WOW].
 PAYOFF  (45-55s): {payoff_rule}
 CLOSE   (55-60s): {close_rule}
                   NEVER say "Like and subscribe".
 
-TARGET: 130-180 words total. Pace = 2.8 words/second.
+TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
 
 TITLE RULES (curiosity-gap psychology):
   GOOD: "The Impossible Thing Hiding Inside Every Human Cell"
@@ -129,10 +167,22 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 
 
 def generate_script(topic: dict) -> dict:
+    import os
+    video_format  = os.getenv("VIDEO_FORMAT", "shorts").lower()
+    if video_format not in _FORMAT_PROFILES:
+        video_format = "shorts"
+    fmt_profile = _FORMAT_PROFILES[video_format]
+
     # Rotate narrative template — variety prevents channel from feeling formulaic
     template_name = random.choice(list(_NARRATIVE_VARIANTS.keys()))
     variant       = _NARRATIVE_VARIANTS[template_name]
-    system_prompt = _SYSTEM_TMPL.format(**variant)
+
+    system_prompt = _SYSTEM_TMPL.format(
+        **variant,
+        word_target   = fmt_profile["word_target"],
+        duration_hint = fmt_profile["duration_hint"],
+        core_depth    = fmt_profile["core_depth"],
+    )
 
     prompt = _USER_TMPL.format(
         title         = topic["title"],
@@ -140,6 +190,8 @@ def generate_script(topic: dict) -> dict:
         intent        = topic["intent"],
         template_name = template_name,
     )
+
+    log.info("Generating [%s] script, template=%s", video_format, template_name)
 
     for key in _GROQ_KEYS:
         if not key:
@@ -159,9 +211,9 @@ def generate_script(topic: dict) -> dict:
                             {"role": "user",   "content": prompt},
                         ],
                         "temperature": 0.75,
-                        "max_tokens":  1500,
+                        "max_tokens":  fmt_profile["max_tokens"],
                     },
-                    timeout=30,
+                    timeout=60,
                 )
                 if r.status_code == 429:
                     log.warning("Rate limit on key …%s", key[-4:])
@@ -170,8 +222,10 @@ def generate_script(topic: dict) -> dict:
                 raw    = r.json()["choices"][0]["message"]["content"].strip()
                 script = _parse(raw)
                 if script:
-                    log.info("Script OK — %d words via Groq [%s]",
-                             len(script["full_script"].split()), template_name)
+                    words = len(script["full_script"].split())
+                    log.info("Script OK — %d words via Groq [%s/%s]",
+                             words, video_format, template_name)
+                    script["video_format"] = video_format
                     return script
             except Exception as exc:
                 log.warning("Groq attempt %d: %s", attempt + 1, exc)
