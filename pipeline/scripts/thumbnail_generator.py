@@ -95,9 +95,9 @@ def generate_thumbnail(
             logo_img = logo_img.resize((72, 72), Image.LANCZOS)
             bg.paste(logo_img, (30, _TH - 102), logo_img)
         except Exception:
-            _draw_pill(draw, "Visionary Minds", font_small, 40, _TH - 80, pill_color)
+            _draw_pill(draw, "MindBlownFacts", font_small, 40, _TH - 80, pill_color)
     else:
-        _draw_pill(draw, "Visionary Minds", font_small, 40, _TH - 80, pill_color)
+        _draw_pill(draw, "MindBlownFacts", font_small, 40, _TH - 80, pill_color)
 
     # ── Category pill (top-right) ─────────────────────────────────────────────
     _draw_pill(draw, intent, font_small, _TW - 200, 30, pill_color)

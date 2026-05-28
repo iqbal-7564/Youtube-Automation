@@ -33,8 +33,8 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-_CHANNEL   = "Visionary Minds"
-_TAGLINE   = "Expand Your Mind Daily"
+_CHANNEL   = "MindBlownFacts"
+_TAGLINE   = "Discover Your World"
 _LOGO_PATH = Path(__file__).parent.parent / "assets" / "logo.png"
 
 _INTENT_COLOR = {
@@ -169,24 +169,73 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
 
 
 def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
-    vf = (
+    """
+    Animated branded close scene:
+      • Deep navy gradient background
+      • Logo centered (large), fades in over 0.7s
+      • Channel name bold white with blue glow border below logo
+      • Tagline in light blue
+      • CTA line at bottom
+      • Full scene fades in at start, fades out at end
+    """
+    logo      = _LOGO_PATH
+    fade_dur  = 0.7
+    fade_out  = max(0.0, dur_s - fade_dur)
+
+    # Proportional sizes
+    name_sz = max(44, min(W // 10, 80))
+    tag_sz  = max(28, min(W // 17, 48))
+    cta_sz  = max(22, min(W // 22, 36))
+
+    # Vertical layout: logo (top half) → name → tagline → CTA
+    logo_size = max(120, min(W // 4, 220))
+    logo_x    = (W - logo_size) // 2
+    logo_y    = H // 2 - logo_size // 2 - (name_sz + tag_sz + 30)
+    name_y    = logo_y + logo_size + 20
+    tag_y     = name_y + name_sz + 12
+    cta_y     = tag_y + tag_sz + 18
+
+    # Text fade-in using alpha expression (t=video time in seconds)
+    alpha_expr = f"if(lt(t\\,{fade_dur:.2f})\\,t/{fade_dur:.2f}\\,1)"
+
+    text_vf = (
+        # Glow layer — slightly larger, semi-transparent blue (creates glow effect)
         f"drawtext=text='{_CHANNEL}':fontfile='{_FONT_BOLD}':"
-        f"fontcolor=white:fontsize=72:x=(w-tw)/2:y=(h-th)/2-70,"
+        f"fontcolor=0x2288FF@0.5:fontsize={name_sz + 4}:"
+        f"alpha='{alpha_expr}':x=(w-tw)/2:y={name_y - 2},"
+        # Main channel name — bold white
+        f"drawtext=text='{_CHANNEL}':fontfile='{_FONT_BOLD}':"
+        f"fontcolor=white:fontsize={name_sz}:"
+        f"bordercolor=0x1A73E8:borderw=3:"
+        f"alpha='{alpha_expr}':x=(w-tw)/2:y={name_y},"
+        # Tagline — light blue
         f"drawtext=text='{_TAGLINE}':fontfile='{_FONT_REG}':"
-        f"fontcolor=white@0.65:fontsize=36:x=(w-tw)/2:y=(h-th)/2+40,"
+        f"fontcolor=0x88CCFF:fontsize={tag_sz}:"
+        f"bordercolor=black:borderw=1:"
+        f"alpha='{alpha_expr}':x=(w-tw)/2:y={tag_y},"
+        # CTA
         f"drawtext=text='Follow for Daily Mind-Blowing Facts':fontfile='{_FONT_REG}':"
-        f"fontcolor=white@0.75:fontsize=30:x=(w-tw)/2:y=(h-th)/2+100"
+        f"fontcolor=white@0.75:fontsize={cta_sz}:"
+        f"alpha='{alpha_expr}':x=(w-tw)/2:y={cta_y}"
     )
+
     base = ["ffmpeg", "-y",
-            "-f", "lavfi", "-i", f"color=c=0x0A0A0A:size={W}x{H}:rate=30",
+            "-f", "lavfi",
+            "-i", f"color=c=0x030410:size={W}x{H}:rate=30",
             "-t", str(dur_s)]
-    logo = _LOGO_PATH
+
     if logo.exists():
-        logo_size = max(60, min(W // 13, 90))
         filter_cx = (
-            f"[0:v]{vf}[base];"
-            f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos[wm];"
-            f"[base][wm]overlay=30:30:shortest=1[out]"
+            # Apply text to background
+            f"[0:v]{text_vf}[txt];"
+            # Scale logo and fade in its alpha channel
+            f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos,"
+            f"fade=t=in:st=0:d={fade_dur:.2f}:alpha=1[logo];"
+            # Overlay logo onto text
+            f"[txt][logo]overlay={logo_x}:{logo_y}:shortest=1,"
+            # Fade full scene in and out
+            f"fade=t=in:st=0:d={fade_dur:.2f},"
+            f"fade=t=out:st={fade_out:.3f}:d={fade_dur:.2f}[out]"
         )
         cmd = base + [
             "-loop", "1", "-i", str(logo),
@@ -196,11 +245,18 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
+        # No logo — text only with fade
+        full_vf = (
+            f"{text_vf},"
+            f"fade=t=in:st=0:d={fade_dur:.2f},"
+            f"fade=t=out:st={fade_out:.3f}:d={fade_dur:.2f}"
+        )
         cmd = base + [
-            "-vf", vf,
+            "-vf", full_vf,
             "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
+
     _run(cmd, f"CLOSE→{out.name}")
 
 

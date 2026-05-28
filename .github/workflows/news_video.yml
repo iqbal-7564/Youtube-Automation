@@ -1,4 +1,4 @@
-name: Visionary Minds Video Pipeline
+name: MindBlownFacts Video Pipeline
 
 on:
   schedule:
@@ -74,7 +74,7 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
         run: |
-          echo "=== Visionary Minds Video Pipeline — format=$VIDEO_FORMAT ==="
+          echo "=== MindBlownFacts Video Pipeline — format=$VIDEO_FORMAT ==="
           python pipeline/main.py
           echo ""
           echo "=== Output files ==="

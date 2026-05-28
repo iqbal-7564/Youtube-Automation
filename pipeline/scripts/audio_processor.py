@@ -97,6 +97,13 @@ def process_audio(
             f"merged={merged_dur:.3f}s → normalized={norm_dur:.3f}s"
         )
 
+    # ── Optional: background music mix ───────────────────────────────────────
+    music_dir = Path(__file__).parent.parent / "assets" / "music"
+    mixed     = _mix_background_music(normalized, music_dir, norm_dur)
+    if mixed:
+        log.info("  Background music mixed: %s", mixed.name)
+        return mixed
+
     return normalized
 
 
@@ -272,6 +279,66 @@ def _probe(path: Path) -> float:
         return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
     except Exception:
         return 0.0
+
+
+def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Path | None:
+    """
+    Mix background music under the voice track at low volume (-20 dB).
+
+    Music files must be placed in pipeline/assets/music/ named by emotion:
+        mysterious.mp3  excited.mp3  dramatic.mp3  neutral.mp3
+
+    Any MP3/WAV/M4A file found there is used. If none exist, returns None
+    and the pipeline continues without music — fully graceful fallback.
+
+    The music is:
+      • Stream-looped to fill the full voice duration
+      • Lowpass filtered (12 kHz) so it never competes with voice clarity
+      • Faded in over 1.5s and faded out over 2s
+      • Mixed at weight 0.10 (≈ -20 dB under voice)
+    """
+    if not music_dir.exists():
+        return None
+
+    music_file: Path | None = None
+    for ext in ("*.mp3", "*.wav", "*.m4a"):
+        candidates = sorted(music_dir.glob(ext))
+        if candidates:
+            # Pick one deterministically by rotating through files
+            import time
+            music_file = candidates[int(time.time() / 3600) % len(candidates)]
+            break
+
+    if not music_file:
+        return None
+
+    out = voice.parent / f"voiced_music_{voice.stem}.m4a"
+    fade_out_start = max(0.0, duration_s - 2.0)
+
+    try:
+        _run([
+            "ffmpeg", "-y",
+            "-stream_loop", "-1", "-i", str(music_file),
+            "-i", str(voice),
+            "-filter_complex", (
+                f"[0:a]aresample=44100,lowpass=f=12000,"
+                f"atrim=0:{duration_s:.3f},"
+                f"afade=t=in:st=0:d=1.5,"
+                f"afade=t=out:st={fade_out_start:.3f}:d=2.0,"
+                f"volume=0.10[music];"
+                f"[1:a][music]amix=inputs=2:duration=first:dropout_transition=2[out]"
+            ),
+            "-map", "[out]",
+            "-c:a", "aac", "-b:a", "192k",
+            "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+            str(out),
+        ], "music-mix")
+        if out.exists() and out.stat().st_size > 10_000:
+            return out
+    except Exception as exc:
+        log.debug("Background music mix failed (non-critical): %s", exc)
+
+    return None
 
 
 def _run(cmd: list, label: str) -> None:

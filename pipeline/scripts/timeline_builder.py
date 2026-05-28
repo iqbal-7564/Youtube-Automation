@@ -73,6 +73,40 @@ _DEFAULT_PERSONA_MS = {"simple": 3_000, "moderate": 4_500, "complex": 6_000}
 # Shorts cap: hook scene never exceeds this regardless of TTS length
 _SHORTS_HOOK_CAP_MS = 2_500
 
+# Global emotional arc per narrative template.
+# Overrides LLM-assigned per-segment emotion to ensure the full-video
+# emotional journey is coherent and intentional.
+_EMOTIONAL_ARC: dict[str, dict[str, str]] = {
+    "classic": {
+        "HOOK":    "excited",     # high energy capture
+        "TENSION": "mysterious",  # pull into mystery
+        "CORE":    "neutral",     # informational delivery
+        "PAYOFF":  "dramatic",    # emotional peak
+        "CLOSE":   "excited",     # leave on high energy
+    },
+    "mystery": {
+        "HOOK":    "mysterious",  # open with unanswered question
+        "TENSION": "dramatic",    # deepen the dread/curiosity
+        "CORE":    "mysterious",  # sustained tension
+        "PAYOFF":  "excited",     # revelation energy
+        "CLOSE":   "neutral",     # calm after revelation
+    },
+    "shock_first": {
+        "HOOK":    "dramatic",    # bold impossible claim
+        "TENSION": "excited",     # challenge the disbelief energetically
+        "CORE":    "neutral",     # methodical proof
+        "PAYOFF":  "dramatic",    # implication hits hard
+        "CLOSE":   "excited",     # tease even more
+    },
+    "reverse": {
+        "HOOK":    "dramatic",    # stunning outcome stated
+        "TENSION": "mysterious",  # how is this possible?
+        "CORE":    "neutral",     # unwrap the cause chain
+        "PAYOFF":  "excited",     # original cause revealed
+        "CLOSE":   "mysterious",  # another hidden pattern exists
+    },
+}
+
 
 def build_timeline(script: dict, intent: str = "") -> dict:
     import os
@@ -161,6 +195,16 @@ def build_timeline(script: dict, intent: str = "") -> dict:
 
             elapsed_ms += dur_ms
             scene_id   += 1
+
+    # Apply global emotional arc — overrides LLM per-segment emotions for
+    # a coherent full-video emotional journey
+    narrative_template = script.get("narrative_template", "classic")
+    arc = _EMOTIONAL_ARC.get(narrative_template, _EMOTIONAL_ARC["classic"])
+    for sc in scenes:
+        label = sc["segment_label"]
+        if label in arc:
+            sc["emotion"]       = arc[label]
+            sc["motion_emotion"] = arc[label]
 
     total_s = elapsed_ms / 1000
     profile = "shorts"  if total_s <= 60 else "standard"

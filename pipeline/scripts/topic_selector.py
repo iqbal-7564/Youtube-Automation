@@ -1,5 +1,5 @@
 """
-STEP 1 — Topic Selection (Visionary Minds Edition)
+STEP 1 — Topic Selection (MindBlownFacts Edition)
 
 Uses Groq to generate a specific, surprising world-fact topic from a curated seed bank.
 Categories (priority order): SPACE > SCIENCE > HISTORY > ANIMALS > NATURE > GEOGRAPHY > OCEAN > CULTURE
@@ -206,26 +206,33 @@ def _groq_expand(category: str, seed: str) -> tuple[str, str]:
                     "model": _GROQ_MODEL,
                     "messages": [
                         {
-                            "role":    "system",
+                            "role": "system",
                             "content": (
                                 "You generate specific, mind-blowing world-fact video topics. "
                                 "Return ONLY valid JSON with no markdown: "
                                 "{\"title\": \"...\", \"description\": \"...\"} "
-                                "Title: max 80 chars, a specific surprising fact or question. "
-                                "Description: 1-2 sentences with the core surprising detail. "
-                                "Make it genuinely astonishing and accurate."
+                                "Title: max 80 chars. Use curiosity-gap psychology — imply "
+                                "hidden or forbidden knowledge. "
+                                "Good: 'The Impossible Thing Scientists Found in Deep Ocean' "
+                                "Bad:  'Amazing Ocean Facts' "
+                                "Description: 1-2 sentences with the most surprising specific detail. "
+                                "Focus on FRESH ANGLES: recent discoveries, counterintuitive facts, "
+                                "or surprising connections to modern life. Make it feel like "
+                                "something people would share right now."
                             ),
                         },
                         {
-                            "role":    "user",
+                            "role": "user",
                             "content": (
                                 f"Category: {category}\n"
                                 f"Seed topic: {seed}\n"
-                                "Generate a specific surprising fact topic for a YouTube Shorts video."
+                                "Generate a fresh, surprising angle on this topic for a viral "
+                                "YouTube Shorts video. Prioritize recent discoveries or "
+                                "counterintuitive facts over general overviews."
                             ),
                         },
                     ],
-                    "temperature": 0.85,
+                    "temperature": 0.90,
                     "max_tokens":  200,
                 },
                 timeout=20,

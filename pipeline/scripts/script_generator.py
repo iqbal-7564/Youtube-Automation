@@ -1,5 +1,5 @@
 """
-STEP 2 — Script Generation (Visionary Minds Edition)
+STEP 2 — Script Generation (MindBlownFacts Edition)
 
 Single Groq LLM call. Returns 5-segment retention-psychology script
 plus YouTube metadata.
@@ -108,7 +108,20 @@ _FORMAT_PROFILES: dict[str, dict] = {
     },
 }
 
-_SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "Visionary Minds".
+# ── Hook formula library ─────────────────────────────────────────────────────
+# Rotated per video to prevent hook fatigue. Each formula creates a different
+# psychological mechanism that captures attention in the first 1-2 seconds.
+
+_HOOK_FORMULAS = [
+    "IMPOSSIBILITY: State a fact that sounds physically impossible. 'X can Y.' No explanation. Let it hang.",
+    "SPECIFIC NUMBER: Use an exact, surprising number. '[PRECISE NUMBER] [shocking fact].' Specificity = credibility.",
+    "CONTRADICTION: Attack a widely-held belief. 'Everything you know about X is wrong.' Instant curiosity gap.",
+    "SCALE BREAK: Make the scale incomprehensible. Compare it to something familiar but make the comparison impossible to process.",
+    "TENSION GAP: State something happened without explaining why. 'X exists. Nobody knows why.' Open loop psychology.",
+    "FORBIDDEN KNOWLEDGE: Frame the fact as something suppressed. 'They never taught you this in school.'",
+]
+
+_SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "MindBlownFacts".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 Content: real-world facts — science, history, nature, space, animals, geography, ocean, culture.
 
@@ -138,7 +151,7 @@ TITLE RULES (curiosity-gap psychology):
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON."""
 
-_USER_TMPL = """Write a YouTube Shorts "Visionary Minds" script for this topic:
+_USER_TMPL = """Write a YouTube Shorts "MindBlownFacts" script for this topic:
 
 TOPIC    : {title}
 DETAILS  : {description}
@@ -173,12 +186,21 @@ def generate_script(topic: dict) -> dict:
         video_format = "shorts"
     fmt_profile = _FORMAT_PROFILES[video_format]
 
-    # Rotate narrative template — variety prevents channel from feeling formulaic
+    # Rotate narrative template + hook formula — double variety prevents formula fatigue
     template_name = random.choice(list(_NARRATIVE_VARIANTS.keys()))
+    hook_formula  = random.choice(_HOOK_FORMULAS)
     variant       = _NARRATIVE_VARIANTS[template_name]
 
+    # Inject hook formula into the hook rule
+    augmented_hook_rule = f"{variant['hook_rule']} HOOK FORMULA TO USE: {hook_formula}"
+
     system_prompt = _SYSTEM_TMPL.format(
-        **variant,
+        description   = variant["description"],
+        hook_rule     = augmented_hook_rule,
+        tension_rule  = variant["tension_rule"],
+        core_rule     = variant["core_rule"],
+        payoff_rule   = variant["payoff_rule"],
+        close_rule    = variant["close_rule"],
         word_target   = fmt_profile["word_target"],
         duration_hint = fmt_profile["duration_hint"],
         core_depth    = fmt_profile["core_depth"],
@@ -223,8 +245,9 @@ def generate_script(topic: dict) -> dict:
                 script = _parse(raw)
                 if script:
                     words = len(script["full_script"].split())
-                    log.info("Script OK — %d words via Groq [%s/%s]",
-                             words, video_format, template_name)
+                    log.info("Script OK — %d words via Groq [%s/%s/hook:%s]",
+                             words, video_format, template_name,
+                             hook_formula.split(":")[0])
                     script["video_format"] = video_format
                     return script
             except Exception as exc:
