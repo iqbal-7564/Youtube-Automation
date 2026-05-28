@@ -6,24 +6,25 @@ Fully automated pipeline that selects a world-facts topic, writes a retention-ps
 
 ## How it works
 
-The pipeline runs **14 sequential steps** driven by a single `master_timeline.json` that every step reads and updates. Timeline durations are **locked after step 4** — no downstream step may change them.
+The pipeline runs **16 sequential steps** driven by a single `master_timeline.json` that every step reads and updates. Timeline durations are **locked after step 4** — no downstream step may change them.
 
 | Step | Module | What it does |
 |------|--------|-------------|
-| 1 | `topic_selector` | Picks a topic via Groq LLM with trend-aware prompting (fresh angles, recent discoveries); deduplicates against 12 months of history; selects category by performance weight |
-| 2 | `script_generator` | Writes a 5-segment script in one of **4 rotating narrative structures**; injects one of **6 rotating hook formulas**; word count scales with `VIDEO_FORMAT`; marks WOW moments; generates CTR-psychology title |
-| 3 | `timeline_builder` | Converts segments to per-scene timeline; applies **global emotional arc** per narrative template; Shorts psychology (2.5s hook cap, 3.5s CORE intervals); per-category persona dwell times |
-| 4 | `voice_generator` | Generates per-scene MP3s with emotion-tuned settings (edge-tts → ElevenLabs → gTTS → silence fallback); appends 300ms inter-scene silence (600ms at CORE→PAYOFF boundary); **locks timeline durations** |
-| 5 | `scene_planner` | **Semantic text analysis** maps 12 narrative trigger patterns in script text to emotional visual keywords; assigns `motion_emotion` tag per scene |
+| 1 | `topic_selector` | Trend-aware topic selection via Groq (fetches viral angle hints per category); deduplicates against 12 months of history; selects category by performance weight |
+| 2 | `script_generator` | 5-segment script in one of **4 rotating narrative structures** + one of **6 rotating hook formulas**; word count scales with `VIDEO_FORMAT`; marks `[WOW]` moments; generates CTR-psychology title |
+| 3 | `timeline_builder` | Per-scene timeline with **global emotional arc** per narrative template; Shorts psychology (hook cap, tight CORE intervals); per-category audience persona dwell times; reads `adaptive_params.json` from previous retention signals |
+| 4 | `voice_generator` | Per-scene MP3s with emotion-tuned TTS (edge-tts → ElevenLabs → gTTS → silence); 300ms inter-scene silence (600ms at CORE→PAYOFF); **locks timeline durations** |
+| 5 | `scene_planner` | Semantic text analysis — 12 narrative trigger patterns map script text to emotional visual keywords; assigns `motion_emotion` tag per scene |
+| 5b | `cinematic_planner` | Director-level shot sequencing (WIDE/AERIAL/MEDIUM/CLOSE/EXTREME\_CLOSE); pacing rhythm per scene; suspense arc peaks at WOW; shot variety rule prevents 3+ consecutive identical types |
 | 6 | `visual_fetcher` | Tries all 3 ranked keywords before category fallbacks; portrait orientation enforced for Shorts |
-| 7 | `video_assembler` | Renders each scene with brand overlays (logo top-left, channel name bottom-left, category pill top-right); **8 emotion-driven motion presets** rotated by scene; animated close scene with logo fade-in + text glow |
-| 8 | `subtitle_generator` | Writes per-scene SRT files; Shorts captions at 75% frame height (clear of YouTube UI overlay) |
-| 9 | `audio_processor` | **3-stage pipeline:** decode PCM → two-pass loudnorm −14 LUFS + afftdn noise reduction → fades + alimiter + M4A output; optional background music mix at −20 dB |
+| 7 | `video_assembler` | Renders each scene with brand overlays (logo top-left, channel name bottom-left, category pill top-right); **8 emotion+shot-driven motion presets**; animated close scene with logo fade-in + text glow |
+| 8 | `subtitle_generator` | Per-scene SRT files; Shorts captions at 75% frame height (clear of YouTube UI) |
+| 9 | `audio_processor` | **3-stage pipeline:** decode PCM → two-pass loudnorm −14 LUFS + afftdn → fades + alimiter + M4A; optional SFX mix (WOW impacts, hook tension, payoff reveal); optional background music at −20 dB |
 | 10 | `encoder` | Stream-copies assembled video + AAC-encodes audio; `apad` extends audio to video length; `-shortest` aligns at video end |
 | 11 | `quality_gate` | **10 hard checks** — all must pass before upload; up to 3 retry attempts on failure |
-| 12 | `thumbnail_generator` | Pillow-based 1280×720 thumbnail — blurred scene background, bold yellow CTR-psychology headline, logo bottom-left, category pill top-right |
+| 12 | `thumbnail_generator` + `ctr_optimizer` | Pillow-based 1280×720 thumbnail; CTR optimizer scores 9 title/headline combinations on curiosity gap, tension, specificity, novelty, and synergy — best pair used for upload |
 | 13 | `uploader` | YouTube resumable upload; thumbnail; merged SRT captions; engagement comment; category playlist |
-| 14 | `news_analytics` | Logs result; fetches audience retention curve; identifies drop-off positions; writes `performance_history.json` per category |
+| 14 | `news_analytics` | Logs result; fetches retention curve; scores scene-level drop-off; writes `performance_history.json`; applies **adaptive learning** — evolves pipeline parameters automatically |
 
 ---
 
@@ -65,28 +66,39 @@ Each video uses a different psychological capture mechanism in the first 1–2 s
 | Impossibility | State a fact that sounds physically impossible. Let it hang. |
 | Specific number | Use an exact, surprising number. Specificity = credibility. |
 | Contradiction | Attack a widely-held belief. Instant curiosity gap. |
-| Scale break | Compare scale to something familiar but make the comparison incomprehensible. |
-| Tension gap | State something happened without explaining why. Open loop psychology. |
+| Scale break | Make the comparison incomprehensible. Breaks mental models. |
+| Tension gap | State something happened without explaining why. Open loop. |
 | Forbidden knowledge | Frame the fact as something suppressed or never taught. |
 
-4 templates × 6 hook formulas = **24 unique structural combinations** per channel rotation.
+4 templates × 6 hook formulas = **24 unique structural combinations** per rotation.
 
 ### Global emotional arc
 
-Each narrative template drives a planned emotion sequence across the full video — not just per-scene. The arc overrides LLM-assigned emotions to guarantee coherent emotional storytelling.
+Each narrative template drives a planned full-video emotion sequence. Overrides LLM-assigned emotions for coherent storytelling and correct TTS voice + motion preset selection.
 
 | Template | HOOK | TENSION | CORE | PAYOFF | CLOSE |
 |----------|------|---------|------|--------|-------|
 | classic | excited | mysterious | neutral | dramatic | excited |
 | mystery | mysterious | dramatic | mysterious | excited | neutral |
-| shock_first | dramatic | excited | neutral | dramatic | excited |
+| shock\_first | dramatic | excited | neutral | dramatic | excited |
 | reverse | dramatic | mysterious | neutral | excited | mysterious |
 
-These emotions directly control TTS voice settings (step 4) and motion preset selection (step 7).
+### Cinematic shot planning
+
+`cinematic_planner` adds director-level shot metadata to every scene after `scene_planner`:
+
+| Field | Values | Effect |
+|-------|--------|--------|
+| `shot_type` | WIDE / AERIAL / MEDIUM / CLOSE / EXTREME\_CLOSE | Selects motion preset family in video\_assembler |
+| `pacing` | FAST\_CUT / HOLD / SLOW\_BUILD / IMPACT | Controls scene energy signature |
+| `suspense_level` | 0.0 – 1.0 | Peaks at 1.0 on WOW-marked scenes (→ EXTREME\_CLOSE + IMPACT) |
+| `contrast_shot` | True / False | Flags wide-after-close cuts for visual breathing room |
+
+Shot variety rule: never 3+ consecutive identical shot types. PAYOFF always gets AERIAL/WIDE (visual release). WOW scenes always get EXTREME\_CLOSE + IMPACT.
 
 ### Visual emotion intelligence
 
-`scene_planner` scans the actual script text for 12 narrative trigger patterns and prepends emotionally-matched visual keywords before the static category banks.
+`scene_planner` scans the actual script text for 12 narrative trigger patterns and prepends emotionally-matched visual keywords before static category banks.
 
 | Trigger pattern | Visual override |
 |----------------|----------------|
@@ -105,17 +117,58 @@ These emotions directly control TTS voice settings (step 4) and motion preset se
 
 ### Motion presets — 8 emotion-driven presets
 
-Eight Ken Burns motion presets rotated by emotion tag + scene index — no two consecutive scenes use the same motion.
+Rotated by shot type + scene index. No two consecutive scenes use the same motion.
 
-| Preset | Emotion | Use case |
-|--------|---------|---------|
-| `slow_drift` | neutral | Calm, beauty, payoff scenes |
-| `push_in` | excited | Standard hook and tension |
-| `impact_zoom` | dramatic | WOW moments, impact reveals |
-| `reveal_pull` | mysterious | Mystery structure, reverse narrative |
-| `pan_right` / `pan_left` | excited | Geography, exploration, scale |
-| `rise_up` | neutral | Discovery, emergence, dawn |
-| `descend` | mysterious | Underground, deep ocean, threat |
+| Preset | Shot affinity | Use case |
+|--------|--------------|---------|
+| `slow_drift` | WIDE, AERIAL | Calm, beauty, payoff |
+| `push_in` | MEDIUM | Standard hook and tension |
+| `impact_zoom` | EXTREME\_CLOSE | WOW moments, maximum drama |
+| `reveal_pull` | CLOSE | Mystery, reverse narrative |
+| `pan_right` / `pan_left` | MEDIUM | Geography, exploration, scale |
+| `rise_up` | MEDIUM | Discovery, emergence |
+| `descend` | CLOSE | Underground, deep ocean, threat |
+
+---
+
+## CTR optimizer
+
+Before upload, `ctr_optimizer` generates up to 3 title variants and 3 thumbnail headline variants, scores every combination on 5 criteria, and injects the highest-scoring pair into the script metadata.
+
+| Criterion | Weight | What it measures |
+|-----------|--------|-----------------|
+| Curiosity gap | 25% | Implies hidden/forbidden knowledge |
+| Emotional tension | 20% | Creates anxiety to find out more |
+| Specificity | 10% | Concrete numbers/facts beat vague claims |
+| Novelty | 15% | Penalises overused phrases (shocking, amazing, etc.) |
+| Synergy | 20% | Title + thumbnail tell different parts of the same story (20–50% word overlap is ideal) |
+
+---
+
+## Pre-render retention prediction
+
+After scene planning (before any rendering), `predict_retention_risk` scores the timeline for likely drop-off points:
+
+- Complex scenes too short → viewer overwhelmed
+- 3+ consecutive neutral-emotion scenes → emotional monotony
+- Long CORE scene without a WOW marker → attention decay
+- Sudden emotion drop after a peak → jarring transition
+
+Outputs `risk_score` (0–1), weak scene list, and actionable recommendations — all logged before a single frame is rendered.
+
+---
+
+## Adaptive learning
+
+After each upload, `apply_adaptive_learning` translates retention signals into automatic parameter updates written to `logs/adaptive_params.json`. `timeline_builder` reads these on the next run.
+
+| Signal | Automatic adjustment |
+|--------|---------------------|
+| `early_drop` (viewers leave before 25%) | Hook cap reduced by 150ms; tension interval tightened |
+| `mid_drop` (viewers leave in CORE) | CORE scene interval reduced |
+| `late_drop` (viewers leave after PAYOFF) | PAYOFF/CLOSE flagged for script review |
+| Retention > 70% | All parameters locked — system is working |
+| Retention drops below 70% | Lock released — system re-adapts |
 
 ---
 
@@ -134,30 +187,28 @@ Falls back gracefully to text-only if `pipeline/assets/logo.png` is missing.
 
 ---
 
-## Background music
+## Audio intelligence
 
-Drop royalty-free audio files in `pipeline/assets/music/` — the pipeline auto-detects and mixes them at −20 dB under the voice track.
+### Background music
 
-| File name | Used for |
-|-----------|---------|
+Drop royalty-free audio files in `pipeline/assets/music/`. Auto-detected, mixed at −20 dB under voice. Lowpass-filtered at 12 kHz (never competes with voice clarity). Faded in 1.5 s / out 2 s.
+
+| File | Used for |
+|------|---------|
 | `mysterious.mp3` | Mystery / reverse narrative videos |
 | `excited.mp3` | Classic / shock-first videos |
-| `dramatic.mp3` | Dramatic reveals and impact scenes |
+| `dramatic.mp3` | Dramatic reveals and WOW scenes |
 | `neutral.mp3` | General fallback |
 
-Music is lowpass-filtered at 12 kHz (never competes with voice clarity), faded in over 1.5 s, faded out over 2 s. Skipped automatically if directory is empty.
+### Sound effects
 
----
+Drop SFX files in `pipeline/assets/sfx/`. Mixed at −28 dB (felt, not heard). Gracefully skipped if directory is empty.
 
-## Retention analytics
-
-After each video, `news_analytics` fetches the YouTube audience retention curve and stores:
-
-- Retention at 25% / 50% / 75% milestones
-- Position and magnitude of the biggest single drop-off
-- Retention signal: `early_drop` (hook/tension too slow) / `mid_drop` (CORE is losing viewers) / `late_drop` (payoff/close is weak) with an actionable fix hint
-
-These signals feed `performance_history.json` to guide future category selection and will eventually drive automatic script parameter adjustments.
+| File | When played |
+|------|------------|
+| `hook_tension.mp3` | At t=0 (opening of every video) |
+| `wow_impact.mp3` | At each WOW-marked scene start |
+| `payoff_reveal.mp3` | At PAYOFF segment start |
 
 ---
 
@@ -187,7 +238,7 @@ All 10 must pass before upload. Failures trigger up to **3 retry attempts**:
 
 `SPACE · SCIENCE · HISTORY · ANIMALS · NATURE · GEOGRAPHY · OCEAN · CULTURE`
 
-Selected by **performance weight** — categories with higher average retention are preferred. Deduplication runs against the full 12-month video history. Topic prompt uses trend-aware instructions to find fresh angles and recent discoveries.
+Selected by **performance weight** — categories with higher average retention are preferred. Deduplication runs against 12 months of history. `_fetch_trending_hints()` calls Groq at run start to get one viral angle hint per category — injected into every topic expansion prompt.
 
 ---
 
@@ -206,10 +257,11 @@ Engine priority per scene: **edge-tts → ElevenLabs → gTTS → silence**
 
 ## Brand assets
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `pipeline/assets/logo.png` | Channel logo — PNG with transparency. Overlaid top-left on every video scene and bottom-left on thumbnails. Falls back to text pill if missing. |
-| `pipeline/assets/music/*.mp3` | Background music tracks. Named by emotion. Skipped if directory is empty. |
+| `pipeline/assets/logo.png` | Channel logo — PNG with transparency. Top-left overlay on all scenes, bottom-left on thumbnails. Graceful text fallback if missing. |
+| `pipeline/assets/music/*.mp3` | Background music. Named by emotion. Auto-detected, skipped if empty. |
+| `pipeline/assets/sfx/*.mp3` | Sound effects. Placed at timed scene events. Skipped if empty. |
 
 ---
 
@@ -221,7 +273,7 @@ Engine priority per scene: **edge-tts → ElevenLabs → gTTS → silence**
 | 12:00 | `0 12 * * *` | `standard` | 3–5 min landscape (1920×1080) |
 | 17:00 | `0 17 * * *` | `shorts` | ~60 s vertical Shorts (1080×1920) |
 
-The 12:00 UTC job also triggers an **analytics refresh** that pulls YouTube retention data and updates `performance_history.json`.
+The 12:00 UTC job also triggers an **analytics refresh** that pulls YouTube retention data, updates `performance_history.json`, and applies adaptive learning for the next run.
 
 ---
 
@@ -257,7 +309,7 @@ VIDEO_FORMAT=standard python pipeline/main.py
 # Long video (7–10 min)
 VIDEO_FORMAT=long python pipeline/main.py
 
-# Force a specific category
+# Force a category
 VIDEO_FORMAT=standard INTENT_OVERRIDE=SPACE python pipeline/main.py
 ```
 
@@ -269,37 +321,60 @@ Outputs land in `pipeline/output/`. Logs go to `pipeline/logs/`.
 
 ```
 pipeline/
-  main.py                    # Orchestrator — 14 steps, 3-attempt quality retry
+  main.py                      # Orchestrator — 16 steps, 3-attempt quality retry
   assets/
-    logo.png                 # Channel logo (PNG with transparency)
+    logo.png                   # Channel logo (PNG with transparency)
     music/
-      mysterious.mp3         # Background music — drop royalty-free files here
+      mysterious.mp3           # Background music — drop royalty-free files here
       excited.mp3
       dramatic.mp3
       neutral.mp3
+    sfx/
+      hook_tension.mp3         # Sound effects — drop royalty-free files here
+      wow_impact.mp3
+      payoff_reveal.mp3
   scripts/
-    topic_selector.py        # Step 1  — trend-aware topic selection + dedup
-    script_generator.py      # Step 2  — 4 templates × 6 hook formulas + CTR titles
-    timeline_builder.py      # Step 3  — global emotional arc + Shorts psychology
-    voice_generator.py       # Step 4  — emotion-tuned TTS + inter-scene silence
-    scene_planner.py         # Step 5  — semantic text → emotional visual keywords
-    visual_fetcher.py        # Step 6  — multi-keyword Pexels/Pixabay fetch
-    video_assembler.py       # Step 7  — 8 motion presets + animated close scene
-    subtitle_generator.py    # Step 8  — per-scene SRT with Shorts positioning
-    audio_processor.py       # Step 9  — 3-stage normalize + background music mix
-    encoder.py               # Step 10 — mux video + audio with apad sync
-    quality_gate.py          # Step 11 — 10 hard checks, 3-attempt retry
-    thumbnail_generator.py   # Step 12 — CTR headline + logo + Pillow thumbnail
-    uploader.py              # Step 13 — upload + captions + comment + playlist
-    news_analytics.py        # Step 14 — retention curve + drop-off analytics
-  temp/                      # Runtime scratch (voice, visuals, scenes, subtitles)
-  output/                    # Final MP4s + thumbnails
+    topic_selector.py          # Step 1  — trend-aware topic selection + dedup
+    script_generator.py        # Step 2  — 4 templates × 6 hook formulas + CTR titles
+    timeline_builder.py        # Step 3  — emotional arc + Shorts psychology + adaptive params
+    voice_generator.py         # Step 4  — emotion-tuned TTS + inter-scene silence
+    scene_planner.py           # Step 5  — semantic text → emotional visual keywords
+    cinematic_planner.py       # Step 5b — shot sequencing + pacing + suspense arc
+    visual_fetcher.py          # Step 6  — multi-keyword Pexels/Pixabay fetch
+    video_assembler.py         # Step 7  — 8 motion presets + animated close scene
+    subtitle_generator.py      # Step 8  — per-scene SRT with Shorts positioning
+    audio_processor.py         # Step 9  — 3-stage normalize + SFX + background music
+    encoder.py                 # Step 10 — mux video + audio with apad sync
+    quality_gate.py            # Step 11 — 10 hard checks, 3-attempt retry
+    thumbnail_generator.py     # Step 12 — Pillow thumbnail + logo
+    ctr_optimizer.py           # Step 12b — title + headline CTR scoring and synergy
+    uploader.py                # Step 13 — upload + captions + comment + playlist
+    news_analytics.py          # Step 14 — retention curve + adaptive learning
+  temp/                        # Runtime scratch (voice, visuals, scenes, subtitles)
+  output/                      # Final MP4s + thumbnails
   logs/
-    quality_failures.json    # Gate failures with attempt number and checks detail
-    video_results.json       # Per-video upload log (last 200)
-    performance_history.json # Per-category avg retention — drives topic selection
-    analytics_data.json      # Raw YouTube Analytics + retention curve data
+    quality_failures.json      # Gate failures with attempt number and checks detail
+    video_results.json         # Per-video upload log (last 200)
+    performance_history.json   # Per-category avg retention — drives topic selection
+    analytics_data.json        # Raw YouTube Analytics + retention curve data
+    adaptive_params.json       # Auto-evolved pipeline parameters from retention signals
 .github/workflows/
-  news_video.yml             # Scheduled + manual dispatch (shorts/standard/long)
+  news_video.yml               # Scheduled + manual dispatch (shorts/standard/long)
 requirements.txt
 ```
+
+---
+
+## Bug fixes applied (latest audit)
+
+Five bugs were found and fixed in a full codebase audit:
+
+| File | Bug | Severity |
+|------|-----|----------|
+| `topic_selector.py:194` | SyntaxError — unescaped quotes inside string literal in trend hints prompt | Critical |
+| `topic_selector.py:199` | SyntaxError — literal newline inside f-string (invalid in Python ≤ 3.11) | Critical |
+| `timeline_builder.py:120` | NameError — `Path` used but `from pathlib import Path` was never imported | Critical |
+| `timeline_builder.py:133` | Logic bug — adaptive params applied by mutating the module-level dict, corrupting defaults on repeated calls | High |
+| `news_analytics.py:306` | Dead code — `elif avg_ret > 70` was unreachable; lock-release logic never ran | Medium |
+
+All 18 pipeline files pass `py_compile` + import test after fixes.
