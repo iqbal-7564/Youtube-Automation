@@ -149,18 +149,27 @@ def _silence(out: Path, duration_s: float) -> None:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _duration_ms(path: Path) -> int:
+    """Return audio duration in ms.
+    MP3 files don't store duration in the stream header — must read from format.
+    """
     if not path.exists():
         return 0
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
-             "-show_streams", str(path)],
+             "-show_streams", "-show_format", str(path)],
             capture_output=True, text=True, timeout=10,
         )
-        for stream in json.loads(r.stdout).get("streams", []):
+        data = json.loads(r.stdout)
+        # Stream duration (present for WAV/AAC but often absent for MP3)
+        for stream in data.get("streams", []):
             dur = stream.get("duration")
             if dur:
                 return int(float(dur) * 1000)
+        # Format duration — always present for MP3
+        fmt_dur = data.get("format", {}).get("duration")
+        if fmt_dur:
+            return int(float(fmt_dur) * 1000)
     except Exception:
         pass
     return 0

@@ -1,58 +1,73 @@
 """
-STEP 5 — Scene Planning
+STEP 5 — Scene Planning (MindBlownFacts Edition)
 
-Reads the updated master timeline and assigns visual_keyword to every scene
-based on segment label and intent. Keyword assignment drives Step 6 (visual fetch).
+Assigns visual_keyword to every scene based on segment label + category.
+Categories: SPACE, SCIENCE, HISTORY, ANIMALS, NATURE, GEOGRAPHY, OCEAN, CULTURE
 """
 
 import logging
 
 log = logging.getLogger(__name__)
 
-_HOOK = {
-    "DISASTER": "explosion destruction emergency",
-    "WAR":      "military explosion impact strike",
-    "POLITICS": "crowd protest demonstration streets",
-    "ECONOMY":  "stock market crash red screen",
-    "SPORTS":   "crowd celebration stadium victory",
+_HOOK: dict[str, str] = {
+    "SPACE":     "galaxy stars universe space stunning",
+    "SCIENCE":   "laboratory experiment science microscope",
+    "HISTORY":   "ancient ruins archaeology historic site",
+    "ANIMALS":   "wild animal close up nature stunning",
+    "NATURE":    "dramatic nature landscape aerial stunning",
+    "GEOGRAPHY": "aerial earth landscape geography drone",
+    "OCEAN":     "ocean deep sea underwater stunning",
+    "CULTURE":   "ancient culture architecture landmark",
 }
 
 _TENSION: dict[str, list[str]] = {
-    "DISASTER": ["emergency rescue helicopter aerial", "flood disaster destruction"],
-    "WAR":      ["military convoy soldiers march",     "city smoke destruction aerial"],
-    "POLITICS": ["government building parliament",     "protest crowd street police"],
-    "ECONOMY":  ["stock market trading floor",         "currency exchange finance"],
-    "SPORTS":   ["athletes competing stadium",         "sports crowd cheering fans"],
+    "SPACE":     ["nebula cosmos deep space",        "planet surface space exploration"],
+    "SCIENCE":   ["dna molecule cell biology",       "physics experiment energy light"],
+    "HISTORY":   ["ancient pyramid ruins stone",     "historical battle medieval castle"],
+    "ANIMALS":   ["predator hunting wildlife nature","ocean creature underwater marine"],
+    "NATURE":    ["volcano eruption lava flow",      "storm lightning dramatic sky"],
+    "GEOGRAPHY": ["mountain peak altitude aerial",   "desert vast landscape drone"],
+    "OCEAN":     ["underwater bioluminescence glow", "ocean wave storm dramatic"],
+    "CULTURE":   ["ancient temple ritual ceremony",  "historical artefact museum art"],
 }
 
 _CORE: dict[str, list[str]] = {
-    "DISASTER": ["emergency response rescue team", "disaster aftermath aerial view",
-                 "rescue operation survivors"],
-    "WAR":      ["military operation soldiers",    "combat zone aerial ruins",
-                 "war damage city streets"],
-    "POLITICS": ["political leader speech podium", "government building official",
-                 "news conference press media"],
-    "ECONOMY":  ["business office finance work",   "economic data analysis report",
-                 "city commerce trade centre"],
-    "SPORTS":   ["athletic competition game play", "sports training practice field",
-                 "crowd fans stadium energy"],
+    "SPACE":     ["space planet surface texture",    "asteroid comet space rock",
+                  "solar system scale size"],
+    "SCIENCE":   ["microscope biology science lab",  "chemical reaction experiment",
+                  "technology innovation research"],
+    "HISTORY":   ["ancient civilisation ruins wide", "historical map trade route",
+                  "archaeological dig site discovery"],
+    "ANIMALS":   ["animal behaviour close shot",     "herd migration aerial drone",
+                  "marine life coral reef ocean"],
+    "NATURE":    ["forest aerial canopy wide",       "river waterfall nature flow",
+                  "cave crystal geological wonder"],
+    "GEOGRAPHY": ["map border country aerial",       "extreme landscape drone wide",
+                  "city skyline aerial geography"],
+    "OCEAN":     ["deep sea creature bioluminescent","ocean floor geology trench",
+                  "whale dolphin marine mammal"],
+    "CULTURE":   ["ancient writing carving stone",   "traditional ceremony people",
+                  "historical artefact close detail"],
 }
 
-_PAYOFF = {
-    "DISASTER": "rescue aid relief survivors",
-    "WAR":      "humanitarian aid rescue relief",
-    "POLITICS": "official statement press conference podium",
-    "ECONOMY":  "economic recovery growth chart upward",
-    "SPORTS":   "trophy ceremony champion celebration",
+_PAYOFF: dict[str, str] = {
+    "SPACE":     "cosmos stars milky way beautiful wide",
+    "SCIENCE":   "scientific discovery breakthrough research",
+    "HISTORY":   "ancient wonder heritage monument golden",
+    "ANIMALS":   "animal peaceful nature beautiful wide",
+    "NATURE":    "nature landscape sunrise golden beauty",
+    "GEOGRAPHY": "world earth from above beautiful aerial",
+    "OCEAN":     "ocean surface calm sunrise beautiful",
+    "CULTURE":   "cultural celebration heritage beautiful",
 }
 
-_DEFAULT_INTENT = "POLITICS"
+_DEFAULT = "SCIENCE"
 
 
 def plan_scenes(timeline: dict, intent: str) -> dict:
     intent = intent.upper()
     if intent not in _HOOK:
-        intent = _DEFAULT_INTENT
+        intent = _DEFAULT
 
     tension_pool = _TENSION[intent].copy()
     core_pool    = _CORE[intent].copy()
@@ -79,5 +94,6 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
             sc["visual_keyword"] = "CLOSE"
             sc["clip_type"]      = "close"
 
-    log.info("Scene keywords assigned (%d scenes, intent=%s)", len(timeline["scenes"]), intent)
+    log.info("Scene keywords assigned (%d scenes, category=%s)",
+             len(timeline["scenes"]), intent)
     return timeline

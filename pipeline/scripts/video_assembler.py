@@ -22,22 +22,28 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-_CHANNEL   = "VisionaryMinds"
-_TAGLINE   = "Stay Informed"
+_CHANNEL   = "MindBlownFacts"
+_TAGLINE   = "Discover Your World"
 
 _INTENT_COLOR = {
-    "WAR":      "0x8B0000",
-    "DISASTER": "0xCC4400",
-    "POLITICS": "0x003D99",
-    "ECONOMY":  "0x006633",
-    "SPORTS":   "0x4B0082",
+    "SPACE":     "0x1A0A6B",
+    "SCIENCE":   "0x0055AA",
+    "HISTORY":   "0x6B3A00",
+    "ANIMALS":   "0x1A5C00",
+    "NATURE":    "0x005C1A",
+    "GEOGRAPHY": "0x006666",
+    "OCEAN":     "0x004080",
+    "CULTURE":   "0x7A3500",
 }
 _INTENT_LABEL = {
-    "WAR":      "BREAKING",
-    "DISASTER": "DISASTER",
-    "POLITICS": "POLITICS",
-    "ECONOMY":  "ECONOMY",
-    "SPORTS":   "SPORTS",
+    "SPACE":     "SPACE",
+    "SCIENCE":   "SCIENCE",
+    "HISTORY":   "HISTORY",
+    "ANIMALS":   "ANIMALS",
+    "NATURE":    "NATURE",
+    "GEOGRAPHY": "GEOGRAPHY",
+    "OCEAN":     "OCEAN",
+    "CULTURE":   "CULTURE",
 }
 
 # DejaVu fonts shipped with fonts-dejavu on Ubuntu
@@ -56,8 +62,8 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
     font_sz  = 52 if profile == "shorts" else 44
 
     i_upper = intent.upper()
-    i_label = _INTENT_LABEL.get(i_upper, "WORLD NEWS")
-    i_color = _INTENT_COLOR.get(i_upper, "0x222222")
+    i_label = _INTENT_LABEL.get(i_upper, "FACTS")
+    i_color = _INTENT_COLOR.get(i_upper, "0x0055AA")
 
     scene_outputs: list[tuple[Path, dict]] = []
 
@@ -184,7 +190,7 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
         f"fontcolor=white@0.65:fontsize=36:"
         f"x=(w-tw)/2:y=(h-th)/2+40,"
 
-        f"drawtext=text='Follow for Live Updates':"
+        f"drawtext=text='Follow for Daily World Facts':"
         f"fontfile='{_FONT_REG}':"
         f"fontcolor=white@0.75:fontsize=30:"
         f"x=(w-tw)/2:y=(h-th)/2+100"

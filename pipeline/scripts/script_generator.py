@@ -1,5 +1,5 @@
 """
-STEP 2 — Script Generation
+STEP 2 — Script Generation (MindBlownFacts Edition)
 
 Single Groq LLM call. Returns 5-segment retention-psychology script
 plus YouTube metadata. Batches title/description/tags in the same call.
@@ -21,30 +21,33 @@ _GROQ_KEYS = [
 ]
 _MODEL = "llama3-70b-8192"
 
-_SYSTEM = """You are a professional news-video scriptwriter for YouTube Shorts.
-Your scripts use retention psychology to keep viewers watching to the last second.
+_SYSTEM = """You are a world-class educational YouTube Shorts scriptwriter for the channel "MindBlownFacts".
+Your scripts use retention psychology to make viewers feel they can't stop watching.
+The content is always about fascinating real-world facts — science, history, nature, space, animals, geography, ocean, culture.
 
 SEGMENT RULES:
-HOOK    (0-3s)  : ONE sentence, max 12 words. Create a question in the viewer's mind WITHOUT answering it.
-                  Use curiosity gap. NEVER start "In today's news", "Welcome back", "Today we discuss".
-TENSION (3-15s) : 2-3 sentences. Expand the hook. Add stakes. Do NOT answer the hook. Raise MORE questions.
-CORE    (15-45s): 4-6 short sentences. Facts ordered highest-impact first. One fact per sentence.
-                  Vary length deliberately: short. Slightly longer for context. Short again.
-PAYOFF  (45-55s): Max 2 sentences. Answer the hook question. Give the viewer clear value.
-CLOSE   (55-60s): ONE sentence. Open loop hinting at future coverage.
+HOOK    (0-3s)  : ONE sentence, max 12 words. Drop a mind-blowing fact or question that creates instant curiosity.
+                  NEVER start with "Did you know", "Welcome back", "Today we discuss", "In today's video".
+                  Use the curiosity gap — state something astonishing but don't explain it yet.
+TENSION (3-15s) : 2-3 sentences. Expand on the hook with more surprising context. Raise MORE questions.
+                  Make it feel like the viewer is about to discover something they were never taught in school.
+CORE    (15-45s): 4-6 short sentences. The real facts, ordered most-surprising first. One fact per sentence.
+                  Vary rhythm deliberately: short. Slightly longer to give context. Short again. Keep it punchy.
+PAYOFF  (45-55s): Max 2 sentences. Deliver the satisfying explanation that answers the hook. Give clear value.
+CLOSE   (55-60s): ONE sentence. Tease the next mind-blowing fact to keep them following.
                   NEVER say "Like and subscribe".
 
 TARGET: 130-180 words total. Pace = 2.8 words/second.
+Writing style: authoritative, fast-paced, conversational — like a brilliant friend who knows everything.
 Respond ONLY with valid JSON. No text outside the JSON."""
 
-_USER_TMPL = """Write a YouTube Shorts news script for this story:
+_USER_TMPL = """Write a YouTube Shorts "MindBlownFacts" script for this topic:
 
-HEADLINE : {title}
+TOPIC    : {title}
 DETAILS  : {description}
-SOURCE   : {source}
-INTENT   : {intent}
+CATEGORY : {intent}
 
-Also generate YouTube metadata in the same response.
+Also generate YouTube metadata optimised for educational/facts content.
 
 Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
@@ -56,11 +59,11 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
     {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": 5}}
   ],
   "total_estimated_seconds": 60,
-  "full_script": "HOOK + TENSION + CORE + PAYOFF + CLOSE combined",
+  "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Hook phrase | Location Year  (max 95 chars, no 'shocking')",
-    "description": "...",
-    "tags": ["tag1", "tag2", "tag3"]
+    "title": "Short punchy title with the key fact (max 95 chars, no 'shocking' or 'unbelievable')",
+    "description": "2-3 sentence description with the main fact. End with relevant hashtags.",
+    "tags": ["facts", "did you know", "world facts", "real world facts", "category-specific tag", "educational"]
   }}
 }}"""
 
@@ -69,7 +72,6 @@ def generate_script(topic: dict) -> dict:
     prompt = _USER_TMPL.format(
         title       = topic["title"],
         description = topic["description"][:400],
-        source      = topic["source"],
         intent      = topic["intent"],
     )
 
@@ -113,7 +115,6 @@ def generate_script(topic: dict) -> dict:
 
 
 def _parse(raw: str) -> dict | None:
-    # Strip markdown fences
     raw = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
     raw = re.sub(r"\s*```\s*$",        "", raw.strip(), flags=re.MULTILINE)
     for src in [raw, re.search(r'\{.*\}', raw, re.DOTALL)]:
@@ -131,15 +132,17 @@ def _parse(raw: str) -> dict | None:
 
 
 def _fallback(topic: dict) -> dict:
-    t = topic["title"]
-    s = topic.get("source", "sources")
-    hook    = "What just happened will change everything."
-    tension = (f"Reports are emerging from multiple {s} channels. "
-               "The situation is still unfolding. Here is what we know so far.")
-    core    = (f"{t}. Officials have confirmed the reports. "
-               "Response teams are already mobilising. More information is coming in.")
-    payoff  = "The full picture is now clear. This is a major developing story."
-    close   = "This story is still developing — follow for live updates."
+    t   = topic["title"]
+    cat = topic.get("intent", "SCIENCE")
+    hook    = "This is one of the most incredible facts on Earth."
+    tension = (f"Most people have never heard this. "
+               "Scientists have known for decades, but it never made the headlines. "
+               "Here is what is really going on.")
+    core    = (f"{t}. The scale of this is hard to comprehend. "
+               "Researchers have studied this phenomenon for years. "
+               "The data confirms it beyond any doubt.")
+    payoff  = "Now you know the truth behind one of the world's most overlooked facts."
+    close   = "Follow for more mind-blowing real world facts every day."
     full    = " ".join([hook, tension, core, payoff, close])
     return {
         "segments": [
@@ -155,10 +158,10 @@ def _fallback(topic: dict) -> dict:
             "title":       t[:95],
             "description": (
                 f"{t}\n\n"
-                f"Source: {s} — {topic.get('article_url', '')}\n\n"
-                "#VisionaryMinds #News #BreakingNews #WorldNews"
+                f"Category: {cat}\n\n"
+                "#MindBlownFacts #Facts #DidYouKnow #WorldFacts #Educational"
             ),
-            "tags": ["news", "breaking news", "world news", "VisionaryMinds",
-                     topic["intent"].lower()],
+            "tags": ["real world facts", "facts", "did you know", "world facts",
+                     "educational", "science facts", cat.lower()],
         },
     }

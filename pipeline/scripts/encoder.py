@@ -45,11 +45,15 @@ def encode_video(
         "-i", str(video_path),
         "-i", str(audio_path),
         # Ensure correct dimensions (pad with black bars if needed)
-        "-vf", (
-            f"scale={W}:{H}:force_original_aspect_ratio=decrease,"
+        "-filter_complex", (
+            f"[0:v]scale={W}:{H}:force_original_aspect_ratio=decrease,"
             f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=black,"
-            f"setsar=1"
+            f"setsar=1[vout];"
+            # apad: extend audio with silence to match video length (prevents A/V drift)
+            "[1:a]apad[aout]"
         ),
+        "-map", "[vout]",
+        "-map", "[aout]",
         "-c:v",      "libx264",
         "-preset",   spec["preset"],
         "-crf",      spec["crf"],
@@ -62,6 +66,7 @@ def encode_video(
         "-b:a",      "192k",
         "-ar",       "44100",
         "-ac",       "2",
+        "-shortest",
         "-movflags", "+faststart",
         str(output_path),
     ]

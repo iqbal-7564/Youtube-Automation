@@ -36,13 +36,16 @@ log = logging.getLogger(__name__)
 _CLIP_THRESHOLD = 0.28
 
 _FALLBACKS: dict[str, list[str]] = {
-    "WAR":      ["city aerial smoke ruins",   "world map global news",    "news broadcast screen"],
-    "DISASTER": ["landscape nature aerial",   "city street people crowd", "emergency lights"],
-    "POLITICS": ["government building dome",  "city downtown aerial",     "crowd street city"],
-    "ECONOMY":  ["office building city",      "financial district aerial", "abstract light motion"],
-    "SPORTS":   ["stadium aerial wide shot",  "sports field empty",       "athletic track field"],
+    "SPACE":     ["galaxy stars milky way",       "planet surface space",       "cosmos nebula wide"],
+    "SCIENCE":   ["laboratory science research",  "microscope experiment",      "technology innovation"],
+    "HISTORY":   ["ancient ruins archaeology",    "historical monument stone",  "civilisation heritage"],
+    "ANIMALS":   ["wildlife nature animal",       "ocean marine creature",      "forest animal habitat"],
+    "NATURE":    ["dramatic landscape aerial",    "waterfall river nature",     "forest canopy wide"],
+    "GEOGRAPHY": ["aerial earth landscape drone", "mountain peak geography",    "desert landscape wide"],
+    "OCEAN":     ["ocean underwater marine",      "deep sea bioluminescence",   "coral reef fish"],
+    "CULTURE":   ["ancient temple architecture",  "cultural ceremony people",   "historical artefact"],
 }
-_GENERIC_FALLBACK = ["city aerial", "people crowd outdoor", "nature landscape wide"]
+_GENERIC_FALLBACK = ["nature landscape wide", "aerial earth beautiful", "cosmos stars universe"]
 
 
 def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:

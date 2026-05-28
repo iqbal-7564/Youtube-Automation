@@ -3,8 +3,8 @@ STEP 12 — Upload + Metadata
 
 YouTube resumable upload (same pattern as scripts/youtube_upload.py).
 Extracts thumbnail at t=2s (inside HOOK — most dramatic frame).
-Auto-assigns to intent-specific playlist.
-Category: 25 (News & Politics) — never use 24/28 for news content.
+Auto-assigns to category-specific playlist.
+Category: 27 (Education) — correct for world facts educational content.
 """
 
 import logging
@@ -17,11 +17,14 @@ import requests
 log = logging.getLogger(__name__)
 
 _PLAYLISTS = {
-    "WAR":      "VisionaryMinds — War & Conflict",
-    "DISASTER": "VisionaryMinds — Disasters",
-    "POLITICS": "VisionaryMinds — Politics",
-    "ECONOMY":  "VisionaryMinds — Economy",
-    "SPORTS":   "VisionaryMinds — Sports",
+    "SPACE":     "MindBlownFacts — Space",
+    "SCIENCE":   "MindBlownFacts — Science",
+    "HISTORY":   "MindBlownFacts — History",
+    "ANIMALS":   "MindBlownFacts — Animals",
+    "NATURE":    "MindBlownFacts — Nature",
+    "GEOGRAPHY": "MindBlownFacts — Geography",
+    "OCEAN":     "MindBlownFacts — Ocean",
+    "CULTURE":   "MindBlownFacts — Culture",
 }
 
 
@@ -53,7 +56,7 @@ def upload_video(
     _upload_thumb(video_id, thumb_path, token)
 
     pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(),
-                              "VisionaryMinds — World News")
+                              "MindBlownFacts — World")
     pl_id   = _playlist(token, pl_name)
     if pl_id:
         _add_to_playlist(token, video_id, pl_id)
@@ -93,7 +96,7 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     meta  = script.get("metadata", {})
     title = (meta.get("title") or topic["title"])[:95]
 
-    # Description: content + optional timestamps + source + hashtags
+    # Description: content + optional timestamps + hashtags
     parts = [title, ""]
     if timeline["total_duration_seconds"] > 60:
         t = 0
@@ -103,17 +106,18 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
             t += sc["duration_ms"] / 1000
         parts.append("")
 
+    cat = topic.get("intent", "SCIENCE").lower()
     parts += [
-        f"Source: {topic['source']} — {topic.get('article_url', '')}",
+        f"Category: {topic.get('intent', 'SCIENCE')}",
         "",
-        "#VisionaryMinds #News #BreakingNews #WorldNews",
+        f"#MindBlownFacts #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational #Shorts",
     ]
     description = "\n".join(parts)[:4900]
 
     tags = (
         meta.get("tags", [])
-        + ["news", "world news", "breaking news", "VisionaryMinds",
-           topic.get("intent", "news").lower()]
+        + ["real world facts", "facts", "did you know", "world facts",
+           "educational", cat]
     )[:30]
 
     return {"title": title, "description": description, "tags": tags}
@@ -124,7 +128,7 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
 def _upload(video_path: Path, meta: dict, token: str,
             title: str, is_short: bool) -> str | None:
     size   = video_path.stat().st_size
-    cat_id = "25"   # 25 = News & Politics
+    cat_id = "27"   # 27 = Education
 
     for attempt in range(3):
         try:
@@ -229,7 +233,7 @@ def _playlist(token: str, name: str) -> str | None:
             headers={"Authorization": f"Bearer {token}",
                      "Content-Type":  "application/json"},
             json={
-                "snippet": {"title": name[:100], "description": "VisionaryMinds News"},
+                "snippet": {"title": name[:100], "description": "MindBlownFacts"},
                 "status":  {"privacyStatus": "public"},
             },
             timeout=15,
