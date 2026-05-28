@@ -7,9 +7,10 @@ Returns {passed, checks, fail_reason}.
 Tolerances are calibrated to the actual pipeline characteristics:
   duration  : ±2.5 s  (accounts for xfade transition duration reduction)
   audio_sync: ±0.3 s  (accounts for -shortest boundary rounding)
-  audio_gaps: only gaps > 1.5 s  (edge-tts adds ~800ms trailing silence +
-              300ms pipeline padding = ~1.1s per scene; 1.5s threshold
-              excludes these intentional inter-scene silences)
+  audio_gaps: only gaps > 2.0 s  (edge-tts adds up to ~1.2s trailing silence +
+              300ms regular padding or 600ms CORE→PAYOFF boundary padding =
+              up to 1.8s of intentional inter-scene silence; 2.0s threshold
+              clears all intentional silence while still catching real gaps)
   voice_quality: WARNING only — does not block upload when a fallback TTS
               engine (gTTS) was the only option available
 
@@ -23,7 +24,7 @@ Checks:
   7.  freeze_frame    — no freeze > 500 ms (3+ identical consecutive pts)
   8.  voice_quality   — WARNING if gTTS/silence used (non-blocking)
   9.  dropped_frames  — no more than 3 frames with irregular timing
-  10. audio_gaps      — no silence gap > 1.0 s inside the audio track
+  10. audio_gaps      — no silence gap > 2.0 s inside the audio track
 """
 
 import json
@@ -255,18 +256,19 @@ def _dropped_frames(path: Path):
 
 
 def _audio_gaps(path: Path, timeline: dict):
-    """Detect unintentional silence gaps > 1.5 s in the audio track.
+    """Detect unintentional silence gaps > 2.0 s in the audio track.
 
-    Threshold is 1.5 s, not 1.0 s.  Each TTS scene file carries ~800ms of
-    natural trailing silence from edge-tts plus 300ms appended by the
-    pipeline = ~1.1s of intentional inter-scene silence.  A 1.0s threshold
-    fires on these false positives; 1.5s clears them while still catching
-    genuinely broken audio.  The check ignores the first 0.6 s (fade-in)
-    and the last 2 s (fade-out).
+    Threshold is 2.0 s.  Each TTS scene file carries up to ~1.2s of natural
+    trailing silence from edge-tts.  Regular scenes have 300ms pipeline
+    padding appended; CORE→PAYOFF boundary scenes have 600ms.  Maximum
+    intentional inter-scene silence is therefore ~1.8s.  A 2.0s threshold
+    clears all intentional silence with 200ms headroom while still catching
+    genuinely broken audio (missing track, corrupt segment).
+    The check ignores the first 0.6 s (fade-in) and the last 2 s (fade-out).
     """
     r = subprocess.run(
         ["ffmpeg", "-i", str(path),
-         "-af", "silencedetect=noise=-50dB:d=1.5",
+         "-af", "silencedetect=noise=-50dB:d=2.0",
          "-f", "null", "-"],
         capture_output=True, text=True, timeout=60,
     )
@@ -289,5 +291,5 @@ def _audio_gaps(path: Path, timeline: dict):
                 pass
 
     if gaps:
-        return False, f"audio gap(s) > 1s detected at {[f'{g:.2f}s' for g in gaps[:3]]}"
+        return False, f"audio gap(s) > 2s detected at {[f'{g:.2f}s' for g in gaps[:3]]}"
     return True, "ok"

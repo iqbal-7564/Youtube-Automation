@@ -287,6 +287,6 @@ def _black_clip(path: Path, dur_s: float, W: int, H: int) -> Path:
          "-i", f"color=c=black:size={W}x{H}:rate=30",
          "-t", str(dur_s), "-c:v", "libx264",
          "-pix_fmt", "yuv420p", "-an", str(path)],
-        capture_output=True,
+        capture_output=True, timeout=60,
     )
     return path

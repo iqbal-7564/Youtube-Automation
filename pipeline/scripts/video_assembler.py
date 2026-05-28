@@ -205,8 +205,8 @@ def _concat(scene_files: list[tuple[Path, dict]], assembled: Path,
         else:
             log.debug("  Segment %s: %.3fs  %.0f KB",
                       p.name, d, p.stat().st_size / 1024)
-    log.info("  Concat: %d segments, expected total %.2fs",
-             len(segments), total_expected)
+    log.info("  Concat: %d segments (from %d scenes), expected total %.2fs",
+             len(segments), len(scene_files), total_expected)
 
     lst = assembled.parent / "concat_list.txt"
     lst.write_text(
