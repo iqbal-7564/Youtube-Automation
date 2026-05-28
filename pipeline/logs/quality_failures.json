@@ -14,5 +14,65 @@
       "freeze_frame": "pass"
     },
     "fail_reason": "[duration] drift 17.11s (expected 38.74s got 21.63s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:28:59.505438",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 40.95s got 43.95s)",
+      "audio_sync": "fail: A/V drift 18.883s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 40.95s got 43.95s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:29:46.821771",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 40.95s got 43.95s)",
+      "audio_sync": "fail: A/V drift 18.883s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 40.95s got 43.95s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:30:05.256872",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 40.95s got 43.95s)",
+      "audio_sync": "fail: A/V drift 2.983s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 40.95s got 43.95s)"
   }
 ]
