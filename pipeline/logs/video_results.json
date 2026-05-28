@@ -13,5 +13,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "lcGU_SVUfzU",
+    "intent": "SCIENCE",
+    "title": "Magnets Defy Gravity",
+    "hook_text": "What defies gravity?",
+    "total_duration_seconds": 69.6,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-28T20:43:09.989671",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
