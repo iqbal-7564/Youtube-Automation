@@ -134,5 +134,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
     },
     "fail_reason": "[duration] drift 3.00s (expected 31.90s got 34.90s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:47:02.600391",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 4, end=26839ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[subtitles] subtitle extends past video end (scene 4, end=26839ms)"
+  },
+  {
+    "timestamp": "2026-05-28T12:47:49.828905",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 4, end=26839ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[subtitles] subtitle extends past video end (scene 4, end=26839ms)"
+  },
+  {
+    "timestamp": "2026-05-28T12:48:01.779346",
+    "topic": "Incredible Facts About What Happened Before The Big Bang",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 4, end=26839ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[subtitles] subtitle extends past video end (scene 4, end=26839ms)"
   }
 ]
