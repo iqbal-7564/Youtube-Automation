@@ -66,7 +66,7 @@ from scene_planner       import plan_scenes
 from cinematic_planner   import plan_cinematics
 from visual_fetcher      import fetch_visuals
 from video_assembler     import assemble_video
-from subtitle_generator  import generate_subtitles
+from subtitle_generator  import generate_subtitles, generate_ass_subtitles
 from audio_processor     import process_audio
 from encoder             import encode_video
 from quality_gate        import run_quality_gate
@@ -200,7 +200,8 @@ def run_pipeline() -> bool:
         # ── 8: Subtitle Generation (after assembly, uses locked timings) ─────
         log.info("[8/14] Subtitle Generation")
         generate_subtitles(timeline, TEMP_DIR / "subtitles")
-        log.info("  SRT files written (%d scenes)", len(timeline["scenes"]))
+        ass_file = generate_ass_subtitles(timeline, TEMP_DIR / "subtitles")
+        log.info("  SRT + ASS files written (%d scenes)", len(timeline["scenes"]))
 
         # ── 9: Audio Processing ──────────────────────────────────────────────
         log.info("[9/14] Audio Processing")
@@ -223,7 +224,7 @@ def run_pipeline() -> bool:
         # Pass LOCKED duration — encoder uses this as the hard cap.
         # timeline["total_duration_seconds"] must never change after step 4.
         encode_video(assembled, norm_audio, output_path, profile,
-                     timeline["total_duration_seconds"])
+                     timeline["total_duration_seconds"], ass_path=ass_file)
         log.info("  Output: %s  (%.1f MB)",
                  output_path.name,
                  output_path.stat().st_size / 1_048_576)
@@ -249,7 +250,7 @@ def run_pipeline() -> bool:
                     sc["transition"] = "cut"
                 assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
                 encode_video(assembled, norm_audio, output_path, profile,
-                             timeline["total_duration_seconds"])
+                             timeline["total_duration_seconds"], ass_path=ass_file)
 
             elif attempt == 2:
                 log.info("  Retry: title-card fallback …")

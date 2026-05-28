@@ -2,7 +2,8 @@
 STEP 10 — Encoding
 
 Muxes assembled video-only track + normalised audio into final MP4.
-Video stream is COPIED (no re-encode). Only audio is encoded (AAC 192k).
+When ass_path is provided, animated subtitles are burned into the video
+(requires re-encode).  Without ass_path the video stream is copied (faster).
 
 A/V sync contract:
   audio is already trimmed to locked_timeline by audio_processor (step 9).
@@ -26,6 +27,7 @@ def encode_video(
     output_path: Path,
     profile: str,
     expected_duration_s: float = 0.0,
+    ass_path: Path | None = None,
 ) -> None:
     if not video_path.exists():
         raise FileNotFoundError(f"Assembled video not found: {video_path}")
@@ -38,23 +40,46 @@ def encode_video(
     log.info("  Video=%.3fs  Audio=%.3fs  PreMuxDrift=%.3fs  "
              "locked=%.3fs", vdur, adur, drift, expected_duration_s)
 
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(video_path),
-        "-i", str(audio_path),
-        "-map",  "0:v",
-        "-map",  "1:a",
-        "-c:v",  "copy",
-        # apad fills any silence gap; -shortest stops at video end
-        "-af",   "apad",
-        "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
-        "-shortest",
-        "-movflags", "+faststart",
-        str(output_path),
-    ]
+    burn_subs = ass_path and ass_path.exists()
 
-    log.info("  Muxing [%s] …", profile)
-    res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if burn_subs:
+        # Re-encode to burn in animated subtitles
+        ass_filter = f"ass={str(ass_path).replace(chr(92), '/')}"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-map",  "0:v",
+            "-map",  "1:a",
+            "-vf",   ass_filter,
+            "-c:v",  "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+            "-af",   "apad",
+            "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+            "-shortest",
+            "-movflags", "+faststart",
+            str(output_path),
+        ]
+        timeout = 300
+        log.info("  Encoding [%s] + ASS subtitles …", profile)
+    else:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-map",  "0:v",
+            "-map",  "1:a",
+            "-c:v",  "copy",
+            # apad fills any silence gap; -shortest stops at video end
+            "-af",   "apad",
+            "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+            "-shortest",
+            "-movflags", "+faststart",
+            str(output_path),
+        ]
+        timeout = 120
+        log.info("  Muxing [%s] …", profile)
+
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
     if res.returncode != 0:
         log.error("Encoder FAILED:\n%s", res.stderr[-800:])

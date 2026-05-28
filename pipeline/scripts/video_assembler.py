@@ -74,12 +74,26 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                 _render_close(sc, out, W, H, dur_s)
             else:
                 vis = visuals_dir / sc.get("visual_file", "_missing")
-                _render_scene(vis, out, W, H, dur_s,
-                              sc.get("clip_type", "video"),
-                              sc["segment_label"],
-                              i_label, i_color, focus,
-                              motion_emotion=sc.get("motion_emotion", "neutral"),
-                              scene_id=sc["scene_id"])
+                clip_type = sc.get("clip_type", "video")
+
+                # Use multi-image slideshow when extra images were fetched
+                extra_names = sc.get("extra_visual_files", [])
+                extras = [visuals_dir / n for n in extra_names
+                          if (visuals_dir / n).exists()]
+                if clip_type == "image" and extras and vis.exists():
+                    vis_list = [vis] + extras
+                    _render_slideshow(
+                        vis_list, out, W, H, dur_s,
+                        sc["segment_label"], i_label, i_color, focus,
+                        motion_emotion=sc.get("motion_emotion", "neutral"),
+                        scene_id=sc["scene_id"],
+                    )
+                else:
+                    _render_scene(vis, out, W, H, dur_s, clip_type,
+                                  sc["segment_label"],
+                                  i_label, i_color, focus,
+                                  motion_emotion=sc.get("motion_emotion", "neutral"),
+                                  scene_id=sc["scene_id"])
         except Exception as exc:
             log.warning("Scene %d render error: %s — fallback", sc["scene_id"], exc)
             _branded_fill(out, W, H, dur_s, i_label, i_color)
@@ -120,14 +134,8 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
             f"x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
         )
 
-    # Brand overlays — channel name bottom-left, intent pill top-right
+    # Brand overlays — intent pill top-right only (channel name removed per design update)
     # Logo image (top-left) is added via filter_complex overlay below.
-    mb = max(60, int(H * 0.05))
-    vf_parts.append(
-        f"drawtext=text='{_CHANNEL}':fontfile='{_FONT_BOLD}':"
-        f"fontcolor=white:fontsize=28:"
-        f"bordercolor=black:borderw=2:x=42:y=h-{mb}-th"
-    )
     vf_parts.append(
         f"drawtext=text=' {i_label} ':fontfile='{_FONT_BOLD}':"
         f"fontcolor=white:fontsize=24:"
@@ -294,6 +302,66 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     subprocess.run(cmd, capture_output=True, timeout=30)
+
+
+# ── Slideshow renderer (multiple images → animated crossfade sequence) ────────
+
+def _render_slideshow(
+    vis_list: list[Path], out: Path, W: int, H: int, dur_s: float,
+    seg_label: str, i_label: str, i_color: str, focus: str,
+    motion_emotion: str, scene_id: int,
+) -> None:
+    """Render 2-3 images as a Ken-Burns slideshow with crossfade transitions."""
+    n      = len(vis_list)
+    xf_dur = min(0.4, dur_s / (n * 4))        # crossfade never eats > 25% per clip
+    per_img = dur_s / n + xf_dur              # each clip slightly longer for xfade overlap
+
+    motions = list(_PRESET_BY_EMOTION.keys())
+    sub_outs: list[Path] = []
+
+    for idx, vis in enumerate(vis_list):
+        sub_out = out.parent / f"slide_{scene_id}_{idx}.mp4"
+        emo = motions[idx % len(motions)]
+        try:
+            _render_scene(vis, sub_out, W, H, per_img, "image", seg_label,
+                          i_label, i_color, focus,
+                          motion_emotion=emo, scene_id=scene_id * 100 + idx)
+        except Exception as exc:
+            log.warning("Slideshow sub-render %d failed: %s — fallback", idx, exc)
+            _branded_fill(sub_out, W, H, per_img, i_label, i_color)
+        if sub_out.exists() and sub_out.stat().st_size > 500:
+            sub_outs.append(sub_out)
+
+    if not sub_outs:
+        raise RuntimeError("No slideshow sub-clips rendered")
+    if len(sub_outs) == 1:
+        shutil.copy(sub_outs[0], out)
+        return
+
+    inputs: list[str] = []
+    for s in sub_outs:
+        inputs += ["-i", str(s)]
+
+    # Build xfade filter chain: [0][1]xfade→[v1]; [v1][2]xfade→[v2]; …
+    parts: list[str] = []
+    prev = "[0:v]"
+    for i in range(1, len(sub_outs)):
+        offset = (per_img - xf_dur) * i - xf_dur * (i - 1)
+        label  = f"[v{i}]"
+        parts.append(
+            f"{prev}[{i}:v]xfade=transition=fade:"
+            f"duration={xf_dur:.2f}:offset={max(0.0, offset):.2f}{label}"
+        )
+        prev = label
+
+    cmd = (["ffmpeg", "-y"] + inputs + [
+        "-filter_complex", ";".join(parts),
+        "-map", prev,
+        "-t", str(dur_s),
+        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+    ])
+    _run(cmd, f"slideshow→{out.name}", timeout=120)
 
 
 # ── Concat with transitions ───────────────────────────────────────────────────

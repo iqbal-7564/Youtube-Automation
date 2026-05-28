@@ -82,7 +82,38 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         sc["clip_score"]  = round(clip_score, 3)
         sc["retry_count"] = retries
 
+        # Fetch extra images for slideshow when the primary visual is an image
+        # and the scene is long enough to show multiple images meaningfully.
+        if sc["clip_type"] == "image" and dur_s >= 5.0:
+            extras = _fetch_extra_images(kw_list, visuals_dir, sc["scene_id"], orient)
+            sc["extra_visual_files"] = [p.name for p in extras]
+        else:
+            sc["extra_visual_files"] = []
+
     return timeline
+
+
+def _fetch_extra_images(
+    kw_list: list[str], out_dir: Path, scene_id: int,
+    orient: str, count: int = 2,
+) -> list[Path]:
+    """Download up to `count` extra images for a multi-image slideshow."""
+    extras: list[Path] = []
+    primary_name = f"scene_{scene_id}_visual.jpg"   # skip if already downloaded
+
+    for kw in kw_list[:3]:
+        candidates = _pexels_photos(kw, orient) or _pixabay_photos(kw)
+        for c in candidates:
+            out_name = f"scene_{scene_id}_extra_{len(extras)}.{c['ext']}"
+            out_path = out_dir / out_name
+            if out_path.name == primary_name:
+                continue
+            if (out_path.exists() and out_path.stat().st_size > 1_000) or \
+               _download(c["url"], out_path):
+                extras.append(out_path)
+            if len(extras) >= count:
+                return extras
+    return extras
 
 
 def _fetch_with_retry(primary_kw, scene_kws, fallbacks, out_dir, scene_id, dur_s, orient, W, H):
