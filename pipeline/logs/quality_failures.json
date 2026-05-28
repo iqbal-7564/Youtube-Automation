@@ -194,5 +194,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
     },
     "fail_reason": "[subtitles] subtitle extends past video end (scene 4, end=26839ms)"
+  },
+  {
+    "timestamp": "2026-05-28T13:18:57.099878",
+    "topic": "Incredible Facts About Habitable Exoplanets",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+  },
+  {
+    "timestamp": "2026-05-28T13:21:02.590878",
+    "topic": "Incredible Facts About Habitable Exoplanets",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+  },
+  {
+    "timestamp": "2026-05-28T13:21:21.301245",
+    "topic": "Incredible Facts About Habitable Exoplanets",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
   }
 ]
