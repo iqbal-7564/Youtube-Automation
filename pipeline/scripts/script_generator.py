@@ -1,5 +1,5 @@
 """
-STEP 2 — Script Generation (MindBlownFacts Edition)
+STEP 2 — Script Generation (Visionary Minds Edition)
 
 Single Groq LLM call. Returns 5-segment retention-psychology script
 plus YouTube metadata. Each segment now carries emotion + complexity tags
@@ -22,7 +22,7 @@ _GROQ_KEYS = [
 ]
 _MODEL = "llama-3.3-70b-versatile"
 
-_SYSTEM = """You are a world-class educational YouTube Shorts scriptwriter for the channel "MindBlownFacts".
+_SYSTEM = """You are a world-class educational YouTube Shorts scriptwriter for the channel "Visionary Minds".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 The content is always about fascinating real-world facts — science, history, nature, space, animals, geography, ocean, culture.
 
@@ -42,7 +42,7 @@ TARGET: 130-180 words total. Pace = 2.8 words/second.
 Writing style: authoritative, fast-paced, conversational — like a brilliant friend who knows everything.
 Respond ONLY with valid JSON. No text outside the JSON."""
 
-_USER_TMPL = """Write a YouTube Shorts "MindBlownFacts" script for this topic:
+_USER_TMPL = """Write a YouTube Shorts "Visionary Minds" script for this topic:
 
 TOPIC    : {title}
 DETAILS  : {description}
@@ -181,7 +181,7 @@ def _fallback(topic: dict) -> dict:
             "description": (
                 f"{t}\n\n"
                 f"Category: {cat}\n\n"
-                "#MindBlownFacts #Facts #DidYouKnow #WorldFacts #Educational"
+                "#VisionaryMinds #Facts #DidYouKnow #WorldFacts #Educational"
             ),
             "tags": ["real world facts", "facts", "did you know", "world facts",
                      "educational", "science facts", cat.lower()],

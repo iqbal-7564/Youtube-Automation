@@ -20,14 +20,14 @@ import requests
 log = logging.getLogger(__name__)
 
 _PLAYLISTS = {
-    "SPACE":     "MindBlownFacts — Space",
-    "SCIENCE":   "MindBlownFacts — Science",
-    "HISTORY":   "MindBlownFacts — History",
-    "ANIMALS":   "MindBlownFacts — Animals",
-    "NATURE":    "MindBlownFacts — Nature",
-    "GEOGRAPHY": "MindBlownFacts — Geography",
-    "OCEAN":     "MindBlownFacts — Ocean",
-    "CULTURE":   "MindBlownFacts — Culture",
+    "SPACE":     "Visionary Minds —Space",
+    "SCIENCE":   "Visionary Minds —Science",
+    "HISTORY":   "Visionary Minds —History",
+    "ANIMALS":   "Visionary Minds —Animals",
+    "NATURE":    "Visionary Minds —Nature",
+    "GEOGRAPHY": "Visionary Minds —Geography",
+    "OCEAN":     "Visionary Minds —Ocean",
+    "CULTURE":   "Visionary Minds —Culture",
 }
 
 
@@ -71,7 +71,7 @@ def upload_video(
     )
     _post_pinned_comment(video_id, question, token)
 
-    pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(), "MindBlownFacts — World")
+    pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(), "Visionary Minds — World")
     pl_id   = _playlist(token, pl_name)
     if pl_id:
         _add_to_playlist(token, video_id, pl_id)
@@ -129,7 +129,7 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     parts += [
         meta.get("description", f"{title}\n\nCategory: {cat}"),
         "",
-        f"#MindBlownFacts #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational",
+        f"#VisionaryMinds #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational",
     ]
     if profile == "shorts":
         parts.append("#Shorts")
@@ -379,7 +379,7 @@ def _playlist(token: str, name: str) -> str | None:
             headers={"Authorization": f"Bearer {token}",
                      "Content-Type":  "application/json"},
             json={
-                "snippet": {"title": name[:100], "description": "MindBlownFacts"},
+                "snippet": {"title": name[:100], "description": "Visionary Minds"},
                 "status":  {"privacyStatus": "public"},
             },
             timeout=15,

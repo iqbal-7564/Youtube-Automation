@@ -86,9 +86,18 @@ def generate_thumbnail(
         # Main text
         draw.text((42, y), line, font=font_headline, fill=(255, 230, 0))
 
-    # ── Channel pill (bottom-left) ────────────────────────────────────────────
+    # ── Channel logo or pill (bottom-left) ───────────────────────────────────
     pill_color = _INTENT_PILL_COLOR.get(intent, (0, 85, 170))
-    _draw_pill(draw, "MindBlownFacts", font_small, 40, _TH - 80, pill_color)
+    logo_path  = Path(__file__).parent.parent / "assets" / "logo.png"
+    if logo_path.exists():
+        try:
+            logo_img = Image.open(logo_path).convert("RGBA")
+            logo_img = logo_img.resize((72, 72), Image.LANCZOS)
+            bg.paste(logo_img, (30, _TH - 102), logo_img)
+        except Exception:
+            _draw_pill(draw, "Visionary Minds", font_small, 40, _TH - 80, pill_color)
+    else:
+        _draw_pill(draw, "Visionary Minds", font_small, 40, _TH - 80, pill_color)
 
     # ── Category pill (top-right) ─────────────────────────────────────────────
     _draw_pill(draw, intent, font_small, _TW - 200, 30, pill_color)

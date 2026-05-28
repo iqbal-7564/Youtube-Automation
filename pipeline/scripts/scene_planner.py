@@ -1,5 +1,5 @@
 """
-STEP 5 — Scene Planning (MindBlownFacts Edition)
+STEP 5 — Scene Planning (Visionary Minds Edition)
 
 Assigns visual_keywords (list of 3, ranked by specificity) to every scene.
 Primary keyword is derived from the scene's actual narration text where

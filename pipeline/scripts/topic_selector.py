@@ -1,5 +1,5 @@
 """
-STEP 1 — Topic Selection (MindBlownFacts Edition)
+STEP 1 — Topic Selection (Visionary Minds Edition)
 
 Uses Groq to generate a specific, surprising world-fact topic from a curated seed bank.
 Categories (priority order): SPACE > SCIENCE > HISTORY > ANIMALS > NATURE > GEOGRAPHY > OCEAN > CULTURE
@@ -185,7 +185,7 @@ def _build_topic(category: str, seed: str, produced: list[dict]) -> dict | None:
         "title":        title[:200],
         "description":  description[:500],
         "intent":       category,
-        "source":       "MindBlownFacts",
+        "source":       "VisionaryMinds",
         "published_at": datetime.utcnow().isoformat(),
         "article_url":  "",
         "seed":         seed,

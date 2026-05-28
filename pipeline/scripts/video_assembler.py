@@ -20,7 +20,7 @@ Transitions:
   • PAYOFF→CLOSE        → 0.3 s fade-to-black
 
 Brand overlays (all non-CLOSE scenes):
-  TOP-LEFT    : "VM" pill
+  TOP-LEFT    : logo (pipeline/assets/logo.png) — falls back to "VM" pill
   BOTTOM-LEFT : channel name
   TOP-RIGHT   : intent label pill
 """
@@ -33,8 +33,9 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-_CHANNEL  = "MindBlownFacts"
-_TAGLINE  = "Discover Your World"
+_CHANNEL   = "Visionary Minds"
+_TAGLINE   = "Expand Your Mind Daily"
+_LOGO_PATH = Path(__file__).parent.parent / "assets" / "logo.png"
 
 _INTENT_COLOR = {
     "SPACE":     "0x1A0A6B", "SCIENCE":   "0x0055AA",
@@ -113,12 +114,8 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
             f"x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
         )
 
-    # Brand overlays
-    vf_parts.append(
-        f"drawtext=text='VM':fontfile='{_FONT_BOLD}':"
-        f"fontcolor=white:fontsize=28:"
-        f"box=1:boxcolor=0x1A73E8@0.85:boxborderw=14:x=42:y=42"
-    )
+    # Brand overlays — channel name bottom-left, intent pill top-right
+    # Logo image (top-left) is added via filter_complex overlay below.
     mb = max(60, int(H * 0.05))
     vf_parts.append(
         f"drawtext=text='{_CHANNEL}':fontfile='{_FONT_BOLD}':"
@@ -131,11 +128,37 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         f"box=1:boxcolor={i_color}@0.92:boxborderw=10:x=w-tw-50:y=42"
     )
 
-    vf  = ",".join(vf_parts)
-    cmd = _base_cmd(vis, dur_s, clip_type, W, H)
-    cmd += ["-vf", vf,
+    base_cmd = _base_cmd(vis, dur_s, clip_type, W, H)
+    logo     = _LOGO_PATH
+
+    if logo.exists():
+        logo_size = max(60, min(W // 13, 90))
+        vf_chain  = ",".join(vf_parts)
+        filter_cx = (
+            f"[0:v]{vf_chain}[base];"
+            f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos[wm];"
+            f"[base][wm]overlay=30:30:shortest=1[out]"
+        )
+        cmd = base_cmd + [
+            "-loop", "1", "-i", str(logo),
+            "-filter_complex", filter_cx,
+            "-map", "[out]",
             "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out)]
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+    else:
+        # No logo — fall back to "VM" text pill in top-left
+        vf_parts.insert(1,
+            f"drawtext=text='VM':fontfile='{_FONT_BOLD}':"
+            f"fontcolor=white:fontsize=28:"
+            f"box=1:boxcolor=0x1A73E8@0.85:boxborderw=14:x=42:y=42"
+        )
+        cmd = base_cmd + [
+            "-vf", ",".join(vf_parts),
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+
     _run(cmd, f"scene→{out.name}")
 
 
@@ -145,15 +168,34 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
         f"fontcolor=white:fontsize=72:x=(w-tw)/2:y=(h-th)/2-70,"
         f"drawtext=text='{_TAGLINE}':fontfile='{_FONT_REG}':"
         f"fontcolor=white@0.65:fontsize=36:x=(w-tw)/2:y=(h-th)/2+40,"
-        f"drawtext=text='Follow for Daily World Facts':fontfile='{_FONT_REG}':"
+        f"drawtext=text='Follow for Daily Mind-Blowing Facts':fontfile='{_FONT_REG}':"
         f"fontcolor=white@0.75:fontsize=30:x=(w-tw)/2:y=(h-th)/2+100"
     )
-    _run(["ffmpeg", "-y",
-          "-f", "lavfi", "-i", f"color=c=0x0A0A0A:size={W}x{H}:rate=30",
-          "-vf", vf, "-t", str(dur_s),
-          "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-          "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out)],
-         f"CLOSE→{out.name}")
+    base = ["ffmpeg", "-y",
+            "-f", "lavfi", "-i", f"color=c=0x0A0A0A:size={W}x{H}:rate=30",
+            "-t", str(dur_s)]
+    logo = _LOGO_PATH
+    if logo.exists():
+        logo_size = max(60, min(W // 13, 90))
+        filter_cx = (
+            f"[0:v]{vf}[base];"
+            f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos[wm];"
+            f"[base][wm]overlay=30:30:shortest=1[out]"
+        )
+        cmd = base + [
+            "-loop", "1", "-i", str(logo),
+            "-filter_complex", filter_cx,
+            "-map", "[out]",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+    else:
+        cmd = base + [
+            "-vf", vf,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+    _run(cmd, f"CLOSE→{out.name}")
 
 
 def _branded_fill(out: Path, W: int, H: int, dur_s: float,
@@ -165,14 +207,31 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
         f"box=1:boxcolor={i_color}@0.70:boxborderw=16:"
         f"x=(w-tw)/2:y=(h-th)/2"
     )
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "lavfi",
-         "-i", f"color=c=0x08080F:size={W}x{H}:rate=30",
-         "-vf", vf, "-t", str(dur_s),
-         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-         "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out)],
-        capture_output=True, timeout=30,
-    )
+    base = ["ffmpeg", "-y", "-f", "lavfi",
+            "-i", f"color=c=0x08080F:size={W}x{H}:rate=30",
+            "-t", str(dur_s)]
+    logo = _LOGO_PATH
+    if logo.exists():
+        logo_size = max(60, min(W // 13, 90))
+        filter_cx = (
+            f"[0:v]{vf}[base];"
+            f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos[wm];"
+            f"[base][wm]overlay=30:30:shortest=1[out]"
+        )
+        cmd = base + [
+            "-loop", "1", "-i", str(logo),
+            "-filter_complex", filter_cx,
+            "-map", "[out]",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+    else:
+        cmd = base + [
+            "-vf", vf,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
+        ]
+    subprocess.run(cmd, capture_output=True, timeout=30)
 
 
 # ── Concat with transitions ───────────────────────────────────────────────────
