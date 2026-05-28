@@ -142,7 +142,8 @@ def run_pipeline() -> bool:
         log.info("[10/13] Encoding")
         profile     = timeline["profile"]
         output_path = OUTPUT_DIR / f"{topic['intent']}_{ts}_{profile}.mp4"
-        encode_video(assembled, norm_audio, output_path, profile)
+        encode_video(assembled, norm_audio, output_path, profile,
+                     timeline["total_duration_seconds"])
         log.info("  Output: %s  (%.1f MB)",
                  output_path.name,
                  output_path.stat().st_size / 1_048_576)
