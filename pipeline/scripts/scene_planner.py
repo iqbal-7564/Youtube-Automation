@@ -2,18 +2,117 @@
 STEP 5 — Scene Planning (Visionary Minds Edition)
 
 Assigns visual_keywords (list of 3, ranked by specificity) to every scene.
-Primary keyword is derived from the scene's actual narration text where
-possible — not just the segment label — so visuals match what is being said.
 
-Also sets focus_region (center/left/right/top/bottom) per scene to guide
-directed Ken Burns motion in video_assembler.
+TWO-LAYER keyword selection:
+  Layer 1 — Semantic text analysis: scans the scene's actual script_text for
+             emotional/narrative trigger words and prepends matching emotional
+             visual keywords. This is what separates "stock search by topic"
+             from "emotional visual storytelling."
+  Layer 2 — Category+segment bank: static category-specific keywords as
+             fallback and supplement.
+
+Also sets focus_region and motion_emotion per scene to guide Ken Burns
+motion presets in video_assembler.
 """
 
 import logging
+import re
 
 log = logging.getLogger(__name__)
 
-# ── Keyword banks ─────────────────────────────────────────────────────────────
+# ── Layer 1: Semantic narrative → emotional visual keywords ───────────────────
+# Pattern strings are pipe-separated regex alternatives.
+# First matching pattern wins; its visuals are prepended to keyword list.
+
+_NARRATIVE_TRIGGERS: list[tuple[str, list[str], str]] = [
+    # (regex_pattern, visual_keywords, motion_emotion)
+
+    # Destruction / extinction / catastrophe
+    (r"died|extinct|destroyed|collapse|impact|crash|doom|apocalypse|devastat",
+     ["cinematic explosion destruction aftermath dark",
+      "apocalyptic dramatic ruins devastation wide",
+      "impact shock debris dramatic cinematic"],
+     "dramatic"),
+
+    # Discovery / secret / hidden
+    (r"discover|found|reveal|uncover|secret|hidden|unknown|first time|never seen",
+     ["discovery light emergence dramatic reveal",
+      "scientist breakthrough discovery laboratory",
+      "hidden reveal light dark contrast dramatic"],
+     "mysterious"),
+
+    # Scale / size comparison
+    (r"bigger|larger|massive|enormous|vast|huge|scale|trillion|billion|million times",
+     ["aerial vast scale comparison dramatic wide",
+      "cosmic scale size comparison universe",
+      "size contrast comparison dramatic aerial"],
+     "dramatic"),
+
+    # Speed / instant
+    (r"faster|speed|instant|second|millisecond|rapidly|lightning|immediate",
+     ["speed blur motion fast dynamic",
+      "lightning fast impact velocity dramatic",
+      "fast motion dynamic energy speed"],
+     "excited"),
+
+    # Fear / danger / threat
+    (r"terrif|deadly|danger|threat|killer|fatal|lethal|predator|attack|horror",
+     ["dark ominous threat dramatic cinematic",
+      "danger predator dark atmospheric",
+      "ominous cinematic thriller dark shadow"],
+     "dramatic"),
+
+    # Ancient / history / time
+    (r"ancient|prehistoric|million year|thousand year|oldest|century|civilisation|empire",
+     ["ancient ruins archaeological stone dramatic",
+      "prehistoric landscape dramatic wide historical",
+      "ancient civilisation monument stone aerial"],
+     "mysterious"),
+
+    # Underground / deep / hidden beneath
+    (r"underground|beneath|buried|ocean floor|deep sea|cave|trench|abyss",
+     ["cave underground dark depth mysterious",
+      "deep ocean dark bioluminescence dramatic",
+      "underground tunnel depth atmospheric dark"],
+     "mysterious"),
+
+    # Wonder / beauty / breathtaking
+    (r"beautiful|stunning|breathtaking|extraordinary|incredible|magnificent|wonder",
+     ["stunning aerial beautiful cinematic wide",
+      "breathtaking landscape golden dramatic light",
+      "cinematic beautiful nature vast wide"],
+     "excited"),
+
+    # Impossible / mind-blowing / paradox
+    (r"impossible|paradox|bizarre|unbelievable|mind.?blow|defy|strange",
+     ["impossible surreal dramatic mind-blowing",
+      "paradox strange dramatic contrast cinematic",
+      "bizarre impossible dramatic wide surreal"],
+     "mysterious"),
+
+    # Life / survival / evolution
+    (r"evolv|survival|adapt|life form|organism|creature|species|born|alive",
+     ["wildlife survival dramatic nature wide",
+      "creature close detail dramatic nature",
+      "life evolution dramatic nature wide"],
+     "excited"),
+
+    # Universe / cosmos / space
+    (r"universe|cosmos|galaxy|nebula|star|planet|black hole|solar|light year",
+     ["cosmos galaxy nebula dramatic wide",
+      "deep space universe dramatic cinematic",
+      "planet surface space dramatic atmospheric"],
+     "mysterious"),
+
+    # Water / ocean / flood
+    (r"ocean|sea|water|flood|wave|tsunami|underwater|marine|current",
+     ["ocean dramatic wave cinematic wide",
+      "underwater dramatic cinematic bioluminescent",
+      "ocean surface dramatic aerial wide"],
+     "dramatic"),
+]
+
+# ── Layer 2: Category + segment static keyword banks ─────────────────────────
 
 _HOOK: dict[str, list[str]] = {
     "SPACE":     ["galaxy stars universe stunning wide",     "nebula cosmos deep space",         "milky way night sky"],
@@ -83,7 +182,7 @@ _PAYOFF: dict[str, list[str]] = {
     "CULTURE":   ["cultural celebration heritage",         "festival culture crowd joyful","cultural art beauty wide"],
 }
 
-# Focus region per segment (guides Ken Burns direction)
+# Focus region per segment — guides Ken Burns direction
 _FOCUS: dict[str, str] = {
     "HOOK":    "center",
     "TENSION": "center",
@@ -92,8 +191,33 @@ _FOCUS: dict[str, str] = {
     "CLOSE":   "center",
 }
 
+# Emotion → motion_emotion tag for video_assembler preset selection
+_EMOTION_MOTION: dict[str, str] = {
+    "excited":    "excited",
+    "mysterious": "mysterious",
+    "dramatic":   "dramatic",
+    "neutral":    "neutral",
+}
+
 _DEFAULT = "SCIENCE"
 
+
+# ── Semantic text analysis ────────────────────────────────────────────────────
+
+def _text_visual_hints(text: str) -> tuple[list[str], str | None]:
+    """
+    Scan script_text for narrative/emotional trigger words.
+    Returns (visual_keyword_overrides, motion_emotion_override).
+    Overrides are prepended to the category keyword list.
+    """
+    text_lower = text.lower()
+    for pattern, visuals, motion in _NARRATIVE_TRIGGERS:
+        if re.search(pattern, text_lower):
+            return visuals[:2], motion
+    return [], None
+
+
+# ── Main ─────────────────────────────────────────────────────────────────────
 
 def plan_scenes(timeline: dict, intent: str) -> dict:
     intent = intent.upper()
@@ -105,7 +229,8 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
     t_idx = c_idx = 0
 
     for sc in timeline["scenes"]:
-        label = sc["segment_label"]
+        label   = sc["segment_label"]
+        emotion = sc.get("emotion", "neutral")
 
         if label == "HOOK":
             kws = _HOOK[intent]
@@ -126,14 +251,20 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
             sc["visual_keywords"] = ["CLOSE"]
             sc["clip_type"]       = "close"
             sc["focus_region"]    = "center"
+            sc["motion_emotion"]  = "neutral"
             continue
 
         else:
             kws = _PAYOFF.get(intent, ["nature landscape wide"])
 
-        sc["visual_keyword"]  = kws[0]
-        sc["visual_keywords"] = list(kws[:3])
+        # Layer 1: semantic text analysis — prepend emotional visual hints
+        text_hints, motion_override = _text_visual_hints(sc.get("script_text", ""))
+        combined = (text_hints + list(kws[:3]))[:3]
+
+        sc["visual_keyword"]  = combined[0]
+        sc["visual_keywords"] = combined
         sc["focus_region"]    = _FOCUS.get(label, "center")
+        sc["motion_emotion"]  = motion_override or _EMOTION_MOTION.get(emotion, "neutral")
 
     log.info("Scene keywords assigned (%d scenes, category=%s)",
              len(timeline["scenes"]), intent)

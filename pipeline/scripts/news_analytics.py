@@ -99,6 +99,34 @@ def fetch_analytics_feedback(logs_dir: Path) -> dict:
         stats = _fetch_stats(vid, token)
         if stats:
             entry.update(stats)
+            # Fetch scene-level retention curve
+            curve = _fetch_retention_curve(vid, token)
+            if curve:
+                # We don't have the full timeline here — store raw curve for
+                # external analysis; scene mapping requires timeline context
+                entry["retention_curve_points"] = len(curve)
+                entry["retention_at_25pct"] = next(
+                    (p["watch_ratio"] * 100 for p in curve
+                     if abs(p["ratio"] - 0.25) < 0.05), None)
+                entry["retention_at_50pct"] = next(
+                    (p["watch_ratio"] * 100 for p in curve
+                     if abs(p["ratio"] - 0.50) < 0.05), None)
+                entry["retention_at_75pct"] = next(
+                    (p["watch_ratio"] * 100 for p in curve
+                     if abs(p["ratio"] - 0.75) < 0.05), None)
+                # Find the biggest single drop-off point
+                if len(curve) >= 2:
+                    drops = [
+                        (curve[i]["ratio"],
+                         curve[i - 1]["watch_ratio"] - curve[i]["watch_ratio"])
+                        for i in range(1, len(curve))
+                    ]
+                    worst = max(drops, key=lambda d: d[1])
+                    entry["biggest_drop_at_pct"] = round(worst[0] * 100, 1)
+                    entry["biggest_drop_size"]   = round(worst[1] * 100, 2)
+                    if worst[1] > 0.05:
+                        log.info("  Retention: biggest drop at %.0f%% of video (%s)",
+                                 worst[0] * 100, vid)
             entry["analytics_fetched"] = True
             updated.append(entry)
 
@@ -112,6 +140,65 @@ def fetch_analytics_feedback(logs_dir: Path) -> dict:
     hints = _feedback_hints(results)
     _write_performance_history(results, perf_path)
     return hints
+
+
+def _fetch_retention_curve(video_id: str, token: str) -> list[dict]:
+    """
+    Fetch the audience retention curve (elapsedVideoTimeRatio vs audienceWatchRatio).
+    Returns list of {ratio: float, watch_ratio: float} sorted by ratio.
+    Empty list if unavailable.
+    """
+    try:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        r = requests.get(
+            "https://youtubeanalytics.googleapis.com/v2/reports",
+            headers={"Authorization": f"Bearer {token}"},
+            params={
+                "ids":        "channel==MINE",
+                "dimensions": "elapsedVideoTimeRatio",
+                "filters":    f"video=={video_id}",
+                "metrics":    "audienceWatchRatio",
+                "startDate":  "2020-01-01",
+                "endDate":    today,
+            },
+            timeout=15,
+        )
+        if r.ok:
+            rows = r.json().get("rows", [])
+            return [{"ratio": float(row[0]), "watch_ratio": float(row[1])}
+                    for row in rows if len(row) >= 2]
+    except Exception as exc:
+        log.debug("Retention curve %s: %s", video_id, exc)
+    return []
+
+
+def _analyze_scene_retention(curve: list[dict], timeline: dict) -> dict:
+    """
+    Map audience retention curve to per-scene retention percentages.
+    Returns {scene_id: avg_retention_pct, ..., "drop_scenes": [scene_ids]}.
+    """
+    if not curve or not timeline.get("scenes"):
+        return {}
+
+    total_ms = timeline["total_duration_ms"]
+    result: dict[str, object] = {}
+    drop_scenes: list[int] = []
+
+    for sc in timeline["scenes"]:
+        start_r = sc["start_ms"] / total_ms
+        end_r   = sc["end_ms"]   / total_ms
+        # Average audienceWatchRatio for points within this scene's window
+        pts = [p["watch_ratio"] for p in curve
+               if start_r <= p["ratio"] < end_r]
+        if pts:
+            avg = round(sum(pts) / len(pts) * 100, 1)
+            result[str(sc["scene_id"])] = avg
+            # Flag scenes with retention < 70% as drop points
+            if avg < 70.0:
+                drop_scenes.append(sc["scene_id"])
+
+    result["drop_scenes"] = drop_scenes
+    return result
 
 
 def _fetch_stats(video_id: str, token: str) -> dict:
@@ -158,6 +245,21 @@ def _feedback_hints(results: list) -> dict:
     elif avg_ret > 70:
         hints["template_lock"] = True
         hints["template_note"] = "script structure performing well — keep"
+
+    # Retention curve signals
+    curve_recent = [r for r in recent if r.get("biggest_drop_at_pct") is not None]
+    if curve_recent:
+        avg_drop_pos = sum(r["biggest_drop_at_pct"] for r in curve_recent) / len(curve_recent)
+        hints["avg_biggest_drop_at_pct"] = round(avg_drop_pos, 1)
+        if avg_drop_pos < 25:
+            hints["retention_signal"] = "early_drop"
+            hints["retention_note"]   = "viewers leave in first 25% — hook or TENSION too slow"
+        elif avg_drop_pos < 50:
+            hints["retention_signal"] = "mid_drop"
+            hints["retention_note"]   = "viewers leave mid-video — CORE is losing them"
+        else:
+            hints["retention_signal"] = "late_drop"
+            hints["retention_note"]   = "good early retention — PAYOFF or CLOSE is weak"
 
     return hints
 

@@ -109,14 +109,52 @@ def generate_thumbnail(
 
 
 def _pick_headline(timeline: dict, script: dict) -> str:
-    # Prefer HOOK text — it's the most curiosity-driving sentence
+    """Pick the most curiosity-driving headline for the thumbnail."""
+    # Prefer the metadata title — it's already CTR-psychology optimised by the LLM
+    title = script.get("metadata", {}).get("title", "").strip()
+    if title:
+        return _ctr_enhance(title)[:72]
+
+    # Fall back to HOOK text
     for sc in timeline.get("scenes", []):
         if sc.get("segment_label") == "HOOK":
             text = sc.get("script_text", "").strip()
             if text:
-                return text[:80]
-    # Fall back to script title
-    return script.get("metadata", {}).get("title", "Mind-Blowing Facts")[:80]
+                return _ctr_enhance(text)[:72]
+
+    return "The Fact That Changes Everything"
+
+
+# Trigger words that indicate a title already has CTR psychology baked in
+_CTR_POWER_WORDS = {
+    "impossible", "hidden", "real", "secret", "nobody", "truth",
+    "actually", "scientists", "discovered", "found", "breaks", "never",
+    "why", "how", "what", "until", "real reason", "not what",
+}
+
+def _ctr_enhance(title: str) -> str:
+    """
+    If the title already uses curiosity-gap language, return as-is.
+    Otherwise wrap in a curiosity-gap frame to improve CTR.
+    """
+    title_lower = title.lower()
+    # Already has CTR power words — trust it
+    if any(w in title_lower for w in _CTR_POWER_WORDS):
+        return title
+
+    # Generic title — apply curiosity frame
+    # Strip trailing period
+    clean = title.rstrip(".")
+    frames = [
+        f"Nobody Told You The Truth About {clean}",
+        f"The Real Reason {clean} Will Surprise You",
+        f"Scientists Found Something Impossible About {clean}",
+    ]
+    # Pick shortest that fits thumbnail line wrap
+    for f in frames:
+        if len(f) <= 72:
+            return f
+    return clean
 
 
 def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.Image":

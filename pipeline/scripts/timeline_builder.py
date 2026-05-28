@@ -5,10 +5,22 @@ CRITICAL: This is the single source of truth read by every subsequent step.
 Built from script segments BEFORE voice generation.
 Voice generator updates it with ACTUAL durations after generating audio.
 
-Complexity-based minimum dwell times ensure viewers have time to absorb facts:
-  simple   → 3 000 ms min
-  moderate → 4 500 ms min
-  complex  → 6 000 ms min
+SHORTS PSYCHOLOGY:
+  Shorts viewers decide in 1-2 seconds. Hook must be hyper-fast.
+  Maximum hook scene: 2 500 ms. Pattern interruption every 3-4 scenes.
+  Ultra-short TENSION intervals force constant novelty.
+
+AUDIENCE PERSONA DWELL TIMES:
+  Different categories have different optimal pacing.
+  SPACE/SCIENCE: viewers want more detail → longer dwell
+  ANIMALS/NATURE: emotional, fast → shorter dwell
+  HISTORY/CULTURE: dramatic narration → moderate-long dwell
+  GEOGRAPHY/OCEAN: visual-led → moderate dwell
+
+COMPLEXITY-BASED minimum dwell times are further adjusted per persona:
+  simple   → persona_min × 0.8
+  moderate → persona_min × 1.0
+  complex  → persona_min × 1.3
 """
 
 import logging
@@ -17,13 +29,6 @@ log = logging.getLogger(__name__)
 
 _WPS = 2.8          # words per second (news pace)
 _FPS = 30
-
-# Minimum scene dwell time (ms) by complexity tag
-_MIN_DWELL_MS = {
-    "simple":   3_000,
-    "moderate": 4_500,
-    "complex":  6_000,
-}
 
 # Transition applied AFTER the scene ends
 _TRANSITIONS = {
@@ -34,8 +39,8 @@ _TRANSITIONS = {
     "CLOSE":   "fade-to-black",
 }
 
-# Target scene length (seconds) per segment; 999 = single scene for full segment
-_SCENE_INTERVAL = {
+# Target scene length (seconds) per segment for STANDARD profile
+_SCENE_INTERVAL_STANDARD = {
     "HOOK":    999,
     "TENSION": 6.0,
     "CORE":    4.5,
@@ -43,11 +48,46 @@ _SCENE_INTERVAL = {
     "CLOSE":   999,
 }
 
+# Shorts: hyper-short intervals to force constant novelty + pattern interruption
+_SCENE_INTERVAL_SHORTS = {
+    "HOOK":    999,   # single hook scene, but dwell time capped below
+    "TENSION": 4.5,   # shorter TENSION splits force 2 quick scenes
+    "CORE":    3.5,   # ultra-short CORE scenes keep pacing aggressive
+    "PAYOFF":  999,
+    "CLOSE":   999,
+}
+
+# Base minimum dwell time (ms) per category — audience persona
+_PERSONA_BASE_MS: dict[str, dict[str, int]] = {
+    "SPACE":     {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "SCIENCE":   {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "HISTORY":   {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
+    "CULTURE":   {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
+    "ANIMALS":   {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
+    "NATURE":    {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
+    "GEOGRAPHY": {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
+    "OCEAN":     {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
+}
+_DEFAULT_PERSONA_MS = {"simple": 3_000, "moderate": 4_500, "complex": 6_000}
+
+# Shorts cap: hook scene never exceeds this regardless of TTS length
+_SHORTS_HOOK_CAP_MS = 2_500
+
 
 def build_timeline(script: dict, intent: str = "") -> dict:
+    intent_upper = intent.upper()
+    persona_ms   = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
+
+    # Pre-pass: decide profile estimate from script word count
+    total_words = sum(len(s["text"].split()) for s in script["segments"])
+    est_total_s = total_words / _WPS
+    is_shorts_est = est_total_s <= 65   # small buffer for drift
+
+    scene_interval = _SCENE_INTERVAL_SHORTS if is_shorts_est else _SCENE_INTERVAL_STANDARD
+
     scenes: list[dict] = []
-    elapsed_ms  = 0
-    scene_id    = 1
+    elapsed_ms = 0
+    scene_id   = 1
 
     for seg in script["segments"]:
         label      = seg["label"]
@@ -57,11 +97,13 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         words      = text.split()
         est_ms     = int(len(words) / _WPS * 1000)
 
-        interval_s = _SCENE_INTERVAL[label]
+        interval_s = scene_interval[label]
         n_scenes   = max(1, round((est_ms / 1000) / interval_s))
         base_dur_ms = est_ms // n_scenes
 
-        min_dur_ms = _MIN_DWELL_MS.get(complexity, 3_000)
+        # Persona-based minimum dwell, adjusted by complexity
+        base_min = persona_ms.get(complexity, 3_000)
+        min_dur_ms = base_min
 
         for sc_idx in range(n_scenes):
             wpsc    = max(1, len(words) // n_scenes)
@@ -69,11 +111,20 @@ def build_timeline(script: dict, intent: str = "") -> dict:
             w_end   = (w_start + wpsc) if sc_idx < n_scenes - 1 else len(words)
             sc_text = " ".join(words[w_start:w_end])
 
-            dur_ms = base_dur_ms if sc_idx < n_scenes - 1 else (est_ms - base_dur_ms * (n_scenes - 1))
+            dur_ms = base_dur_ms if sc_idx < n_scenes - 1 \
+                     else (est_ms - base_dur_ms * (n_scenes - 1))
             dur_ms = max(dur_ms, min_dur_ms)
+
+            # Shorts: cap HOOK scene to prevent over-long openers
+            if label == "HOOK" and is_shorts_est:
+                dur_ms = min(dur_ms, _SHORTS_HOOK_CAP_MS)
 
             start_ms = elapsed_ms
             end_ms   = elapsed_ms + dur_ms
+
+            # Detect WOW marker in script text for downstream intensity spike
+            has_wow = "[WOW]" in sc_text
+            sc_text_clean = sc_text.replace("[WOW]", "").strip()
 
             scenes.append({
                 "scene_id":        scene_id,
@@ -81,12 +132,12 @@ def build_timeline(script: dict, intent: str = "") -> dict:
                 "start_ms":        start_ms,
                 "end_ms":          end_ms,
                 "duration_ms":     dur_ms,
-                "script_text":     sc_text,
+                "script_text":     sc_text_clean,
                 "emotion":         emotion,
                 "complexity":      complexity,
                 "voice_start_ms":  start_ms,
                 "voice_end_ms":    end_ms,
-                "subtitle_lines":  _build_subtitle_lines(sc_text, start_ms, end_ms),
+                "subtitle_lines":  _build_subtitle_lines(sc_text_clean, start_ms, end_ms),
                 "visual_keyword":  "",
                 "visual_keywords": [],
                 "visual_file":     "",
@@ -94,6 +145,8 @@ def build_timeline(script: dict, intent: str = "") -> dict:
                 "clip_score":      0.0,
                 "retry_count":     0,
                 "focus_region":    "center",
+                "motion_emotion":  emotion,
+                "has_wow":         has_wow,
                 "transition":      _TRANSITIONS[label],
                 "tts_engine":      "",
             })
@@ -112,7 +165,9 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         "profile":                profile,
         "width":                  W,
         "height":                 H,
-        "intent":                 intent.upper(),
+        "intent":                 intent_upper,
+        "pacing_profile":         intent_upper or "DEFAULT",
+        "narrative_template":     script.get("narrative_template", "classic"),
         "scenes":                 scenes,
     }
 

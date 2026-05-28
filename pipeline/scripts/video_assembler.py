@@ -77,7 +77,9 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                 _render_scene(vis, out, W, H, dur_s,
                               sc.get("clip_type", "video"),
                               sc["segment_label"],
-                              i_label, i_color, focus)
+                              i_label, i_color, focus,
+                              motion_emotion=sc.get("motion_emotion", "neutral"),
+                              scene_id=sc["scene_id"])
         except Exception as exc:
             log.warning("Scene %d render error: %s — fallback", sc["scene_id"], exc)
             _branded_fill(out, W, H, dur_s, i_label, i_color)
@@ -97,7 +99,9 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
 
 def _render_scene(vis: Path, out: Path, W: int, H: int,
                   dur_s: float, clip_type: str, seg_label: str,
-                  i_label: str, i_color: str, focus: str) -> None:
+                  i_label: str, i_color: str, focus: str,
+                  motion_emotion: str = "neutral",
+                  scene_id: int = 1) -> None:
 
     vf_parts: list[str] = []
 
@@ -108,7 +112,9 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
 
     if clip_type == "image":
         frames = max(int(dur_s * 30), 30)
-        z_expr, x_expr, y_expr = _ken_burns_expr(focus, seg_label)
+        z_expr, x_expr, y_expr = _ken_burns_expr(
+            focus, seg_label, motion_emotion, scene_id
+        )
         vf_parts.append(
             f"zoompan=z='{z_expr}':d={frames}:"
             f"x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
@@ -341,21 +347,88 @@ def _xfade(a: Path, b: Path, dur: float, xf_type: str, out: Path) -> None:
     )
 
 
-# ── Ken Burns ─────────────────────────────────────────────────────────────────
+# ── Motion presets ────────────────────────────────────────────────────────────
+# Each preset is (zoom_expr, x_expr, y_expr) for zoompan filter.
+# Varied presets prevent the "same zoom every video" audience fatigue.
 
-def _ken_burns_expr(focus: str, seg_label: str) -> tuple[str, str, str]:
-    z = "min(zoom+0.001,1.5)" if seg_label in ("HOOK", "TENSION") \
-        else "if(eq(on\\,1)\\,1.5\\,max(zoom-0.001\\,1.0))"
+_MOTION_PRESETS: dict[str, tuple[str, str, str]] = {
+    # Slow gentle drift — calm, beauty, payoff scenes
+    "slow_drift": (
+        "min(zoom+0.0005,1.25)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Classic push-in — standard hook/tension
+    "push_in": (
+        "min(zoom+0.001,1.5)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Dramatic fast zoom — WOW moments, impact
+    "impact_zoom": (
+        "min(zoom+0.003,2.0)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Pull back (reveal) — mystery, reverse narrative
+    "reveal_pull": (
+        "if(eq(on\\,1)\\,1.8\\,max(zoom-0.002\\,1.0))",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Pan right — geography, scale, exploration
+    "pan_right": (
+        "min(zoom+0.0008,1.3)",
+        "iw/2-(iw/zoom/2)+on*0.4",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Pan left — alternative direction
+    "pan_left": (
+        "min(zoom+0.0008,1.3)",
+        "iw/2-(iw/zoom/2)-on*0.4",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # Rise up — discovery, emergence, wonder
+    "rise_up": (
+        "min(zoom+0.001,1.4)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)-on*0.25",
+    ),
+    # Descend — underground, ocean deep, threat
+    "descend": (
+        "min(zoom+0.001,1.4)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)+on*0.25",
+    ),
+}
+
+# emotion + segment → preferred preset(s), cycled by scene_id for variety
+_PRESET_BY_EMOTION: dict[str, list[str]] = {
+    "excited":    ["push_in",     "pan_right",   "pan_left"],
+    "dramatic":   ["impact_zoom", "reveal_pull", "push_in"],
+    "mysterious": ["reveal_pull", "descend",     "slow_drift"],
+    "neutral":    ["slow_drift",  "rise_up",     "pan_right"],
+}
+
+
+def _ken_burns_expr(focus: str, seg_label: str,
+                    motion_emotion: str = "neutral",
+                    scene_id: int = 1) -> tuple[str, str, str]:
+    """Select a motion preset based on emotion and scene_id for variety."""
+    presets = _PRESET_BY_EMOTION.get(motion_emotion, _PRESET_BY_EMOTION["neutral"])
+    preset_name = presets[scene_id % len(presets)]
+
+    # Focus override: if focus_region is explicit, adjust x/y within the preset
+    z, x, y = _MOTION_PRESETS[preset_name]
     if focus == "left":
-        x, y = "iw/2-(iw/zoom/2)+on*0.3", "ih/2-(ih/zoom/2)"
+        x = "iw/2-(iw/zoom/2)+on*0.4"
     elif focus == "right":
-        x, y = "iw/2-(iw/zoom/2)-on*0.3", "ih/2-(ih/zoom/2)"
+        x = "iw/2-(iw/zoom/2)-on*0.4"
     elif focus == "top":
-        x, y = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)+on*0.3"
+        y = "ih/2-(ih/zoom/2)+on*0.3"
     elif focus == "bottom":
-        x, y = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)-on*0.3"
-    else:
-        x, y = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+        y = "ih/2-(ih/zoom/2)-on*0.3"
+
     return z, x, y
 
 
