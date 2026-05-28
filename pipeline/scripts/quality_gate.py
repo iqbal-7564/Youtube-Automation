@@ -1,19 +1,22 @@
 """
 STEP 11 — Quality Gate
 
-7 hard checks — ALL must pass before upload.
+10 hard checks — ALL must pass before upload.
 Returns {passed, checks, fail_reason}.
 If ANY check fails, the video is logged to quality_failures.json
-and the upload is skipped (no auto-retry — needs human review).
+and the upload is skipped.
 
 Checks:
-  1. file_integrity  — container valid, moov at start, size > 100 KB
-  2. resolution      — exact match to profile spec + 30 fps
-  3. duration        — within ±500 ms of timeline total
-  4. audio_sync      — A/V track length within ±100 ms
-  5. audio_level     — integrated loudness −14 LUFS ±2
-  6. subtitles       — no entry past video end, no entry < 300 ms
-  7. freeze_frame    — no freeze > 500 ms (3+ identical consecutive frames)
+  1.  file_integrity  — container valid, moov at start, size > 100 KB
+  2.  resolution      — exact match to profile spec + 30 fps
+  3.  duration        — within ± 2 s of timeline total
+  4.  audio_sync      — A/V track length within ± 100 ms
+  5.  audio_level     — integrated loudness −14 LUFS ± 2
+  6.  subtitles       — no entry past video end, no entry < 300 ms
+  7.  freeze_frame    — no freeze > 500 ms (3+ identical consecutive pts values)
+  8.  voice_quality   — no scene used gTTS or silence fallback
+  9.  dropped_frames  — no more than 3 frames with irregular timing (>20% deviation)
+  10. audio_gaps      — no silence gap > 300 ms in the middle of the audio track
 """
 
 import json
@@ -44,13 +47,16 @@ def run_quality_gate(
             if fail is None:
                 fail = f"[{name}] exception: {exc}"
 
-    chk("file_integrity", lambda: _integrity(video_path))
-    chk("resolution",     lambda: _resolution(video_path, timeline))
-    chk("duration",       lambda: _duration(video_path, timeline))
-    chk("audio_sync",     lambda: _audio_sync(video_path))
-    chk("audio_level",    lambda: _audio_level(video_path))
-    chk("subtitles",      lambda: _subtitles(subtitles_dir, timeline))
-    chk("freeze_frame",   lambda: _freeze(video_path))
+    chk("file_integrity",  lambda: _integrity(video_path))
+    chk("resolution",      lambda: _resolution(video_path, timeline))
+    chk("duration",        lambda: _duration(video_path, timeline))
+    chk("audio_sync",      lambda: _audio_sync(video_path))
+    chk("audio_level",     lambda: _audio_level(video_path))
+    chk("subtitles",       lambda: _subtitles(subtitles_dir, timeline))
+    chk("freeze_frame",    lambda: _freeze(video_path))
+    chk("voice_quality",   lambda: _voice_quality(timeline))
+    chk("dropped_frames",  lambda: _dropped_frames(video_path))
+    chk("audio_gaps",      lambda: _audio_gaps(video_path))
 
     passed = fail is None
     log.info("  Gate: %s  %s", "PASS" if passed else "FAIL", fail or "all clear")
@@ -172,7 +178,7 @@ def _freeze(path: Path):
     r = subprocess.run(
         ["ffprobe", "-v", "quiet",
          "-show_frames", "-select_streams", "v:0",
-         "-read_intervals", "%+#60",    # sample first 60 frames
+         "-read_intervals", "%+#60",
          "-print_format", "json", str(path)],
         capture_output=True, text=True, timeout=30,
     )
@@ -191,4 +197,77 @@ def _freeze(path: Path):
             return False, f"freeze detected ({dupes} duplicate pts values)"
     except Exception:
         pass
+    return True, "ok"
+
+
+def _voice_quality(timeline: dict):
+    """Fail if any scene used gTTS or silence fallback."""
+    bad = [
+        sc["scene_id"]
+        for sc in timeline.get("scenes", [])
+        if sc.get("tts_engine") in ("gtts", "silence")
+    ]
+    if bad:
+        return False, f"low-quality TTS on scene(s) {bad} — check ElevenLabs/edge-tts"
+    return True, "ok"
+
+
+def _dropped_frames(path: Path):
+    """Check for frames whose duration deviates >20% from expected interval."""
+    r = subprocess.run(
+        ["ffprobe", "-v", "quiet",
+         "-show_frames", "-select_streams", "v:0",
+         "-read_intervals", "%+#90",
+         "-print_format", "json", str(path)],
+        capture_output=True, text=True, timeout=30,
+    )
+    try:
+        frames = json.loads(r.stdout).get("frames", [])
+        if len(frames) < 4:
+            return True, "not enough frames"
+        # Expected interval at 30 fps
+        expected = 1 / 30
+        irregular = 0
+        for f in frames:
+            try:
+                dur = float(f.get("pkt_duration_time") or 0)
+                if dur > 0 and abs(dur - expected) / expected > 0.20:
+                    irregular += 1
+            except (ValueError, TypeError):
+                pass
+        if irregular > 3:
+            return False, f"{irregular} irregular frame intervals (possible dropped frames)"
+    except Exception:
+        pass
+    return True, "ok"
+
+
+def _audio_gaps(path: Path):
+    """Check for silence gaps > 300 ms in the middle of the audio track."""
+    r = subprocess.run(
+        ["ffmpeg", "-i", str(path),
+         "-af", "silencedetect=noise=-50dB:d=0.3",
+         "-f", "null", "-"],
+        capture_output=True, text=True, timeout=60,
+    )
+    combined = r.stdout + r.stderr
+    try:
+        total_dur_data = _fp(path, "-show_format")
+        total_dur = float(total_dur_data.get("format", {}).get("duration", 0))
+    except Exception:
+        total_dur = 0.0
+
+    gaps = []
+    for line in combined.splitlines():
+        if "silence_start" in line:
+            try:
+                start = float(line.split("silence_start:")[1].strip())
+                # Ignore silence in the last 2 s (fade-out) and first 0.6 s (fade-in)
+                if 0.6 < start < total_dur - 2.0:
+                    gaps.append(start)
+            except (IndexError, ValueError):
+                pass
+
+    if gaps:
+        return False, f"audio gap(s) detected at {[f'{g:.2f}s' for g in gaps[:3]]}"
     return True, "ok"

@@ -2,7 +2,8 @@
 STEP 2 — Script Generation (MindBlownFacts Edition)
 
 Single Groq LLM call. Returns 5-segment retention-psychology script
-plus YouTube metadata. Batches title/description/tags in the same call.
+plus YouTube metadata. Each segment now carries emotion + complexity tags
+used downstream by voice_generator and timeline_builder.
 """
 
 import json
@@ -47,23 +48,22 @@ TOPIC    : {title}
 DETAILS  : {description}
 CATEGORY : {intent}
 
-Also generate YouTube metadata optimised for educational/facts content.
-
 Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
   "segments": [
-    {{"id": 1, "label": "HOOK",    "text": "...", "estimated_duration_seconds": 3}},
-    {{"id": 2, "label": "TENSION", "text": "...", "estimated_duration_seconds": 12}},
-    {{"id": 3, "label": "CORE",    "text": "...", "estimated_duration_seconds": 30}},
-    {{"id": 4, "label": "PAYOFF",  "text": "...", "estimated_duration_seconds": 10}},
-    {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": 5}}
+    {{"id": 1, "label": "HOOK",    "text": "...", "estimated_duration_seconds": 3,  "emotion": "excited",    "complexity": "simple"}},
+    {{"id": 2, "label": "TENSION", "text": "...", "estimated_duration_seconds": 12, "emotion": "mysterious", "complexity": "moderate"}},
+    {{"id": 3, "label": "CORE",    "text": "...", "estimated_duration_seconds": 30, "emotion": "neutral",    "complexity": "complex"}},
+    {{"id": 4, "label": "PAYOFF",  "text": "...", "estimated_duration_seconds": 10, "emotion": "dramatic",   "complexity": "simple"}},
+    {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": 5,  "emotion": "neutral",    "complexity": "simple"}}
   ],
   "total_estimated_seconds": 60,
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
     "title": "Short punchy title with the key fact (max 95 chars, no 'shocking' or 'unbelievable')",
     "description": "2-3 sentence description with the main fact. End with relevant hashtags.",
-    "tags": ["facts", "did you know", "world facts", "real world facts", "category-specific tag", "educational"]
+    "tags": ["facts", "did you know", "world facts", "real world facts", "category-specific tag", "educational"],
+    "engagement_question": "One open question to pin as the first comment — invites viewer to respond"
   }}
 }}"""
 
@@ -93,7 +93,7 @@ def generate_script(topic: dict) -> dict:
                             {"role": "user",   "content": prompt},
                         ],
                         "temperature": 0.7,
-                        "max_tokens":  1200,
+                        "max_tokens":  1400,
                     },
                     timeout=30,
                 )
@@ -125,6 +125,23 @@ def _parse(raw: str) -> dict | None:
             data = json.loads(text)
             segs = data.get("segments", [])
             if len(segs) == 5 and data.get("full_script"):
+                # Back-fill emotion/complexity if LLM omitted them
+                _defaults = [
+                    ("HOOK",    "excited",    "simple"),
+                    ("TENSION", "mysterious", "moderate"),
+                    ("CORE",    "neutral",    "complex"),
+                    ("PAYOFF",  "dramatic",   "simple"),
+                    ("CLOSE",   "neutral",    "simple"),
+                ]
+                for seg, (_, emo, cplx) in zip(segs, _defaults):
+                    seg.setdefault("emotion",    emo)
+                    seg.setdefault("complexity", cplx)
+                # Back-fill engagement_question
+                data.setdefault("metadata", {})
+                data["metadata"].setdefault(
+                    "engagement_question",
+                    "What fact surprised you the most? Drop it below 👇",
+                )
                 return data
         except json.JSONDecodeError:
             pass
@@ -146,16 +163,21 @@ def _fallback(topic: dict) -> dict:
     full    = " ".join([hook, tension, core, payoff, close])
     return {
         "segments": [
-            {"id": 1, "label": "HOOK",    "text": hook,    "estimated_duration_seconds": 3},
-            {"id": 2, "label": "TENSION", "text": tension, "estimated_duration_seconds": 12},
-            {"id": 3, "label": "CORE",    "text": core,    "estimated_duration_seconds": 30},
-            {"id": 4, "label": "PAYOFF",  "text": payoff,  "estimated_duration_seconds": 10},
-            {"id": 5, "label": "CLOSE",   "text": close,   "estimated_duration_seconds": 5},
+            {"id": 1, "label": "HOOK",    "text": hook,    "estimated_duration_seconds": 3,
+             "emotion": "excited",    "complexity": "simple"},
+            {"id": 2, "label": "TENSION", "text": tension, "estimated_duration_seconds": 12,
+             "emotion": "mysterious", "complexity": "moderate"},
+            {"id": 3, "label": "CORE",    "text": core,    "estimated_duration_seconds": 30,
+             "emotion": "neutral",    "complexity": "complex"},
+            {"id": 4, "label": "PAYOFF",  "text": payoff,  "estimated_duration_seconds": 10,
+             "emotion": "dramatic",   "complexity": "simple"},
+            {"id": 5, "label": "CLOSE",   "text": close,   "estimated_duration_seconds": 5,
+             "emotion": "neutral",    "complexity": "simple"},
         ],
         "total_estimated_seconds": 60,
         "full_script": full,
         "metadata": {
-            "title":       t[:95],
+            "title":               t[:95],
             "description": (
                 f"{t}\n\n"
                 f"Category: {cat}\n\n"
@@ -163,5 +185,6 @@ def _fallback(topic: dict) -> dict:
             ),
             "tags": ["real world facts", "facts", "did you know", "world facts",
                      "educational", "science facts", cat.lower()],
+            "engagement_question": f"Did you already know this about {t[:40]}? Tell us below!",
         },
     }

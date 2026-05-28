@@ -5,6 +5,8 @@ Merges all per-scene voice files, then applies:
   1. Loudness normalisation  → -14 LUFS  (YouTube standard)
   2. Noise gate              → afftdn
   3. Peak limiter            → -1.0 dBFS ceiling
+  4. Fade in  0.5 s at start (eliminates hard audio cut on buffering)
+  5. Fade out 1.0 s at end   (clean finish before end card)
 
 Output: temp/voice/normalized_voice.aac
 """
@@ -37,9 +39,6 @@ def process_audio(voice_dir: Path, temp_dir: Path) -> Path:
 
 
 def _merge(files: list[Path], output: Path) -> None:
-    """Concatenate all voice files into one MP3.
-    Uses filter_complex concat (handles mixed sample-rates / channel counts).
-    """
     if len(files) == 1:
         shutil.copy(files[0], output)
         return
@@ -48,9 +47,9 @@ def _merge(files: list[Path], output: Path) -> None:
     for f in files:
         inputs += ["-i", str(f)]
 
-    n              = len(files)
-    concat_inputs  = "".join(f"[{i}:a]" for i in range(n))
-    concat_filter  = f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
+    n             = len(files)
+    concat_inputs = "".join(f"[{i}:a]" for i in range(n))
+    concat_filter = f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
 
     _run(
         ["ffmpeg", "-y"]
@@ -67,19 +66,40 @@ def _merge(files: list[Path], output: Path) -> None:
 
 
 def _normalize(src: Path, out: Path) -> None:
-    af = (
-        "loudnorm=I=-14:TP=-1.5:LRA=11,"
-        "afftdn=nf=-40,"
-        "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50"
-    )
+    # Probe duration so fade-out can be placed accurately
+    dur = _probe_duration(src)
+    fade_out_start = max(0.0, dur - 1.0)
+
+    af_parts = [
+        "loudnorm=I=-14:TP=-1.5:LRA=11",
+        "afftdn=nf=-40",
+        "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50",
+        "afade=t=in:st=0:d=0.5",
+    ]
+    if fade_out_start > 0:
+        af_parts.append(f"afade=t=out:st={fade_out_start:.3f}:d=1.0")
+
     _run(
         ["ffmpeg", "-y",
          "-i", str(src),
-         "-af", af,
+         "-af", ",".join(af_parts),
          "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
          str(out)],
-        "normalize+limit",
+        "normalize+fade",
     )
+
+
+def _probe_duration(path: Path) -> float:
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_format", str(path)],
+            capture_output=True, text=True, timeout=15,
+        )
+        import json
+        return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
+    except Exception:
+        return 0.0
 
 
 def _run(cmd: list, label: str) -> None:

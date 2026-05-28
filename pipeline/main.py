@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-News Video Pipeline — Main Orchestrator (13 steps, sequential).
+News Video Pipeline — Main Orchestrator (14 steps, sequential).
 master_timeline.json is the single source of truth updated by each step.
+
+Quality gate failure triggers up to 3 retry attempts with degraded renders:
+  Attempt 1 — full render (normal)
+  Attempt 2 — strip xfade transitions, re-assemble
+  Attempt 3 — single title-card fallback (black + text)
+If all 3 fail, the slot is logged and skipped with an alert.
 """
 
 import json
@@ -14,8 +20,6 @@ from pathlib import Path
 # ── Paths ──────────────────────────────────────────────────────────────────────
 _PIPELINE_DIR = Path(__file__).parent
 
-# Only pipeline/scripts on sys.path — no root/scripts to avoid name collisions
-# (e.g. root scripts/analytics.py vs pipeline/scripts/analytics.py)
 sys.path.insert(0, str(_PIPELINE_DIR / "scripts"))
 
 TEMP_DIR   = _PIPELINE_DIR / "temp"
@@ -40,19 +44,20 @@ logging.basicConfig(
 log = logging.getLogger("pipeline.main")
 
 # ── Imports (after sys.path is set) ───────────────────────────────────────────
-from topic_selector     import select_topic
-from script_generator   import generate_script
-from timeline_builder   import build_timeline
-from voice_generator    import generate_voices
-from scene_planner      import plan_scenes
-from visual_fetcher     import fetch_visuals
-from subtitle_generator import generate_subtitles
-from video_assembler    import assemble_video
-from audio_processor    import process_audio
-from encoder            import encode_video
-from quality_gate       import run_quality_gate
-from uploader           import upload_video
-from news_analytics     import log_result
+from topic_selector      import select_topic
+from script_generator    import generate_script
+from timeline_builder    import build_timeline
+from voice_generator     import generate_voices
+from scene_planner       import plan_scenes
+from visual_fetcher      import fetch_visuals
+from subtitle_generator  import generate_subtitles
+from video_assembler     import assemble_video
+from audio_processor     import process_audio
+from encoder             import encode_video
+from quality_gate        import run_quality_gate
+from thumbnail_generator import generate_thumbnail
+from uploader            import upload_video
+from news_analytics      import log_result
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -61,16 +66,24 @@ def _save(timeline: dict) -> None:
     TIMELINE_PATH.write_text(json.dumps(timeline, indent=2, ensure_ascii=False))
 
 
-def _log_quality_failure(gate: dict, topic: dict) -> None:
+def _log_quality_failure(gate: dict, topic: dict, attempt: int) -> None:
     path     = LOGS_DIR / "quality_failures.json"
     existing = json.loads(path.read_text()) if path.exists() else []
     existing.append({
         "timestamp": datetime.utcnow().isoformat(),
         "topic":     topic.get("title"),
         "intent":    topic.get("intent"),
+        "attempt":   attempt,
         **gate,
     })
     path.write_text(json.dumps(existing[-100:], indent=2))
+
+
+def _tts_degraded(timeline: dict) -> bool:
+    return any(
+        sc.get("tts_engine") in ("gtts", "silence")
+        for sc in timeline.get("scenes", [])
+    )
 
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────
@@ -83,7 +96,7 @@ def run_pipeline() -> bool:
 
     try:
         # ── 1: Topic Selection ───────────────────────────────────────────────
-        log.info("[1/13] Topic Selection")
+        log.info("[1/14] Topic Selection")
         topic = select_topic(LOGS_DIR)
         if not topic:
             log.warning("No suitable topic found — aborting.")
@@ -91,13 +104,13 @@ def run_pipeline() -> bool:
         log.info("  [%s] %s", topic["intent"], topic["title"][:80])
 
         # ── 2: Script Generation ─────────────────────────────────────────────
-        log.info("[2/13] Script Generation")
+        log.info("[2/14] Script Generation")
         script = generate_script(topic)
         log.info("  Segments: %d  Est. %ds",
                  len(script["segments"]), script["total_estimated_seconds"])
 
         # ── 3: Master Timeline Build ─────────────────────────────────────────
-        log.info("[3/13] Timeline Build")
+        log.info("[3/14] Timeline Build")
         timeline = build_timeline(script, topic["intent"])
         _save(timeline)
         log.info("  Scenes: %d  Duration: %.1fs  Profile: %s",
@@ -106,40 +119,44 @@ def run_pipeline() -> bool:
                  timeline["profile"])
 
         # ── 4: Voice Generation ──────────────────────────────────────────────
-        log.info("[4/13] Voice Generation")
+        log.info("[4/14] Voice Generation")
         timeline = generate_voices(timeline, TEMP_DIR / "voice")
         _save(timeline)
         log.info("  Actual duration: %.1fs", timeline["total_duration_seconds"])
 
+        if _tts_degraded(timeline):
+            log.warning("  ⚠  TTS DEGRADED: one or more scenes used gTTS/silence. "
+                        "Check ELEVENLABS_API_KEY / edge-tts availability.")
+
         # ── 5: Scene Planning ────────────────────────────────────────────────
-        log.info("[5/13] Scene Planning")
+        log.info("[5/14] Scene Planning")
         timeline = plan_scenes(timeline, topic["intent"])
         _save(timeline)
         log.info("  Keywords assigned to %d scenes", len(timeline["scenes"]))
 
         # ── 6: Visual Fetch + Validation ─────────────────────────────────────
-        log.info("[6/13] Visual Fetch")
+        log.info("[6/14] Visual Fetch")
         timeline = fetch_visuals(timeline, TEMP_DIR / "visuals")
         _save(timeline)
         log.info("  Visuals ready for %d scenes", len(timeline["scenes"]))
 
         # ── 7: Subtitle Generation ───────────────────────────────────────────
-        log.info("[7/13] Subtitle Generation")
+        log.info("[7/14] Subtitle Generation")
         generate_subtitles(timeline, TEMP_DIR / "subtitles")
         log.info("  SRT files written")
 
         # ── 8: Video Assembly ────────────────────────────────────────────────
-        log.info("[8/13] Video Assembly")
+        log.info("[8/14] Video Assembly")
         assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
         log.info("  Assembled: %s", assembled.name)
 
         # ── 9: Audio Processing ──────────────────────────────────────────────
-        log.info("[9/13] Audio Processing")
+        log.info("[9/14] Audio Processing")
         norm_audio = process_audio(TEMP_DIR / "voice", TEMP_DIR)
         log.info("  Normalized: %s", norm_audio.name)
 
         # ── 10: Encoding ─────────────────────────────────────────────────────
-        log.info("[10/13] Encoding")
+        log.info("[10/14] Encoding")
         profile     = timeline["profile"]
         output_path = OUTPUT_DIR / f"{topic['intent']}_{ts}_{profile}.mp4"
         encode_video(assembled, norm_audio, output_path, profile,
@@ -148,26 +165,58 @@ def run_pipeline() -> bool:
                  output_path.name,
                  output_path.stat().st_size / 1_048_576)
 
-        # ── 11: Quality Gate ─────────────────────────────────────────────────
-        log.info("[11/13] Quality Gate")
-        gate = run_quality_gate(output_path, timeline, TEMP_DIR / "subtitles")
-        if not gate["passed"]:
-            log.error("  GATE FAILED: %s", gate["fail_reason"])
-            _log_quality_failure(gate, topic)
-            return False
-        log.info("  All 7 checks passed")
+        # ── 11: Quality Gate (with retry) ─────────────────────────────────────
+        log.info("[11/14] Quality Gate")
+        gate = None
+        for attempt in range(1, 4):
+            gate = run_quality_gate(output_path, timeline, TEMP_DIR / "subtitles")
+            if gate["passed"]:
+                break
 
-        # ── 12: Upload + Metadata ────────────────────────────────────────────
-        log.info("[12/13] Upload")
+            log.warning("  Gate failed (attempt %d/3): %s", attempt, gate["fail_reason"])
+            _log_quality_failure(gate, topic, attempt)
+
+            if attempt == 3:
+                log.error("  All 3 gate attempts failed — skipping upload")
+                return False
+
+            # Attempt 2: re-assemble without xfade transitions
+            if attempt == 1:
+                log.info("  Retry: re-assembling without transitions …")
+                for sc in timeline["scenes"]:
+                    sc["transition"] = "cut"
+                assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
+                encode_video(assembled, norm_audio, output_path, profile,
+                             timeline["total_duration_seconds"])
+
+            # Attempt 3: minimal title-card fallback
+            elif attempt == 2:
+                log.info("  Retry: minimal title-card fallback …")
+                _title_card_fallback(output_path, topic, timeline, norm_audio, profile)
+
+        assert gate is not None
+        if not gate["passed"]:
+            return False
+        log.info("  All 10 checks passed")
+
+        # ── 12: Thumbnail Generation ──────────────────────────────────────────
+        log.info("[12/14] Thumbnail Generation")
         thumb_path = OUTPUT_DIR / f"thumb_{ts}.jpg"
-        video_id   = upload_video(output_path, thumb_path, script, topic, timeline, profile)
+        generate_thumbnail(timeline, script, TEMP_DIR / "visuals", thumb_path)
+
+        # ── 13: Upload + Metadata ─────────────────────────────────────────────
+        log.info("[13/14] Upload")
+        video_id = upload_video(
+            output_path, thumb_path, script, topic, timeline, profile,
+            subtitles_dir=TEMP_DIR / "subtitles",
+        )
         if not video_id:
             log.error("  Upload failed — no video_id returned")
             return False
         log.info("  https://youtu.be/%s", video_id)
 
-        # ── 13: Analytics ────────────────────────────────────────────────────
-        log.info("[13/13] Analytics")
+        # ── 14: Analytics ─────────────────────────────────────────────────────
+        log.info("[14/14] Analytics")
         log_result(video_id, topic, timeline, gate, profile, LOGS_DIR)
 
         log.info("=" * 65)
@@ -179,6 +228,36 @@ def run_pipeline() -> bool:
         log.error("PIPELINE FAILED: %s", exc)
         log.error(traceback.format_exc())
         return False
+
+
+def _title_card_fallback(
+    output_path: Path,
+    topic: dict,
+    timeline: dict,
+    audio_path: Path,
+    profile: str,
+) -> None:
+    """Minimal fallback: black background + title text, full audio."""
+    import subprocess
+    W, H    = timeline["width"], timeline["height"]
+    dur_s   = timeline["total_duration_seconds"]
+    title   = topic["title"][:60].replace("'", "\\'").replace(":", "\\:")
+    font    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    vf      = (f"drawtext=text='{title}':"
+               f"fontfile='{font}':fontcolor=white:fontsize=56:"
+               f"bordercolor=black:borderw=3:"
+               f"x=(w-tw)/2:y=(h-th)/2")
+    video_only = output_path.with_suffix(".fallback_v.mp4")
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi",
+         "-i", f"color=c=0x0A0A1A:size={W}x{H}:rate=30",
+         "-vf", vf, "-t", str(dur_s),
+         "-c:v", "libx264", "-crf", "23", "-pix_fmt", "yuv420p", "-r", "30", "-an",
+         str(video_only)],
+        capture_output=True, timeout=120,
+    )
+    from encoder import encode_video
+    encode_video(video_only, audio_path, output_path, profile, dur_s)
 
 
 if __name__ == "__main__":

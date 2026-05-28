@@ -4,6 +4,11 @@ STEP 3 — Master Timeline Build
 CRITICAL: This is the single source of truth read by every subsequent step.
 Built from script segments BEFORE voice generation.
 Voice generator updates it with ACTUAL durations after generating audio.
+
+Complexity-based minimum dwell times ensure viewers have time to absorb facts:
+  simple   → 3 000 ms min
+  moderate → 4 500 ms min
+  complex  → 6 000 ms min
 """
 
 import logging
@@ -13,7 +18,14 @@ log = logging.getLogger(__name__)
 _WPS = 2.8          # words per second (news pace)
 _FPS = 30
 
-# Transition per segment label (applied AFTER the scene)
+# Minimum scene dwell time (ms) by complexity tag
+_MIN_DWELL_MS = {
+    "simple":   3_000,
+    "moderate": 4_500,
+    "complex":  6_000,
+}
+
+# Transition applied AFTER the scene ends
 _TRANSITIONS = {
     "HOOK":    "cut",
     "TENSION": "cut",
@@ -38,52 +50,60 @@ def build_timeline(script: dict, intent: str = "") -> dict:
     scene_id    = 1
 
     for seg in script["segments"]:
-        label    = seg["label"]
-        text     = seg["text"].strip()
-        words    = text.split()
-        est_ms   = int(len(words) / _WPS * 1000)
+        label      = seg["label"]
+        text       = seg["text"].strip()
+        emotion    = seg.get("emotion",    "neutral")
+        complexity = seg.get("complexity", "simple")
+        words      = text.split()
+        est_ms     = int(len(words) / _WPS * 1000)
 
-        interval_s  = _SCENE_INTERVAL[label]
-        n_scenes    = max(1, round((est_ms / 1000) / interval_s))
+        interval_s = _SCENE_INTERVAL[label]
+        n_scenes   = max(1, round((est_ms / 1000) / interval_s))
         base_dur_ms = est_ms // n_scenes
 
+        min_dur_ms = _MIN_DWELL_MS.get(complexity, 3_000)
+
         for sc_idx in range(n_scenes):
-            # Distribute words evenly across scenes in this segment
-            wpsc   = max(1, len(words) // n_scenes)
+            wpsc    = max(1, len(words) // n_scenes)
             w_start = sc_idx * wpsc
             w_end   = (w_start + wpsc) if sc_idx < n_scenes - 1 else len(words)
             sc_text = " ".join(words[w_start:w_end])
 
             dur_ms = base_dur_ms if sc_idx < n_scenes - 1 else (est_ms - base_dur_ms * (n_scenes - 1))
-            dur_ms = max(dur_ms, 1000)   # minimum 1 second per scene
+            dur_ms = max(dur_ms, min_dur_ms)
 
             start_ms = elapsed_ms
             end_ms   = elapsed_ms + dur_ms
 
             scenes.append({
-                "scene_id":       scene_id,
-                "segment_label":  label,
-                "start_ms":       start_ms,
-                "end_ms":         end_ms,
-                "duration_ms":    dur_ms,
-                "script_text":    sc_text,
-                "voice_start_ms": start_ms,
-                "voice_end_ms":   end_ms,
-                "subtitle_lines": _build_subtitle_lines(sc_text, start_ms, end_ms),
-                "visual_keyword": "",
-                "visual_file":    "",
-                "clip_type":      "video",
-                "clip_score":     0.0,
-                "retry_count":    0,
-                "transition":     _TRANSITIONS[label],
+                "scene_id":        scene_id,
+                "segment_label":   label,
+                "start_ms":        start_ms,
+                "end_ms":          end_ms,
+                "duration_ms":     dur_ms,
+                "script_text":     sc_text,
+                "emotion":         emotion,
+                "complexity":      complexity,
+                "voice_start_ms":  start_ms,
+                "voice_end_ms":    end_ms,
+                "subtitle_lines":  _build_subtitle_lines(sc_text, start_ms, end_ms),
+                "visual_keyword":  "",
+                "visual_keywords": [],
+                "visual_file":     "",
+                "clip_type":       "video",
+                "clip_score":      0.0,
+                "retry_count":     0,
+                "focus_region":    "center",
+                "transition":      _TRANSITIONS[label],
+                "tts_engine":      "",
             })
 
             elapsed_ms += dur_ms
             scene_id   += 1
 
-    total_s  = elapsed_ms / 1000
-    profile  = "shorts"  if total_s <= 60 else "standard"
-    W, H     = (1080, 1920) if profile == "shorts" else (1920, 1080)
+    total_s = elapsed_ms / 1000
+    profile = "shorts"  if total_s <= 60 else "standard"
+    W, H    = (1080, 1920) if profile == "shorts" else (1920, 1080)
 
     return {
         "total_duration_seconds": round(total_s, 2),
@@ -98,14 +118,14 @@ def build_timeline(script: dict, intent: str = "") -> dict:
 
 
 def _build_subtitle_lines(text: str, start_ms: int, end_ms: int) -> list[dict]:
-    """Split text into ≤6-word subtitle lines with evenly distributed timing."""
-    words   = text.split()
+    """Split text into ≤4-word subtitle chunks with evenly distributed timing."""
+    words  = text.split()
     chunks: list[str] = []
-    buf: list[str]    = []
+    buf:    list[str] = []
 
     for w in words:
         buf.append(w)
-        if len(buf) >= 6:
+        if len(buf) >= 4:
             chunks.append(" ".join(buf))
             buf = []
     if buf:
@@ -114,8 +134,8 @@ def _build_subtitle_lines(text: str, start_ms: int, end_ms: int) -> list[dict]:
     if not chunks:
         return []
 
-    dur_ms     = max(end_ms - start_ms, 500)
-    ms_per_ln  = max(500, dur_ms // len(chunks))
+    dur_ms    = max(end_ms - start_ms, 500)
+    ms_per_ln = max(500, dur_ms // len(chunks))
     result: list[dict] = []
     t = start_ms
 

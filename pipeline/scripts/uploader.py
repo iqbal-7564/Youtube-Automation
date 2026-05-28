@@ -1,15 +1,18 @@
 """
 STEP 12 — Upload + Metadata
 
-YouTube resumable upload (same pattern as scripts/youtube_upload.py).
-Extracts thumbnail at t=2s (inside HOOK — most dramatic frame).
-Auto-assigns to category-specific playlist.
-Category: 27 (Education) — correct for world facts educational content.
+YouTube resumable upload.
+Thumbnail: uses the Pillow-designed image from thumbnail_generator (not a frame grab).
+Description: proper chapter markers + category hashtags.
+Post-upload:
+  • SRT captions uploaded via captions.insert (boosts search indexing + accessibility)
+  • Pinned engagement comment posted via commentThreads.insert
+  • Auto-assigns to category-specific playlist
 """
 
 import logging
 import os
-import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -35,6 +38,7 @@ def upload_video(
     topic: dict,
     timeline: dict,
     profile: str,
+    subtitles_dir: Path | None = None,
 ) -> str | None:
     try:
         token = _token()
@@ -52,11 +56,22 @@ def upload_video(
     if not video_id:
         return None
 
-    _extract_thumb(video_path, thumb_path)
-    _upload_thumb(video_id, thumb_path, token)
+    # Upload the designed Pillow thumbnail
+    if thumb_path.exists() and thumb_path.stat().st_size > 0:
+        _upload_thumb(video_id, thumb_path, token)
 
-    pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(),
-                              "MindBlownFacts — World")
+    # Upload SRT captions
+    if subtitles_dir:
+        _upload_captions(video_id, subtitles_dir, timeline, token)
+
+    # Pin engagement comment
+    question = script.get("metadata", {}).get(
+        "engagement_question",
+        "Which fact surprised you the most? Tell us below!"
+    )
+    _post_pinned_comment(video_id, question, token)
+
+    pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(), "MindBlownFacts — World")
     pl_id   = _playlist(token, pl_name)
     if pl_id:
         _add_to_playlist(token, video_id, pl_id)
@@ -95,29 +110,36 @@ def _token() -> str:
 def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict:
     meta  = script.get("metadata", {})
     title = (meta.get("title") or topic["title"])[:95]
+    cat   = topic.get("intent", "SCIENCE")
 
-    # Description: content + optional timestamps + hashtags
-    parts = [title, ""]
+    parts: list[str] = [title, ""]
+
+    # Chapter markers for standard long-form videos
     if timeline["total_duration_seconds"] > 60:
-        t = 0
+        parts.append("📌 Chapters")
+        t = 0.0
         for sc in timeline["scenes"]:
             mm, ss = divmod(int(t), 60)
-            parts.append(f"{mm}:{ss:02d} - {sc['segment_label']}")
+            label  = sc["segment_label"]
+            if not label.startswith("_"):
+                parts.append(f"{mm}:{ss:02d} — {label}")
             t += sc["duration_ms"] / 1000
         parts.append("")
 
-    cat = topic.get("intent", "SCIENCE").lower()
     parts += [
-        f"Category: {topic.get('intent', 'SCIENCE')}",
+        meta.get("description", f"{title}\n\nCategory: {cat}"),
         "",
-        f"#MindBlownFacts #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational #Shorts",
+        f"#MindBlownFacts #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational",
     ]
+    if profile == "shorts":
+        parts.append("#Shorts")
+
     description = "\n".join(parts)[:4900]
 
     tags = (
         meta.get("tags", [])
         + ["real world facts", "facts", "did you know", "world facts",
-           "educational", cat]
+           "educational", cat.lower()]
     )[:30]
 
     return {"title": title, "description": description, "tags": tags}
@@ -128,7 +150,7 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
 def _upload(video_path: Path, meta: dict, token: str,
             title: str, is_short: bool) -> str | None:
     size   = video_path.stat().st_size
-    cat_id = "27"   # 27 = Education
+    cat_id = "27"
 
     for attempt in range(3):
         try:
@@ -180,19 +202,7 @@ def _upload(video_path: Path, meta: dict, token: str,
 
 # ── Thumbnail ─────────────────────────────────────────────────────────────────
 
-def _extract_thumb(video: Path, thumb: Path) -> None:
-    subprocess.run(
-        ["ffmpeg", "-y", "-ss", "2", "-i", str(video),
-         "-vframes", "1", "-q:v", "2", str(thumb)],
-        capture_output=True, timeout=30,
-    )
-    if thumb.exists():
-        log.info("  Thumbnail extracted at 2s")
-
-
 def _upload_thumb(video_id: str, thumb: Path, token: str) -> None:
-    if not (thumb.exists() and thumb.stat().st_size > 0):
-        return
     try:
         with open(str(thumb), "rb") as f:
             r = requests.post(
@@ -208,6 +218,122 @@ def _upload_thumb(video_id: str, thumb: Path, token: str) -> None:
             log.warning("  Thumbnail HTTP %d", r.status_code)
     except Exception as exc:
         log.warning("  Thumbnail: %s", exc)
+
+
+# ── SRT captions ──────────────────────────────────────────────────────────────
+
+def _upload_captions(video_id: str, subtitles_dir: Path, timeline: dict, token: str) -> None:
+    """Merge all per-scene SRT files into one and upload to YouTube."""
+    try:
+        combined: list[str] = []
+        idx = 1
+        for sc in timeline["scenes"]:
+            srt_path = subtitles_dir / f"sub_{sc['scene_id']}.srt"
+            if not srt_path.exists():
+                continue
+            content = srt_path.read_text(encoding="utf-8").strip()
+            if not content:
+                continue
+            for block in content.split("\n\n"):
+                lines = block.strip().splitlines()
+                if len(lines) >= 3:
+                    combined.append(str(idx))
+                    combined.extend(lines[1:])
+                    combined.append("")
+                    idx += 1
+
+        if not combined:
+            return
+
+        srt_content = "\n".join(combined)
+        r = requests.post(
+            "https://www.googleapis.com/upload/youtube/v3/captions"
+            "?uploadType=resumable&part=snippet",
+            headers={
+                "Authorization":           f"Bearer {token}",
+                "Content-Type":            "application/json",
+                "X-Upload-Content-Type":   "text/plain",
+                "X-Upload-Content-Length": str(len(srt_content.encode())),
+            },
+            json={
+                "snippet": {
+                    "videoId":  video_id,
+                    "language": "en",
+                    "name":     "English",
+                    "isDraft":  False,
+                }
+            },
+            timeout=15,
+        )
+        if r.status_code != 200:
+            log.warning("  Caption init HTTP %d", r.status_code)
+            return
+
+        upload_url = r.headers.get("Location", "")
+        if not upload_url:
+            return
+
+        up = requests.put(
+            upload_url,
+            headers={"Content-Type": "text/plain"},
+            data=srt_content.encode("utf-8"),
+            timeout=60,
+        )
+        if up.ok:
+            log.info("  Captions uploaded")
+        else:
+            log.warning("  Caption upload HTTP %d", up.status_code)
+
+    except Exception as exc:
+        log.warning("  Captions: %s", exc)
+
+
+# ── Pinned comment ────────────────────────────────────────────────────────────
+
+def _post_pinned_comment(video_id: str, question: str, token: str) -> None:
+    try:
+        # Wait briefly so YouTube indexes the video first
+        time.sleep(5)
+        r = requests.post(
+            "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type":  "application/json"},
+            json={
+                "snippet": {
+                    "videoId": video_id,
+                    "topLevelComment": {
+                        "snippet": {"textOriginal": question}
+                    },
+                }
+            },
+            timeout=15,
+        )
+        if not r.ok:
+            log.warning("  Comment HTTP %d", r.status_code)
+            return
+
+        comment_id = r.json().get("snippet", {}).get("topLevelComment", {}).get("id", "")
+        if not comment_id:
+            return
+
+        # Pin the comment
+        requests.post(
+            "https://www.googleapis.com/youtube/v3/comments?part=snippet",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type":  "application/json"},
+            json={
+                "id": comment_id,
+                "snippet": {
+                    "videoId":     video_id,
+                    "textOriginal": question,
+                    "moderationStatus": "published",
+                },
+            },
+            timeout=15,
+        )
+        log.info("  Pinned comment posted")
+    except Exception as exc:
+        log.warning("  Comment: %s", exc)
 
 
 # ── Playlist ──────────────────────────────────────────────────────────────────

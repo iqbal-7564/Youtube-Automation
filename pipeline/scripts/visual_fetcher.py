@@ -1,9 +1,10 @@
 """
 STEP 6 — Visual Fetch + Validation
 
-For each scene: fetch up to 5 candidates from Pexels (primary) / Pixabay (fallback),
-score with text-based CLIP proxy (keyword recall × fuzzy), pick best >= 0.28.
-Retry loop (max 3): swap keyword → intent fallback → generic safe keyword.
+For each scene: tries up to 3 scene-specific keywords (visual_keywords list),
+then falls back to category fallbacks → generic safe keyword.
+Pexels portrait orientation filter is enforced for Shorts profile.
+Score with text-based CLIP proxy (keyword recall × fuzzy), pick best >= 0.28.
 Video clips are trimmed to exact scene duration. Images get Ken Burns in Step 8.
 """
 
@@ -50,10 +51,9 @@ _GENERIC_FALLBACK = ["nature landscape wide", "aerial earth beautiful", "cosmos 
 
 def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     visuals_dir.mkdir(parents=True, exist_ok=True)
-    W, H   = timeline["width"], timeline["height"]
-    intent = timeline.get("intent", "POLITICS")
-    orient = "portrait" if W < H else "landscape"
-
+    W, H    = timeline["width"], timeline["height"]
+    intent  = timeline.get("intent", "SCIENCE")
+    orient  = "portrait" if W < H else "landscape"
     fallbacks = _FALLBACKS.get(intent, _GENERIC_FALLBACK)
 
     for sc in timeline["scenes"]:
@@ -61,11 +61,13 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
             sc.update(visual_file="CLOSE", clip_type="close", clip_score=1.0)
             continue
 
-        keyword = sc["visual_keyword"]
-        dur_s   = sc["duration_ms"] / 1000
+        # Use the ranked keyword list from scene_planner (3 specific options)
+        kw_list   = sc.get("visual_keywords") or [sc["visual_keyword"]]
+        dur_s     = sc["duration_ms"] / 1000
+        primary_kw = kw_list[0]
 
         path, clip_type, clip_score, retries = _fetch_with_retry(
-            keyword, fallbacks, visuals_dir, sc["scene_id"], dur_s, orient
+            primary_kw, kw_list[1:], fallbacks, visuals_dir, sc["scene_id"], dur_s, orient, W, H
         )
 
         if path:
@@ -73,8 +75,7 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
             sc["clip_type"]   = clip_type
         else:
             log.warning("Scene %d: no visual — black fallback", sc["scene_id"])
-            bp = _black_clip(visuals_dir / f"scene_{sc['scene_id']}_visual.mp4",
-                             dur_s, W, H)
+            bp = _black_clip(visuals_dir / f"scene_{sc['scene_id']}_visual.mp4", dur_s, W, H)
             sc["visual_file"] = bp.name
             sc["clip_type"]   = "black"
 
@@ -84,12 +85,20 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     return timeline
 
 
-def _fetch_with_retry(keyword, fallbacks, out_dir, scene_id, dur_s, orient):
-    kw_tries = [keyword] + fallbacks[:2] + [_GENERIC_FALLBACK[0]]
+def _fetch_with_retry(primary_kw, scene_kws, fallbacks, out_dir, scene_id, dur_s, orient, W, H):
+    # Try scene-specific keywords first, then category fallbacks, then generic
+    kw_tries = [primary_kw] + list(scene_kws) + fallbacks[:2] + [_GENERIC_FALLBACK[0]]
+    seen = set()
+    deduped = []
+    for k in kw_tries:
+        if k not in seen:
+            seen.add(k)
+            deduped.append(k)
+    kw_tries = deduped[:5]
 
     best: Optional[dict] = None
 
-    for retry, kw in enumerate(kw_tries[:4]):
+    for retry, kw in enumerate(kw_tries):
         candidates = (_pexels_videos(kw, orient) or
                       _pixabay_videos(kw) or
                       _pexels_photos(kw, orient) or
@@ -98,11 +107,11 @@ def _fetch_with_retry(keyword, fallbacks, out_dir, scene_id, dur_s, orient):
             continue
 
         for c in candidates:
-            c["_s"] = _score(keyword, c["tags"])
+            c["_s"] = _score(primary_kw, c["tags"])
         candidates.sort(key=lambda c: c["_s"], reverse=True)
         top = candidates[0]
 
-        if top["_s"] >= _CLIP_THRESHOLD or retry == 3:
+        if top["_s"] >= _CLIP_THRESHOLD or retry == len(kw_tries) - 1:
             out_name = f"scene_{scene_id}_visual.{top['ext']}"
             out_path = out_dir / out_name
             if _download(top["url"], out_path):
@@ -116,18 +125,17 @@ def _fetch_with_retry(keyword, fallbacks, out_dir, scene_id, dur_s, orient):
         if best is None or top["_s"] > best.get("_s", 0):
             best = {**top, "out_dir": out_dir, "scene_id": scene_id, "dur_s": dur_s}
 
-    # Exhausted retries — use best found regardless of score
     if best:
         out_path = best["out_dir"] / f"scene_{best['scene_id']}_visual.{best['ext']}"
         if _download(best["url"], out_path):
             if best["type"] == "video":
                 trimmed = _trim(out_path, best["dur_s"], best["scene_id"], best["out_dir"])
                 if trimmed:
-                    return trimmed, "video", best["_s"], 3
+                    return trimmed, "video", best["_s"], len(kw_tries)
             else:
-                return out_path, "image", best["_s"], 3
+                return out_path, "image", best["_s"], len(kw_tries)
 
-    return None, "video", 0.0, 3
+    return None, "video", 0.0, len(kw_tries)
 
 
 # ── Pexels / Pixabay ──────────────────────────────────────────────────────────

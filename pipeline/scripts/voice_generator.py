@@ -7,7 +7,14 @@ If actual duration drifts > 500ms from estimate, scene visual duration adjusts
 (audio is never stretched — visual window expands/contracts instead).
 
 Engine priority: edge-tts → ElevenLabs → gTTS → silence fallback
-Voice settings:  speed -5% (0.95x), stability 0.75, similarity_boost 0.85
+ElevenLabs voice settings are tuned per emotion tag:
+  excited    → low stability, higher style (dynamic delivery)
+  mysterious → high stability, slow rate (eerie, deliberate)
+  dramatic   → medium stability, high similarity (powerful)
+  neutral    → default settings
+
+300 ms of silence is appended to each voice file to give viewers a
+breathing moment between scenes. CORE→PAYOFF boundary gets 600 ms.
 """
 
 import asyncio
@@ -25,15 +32,49 @@ log = logging.getLogger(__name__)
 _EL_VOICE_ID = "pNInz6obpgDQGcFmaJgB"   # Adam — authoritative news style
 _EDGE_VOICE  = "en-US-GuyNeural"
 
+# ElevenLabs voice settings per emotion
+_EL_SETTINGS: dict[str, dict] = {
+    "excited":    {"stability": 0.35, "similarity_boost": 0.90, "style": 0.70, "use_speaker_boost": True},
+    "mysterious": {"stability": 0.85, "similarity_boost": 0.80, "style": 0.10, "use_speaker_boost": False},
+    "dramatic":   {"stability": 0.55, "similarity_boost": 0.90, "style": 0.45, "use_speaker_boost": True},
+    "neutral":    {"stability": 0.75, "similarity_boost": 0.85, "style": 0.00, "use_speaker_boost": True},
+}
+
+# edge-tts rate per emotion
+_EDGE_RATE: dict[str, str] = {
+    "excited":    "+5%",
+    "mysterious": "-10%",
+    "dramatic":   "-5%",
+    "neutral":    "-5%",
+}
+
+# Silence padding between scenes (ms)
+_SCENE_PAD_MS           = 300
+_SECTION_BOUNDARY_PAD_MS = 600   # CORE → PAYOFF transition
+
 
 def generate_voices(timeline: dict, voice_dir: Path) -> dict:
     voice_dir.mkdir(parents=True, exist_ok=True)
     scenes = timeline["scenes"]
 
-    for sc in scenes:
-        path = voice_dir / f"voice_{sc['scene_id']}.mp3"
+    for i, sc in enumerate(scenes):
+        path    = voice_dir / f"voice_{sc['scene_id']}.mp3"
+        emotion = sc.get("emotion", "neutral")
+
         if not (path.exists() and path.stat().st_size > 500):
-            _generate(sc["script_text"], path)
+            engine = _generate(sc["script_text"], path, emotion)
+            sc["tts_engine"] = engine
+        else:
+            sc.setdefault("tts_engine", "cached")
+
+        # Append inter-scene silence
+        is_core_payoff_boundary = (
+            sc["segment_label"] == "CORE" and
+            i + 1 < len(scenes) and
+            scenes[i + 1]["segment_label"] == "PAYOFF"
+        )
+        pad_ms = _SECTION_BOUNDARY_PAD_MS if is_core_payoff_boundary else _SCENE_PAD_MS
+        _append_silence(path, pad_ms / 1000)
 
         actual_ms = _duration_ms(path)
         if actual_ms > 0:
@@ -68,27 +109,36 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
             sc["subtitle_lines"], sc["start_ms"], sc["end_ms"]
         )
 
+    # Log TTS engine usage so quality gate can check
+    engines_used = [sc.get("tts_engine", "") for sc in scenes]
+    degraded = [e for e in engines_used if e in ("gtts", "silence")]
+    if degraded:
+        log.warning("  TTS quality degraded for %d scene(s) — engines: %s",
+                    len(degraded), set(degraded))
+
     return timeline
 
 
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
-def _generate(text: str, out: Path) -> None:
-    if _edge_tts(text, out):
-        return
-    if _elevenlabs(text, out):
-        return
+def _generate(text: str, out: Path, emotion: str) -> str:
+    if _edge_tts(text, out, emotion):
+        return "edge-tts"
+    if _elevenlabs(text, out, emotion):
+        return "elevenlabs"
     if _gtts(text, out):
-        return
+        return "gtts"
     _silence(out, max(1.0, len(text.split()) / 2.8))
     log.error("All TTS engines failed — silence for: %s", text[:50])
+    return "silence"
 
 
-def _edge_tts(text: str, out: Path) -> bool:
+def _edge_tts(text: str, out: Path, emotion: str) -> bool:
+    rate = _EDGE_RATE.get(emotion, "-5%")
     try:
         async def _run():
             import edge_tts
-            comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate="-5%")
+            comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate)
             await comm.save(str(out))
 
         asyncio.run(_run())
@@ -98,10 +148,11 @@ def _edge_tts(text: str, out: Path) -> bool:
         return False
 
 
-def _elevenlabs(text: str, out: Path) -> bool:
+def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
     key = os.getenv("ELEVENLABS_API_KEY", "")
     if not key:
         return False
+    settings = _EL_SETTINGS.get(emotion, _EL_SETTINGS["neutral"])
     try:
         r = requests.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
@@ -109,12 +160,7 @@ def _elevenlabs(text: str, out: Path) -> bool:
             json={
                 "text":     text,
                 "model_id": "eleven_monolingual_v1",
-                "voice_settings": {
-                    "stability":         0.75,
-                    "similarity_boost":  0.85,
-                    "style":             0.0,
-                    "use_speaker_boost": True,
-                },
+                "voice_settings": settings,
             },
             timeout=30,
         )
@@ -140,18 +186,39 @@ def _gtts(text: str, out: Path) -> bool:
 def _silence(out: Path, duration_s: float) -> None:
     subprocess.run(
         ["ffmpeg", "-y", "-f", "lavfi",
-         "-i", f"anullsrc=r=44100:cl=stereo",
+         "-i", "anullsrc=r=44100:cl=stereo",
          "-t", str(duration_s), str(out)],
         capture_output=True,
     )
 
 
+def _append_silence(path: Path, duration_s: float) -> None:
+    """Append silence to an existing audio file in-place."""
+    if not path.exists():
+        return
+    tmp = path.with_suffix(".tmp.mp3")
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y",
+             "-i", str(path),
+             "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={duration_s}",
+             "-filter_complex", "[0:a][1:a]concat=n=2:v=0:a=1[outa]",
+             "-map", "[outa]",
+             "-c:a", "libmp3lame", "-q:a", "2",
+             str(tmp)],
+            capture_output=True, timeout=30,
+        )
+        if tmp.exists() and tmp.stat().st_size > 500:
+            tmp.replace(path)
+    except Exception as exc:
+        log.debug("append_silence: %s", exc)
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _duration_ms(path: Path) -> int:
-    """Return audio duration in ms.
-    MP3 files don't store duration in the stream header — must read from format.
-    """
     if not path.exists():
         return 0
     try:
@@ -161,12 +228,10 @@ def _duration_ms(path: Path) -> int:
             capture_output=True, text=True, timeout=10,
         )
         data = json.loads(r.stdout)
-        # Stream duration (present for WAV/AAC but often absent for MP3)
         for stream in data.get("streams", []):
             dur = stream.get("duration")
             if dur:
                 return int(float(dur) * 1000)
-        # Format duration — always present for MP3
         fmt_dur = data.get("format", {}).get("duration")
         if fmt_dur:
             return int(float(fmt_dur) * 1000)

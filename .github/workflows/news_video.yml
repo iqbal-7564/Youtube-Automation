@@ -34,7 +34,7 @@ jobs:
           ffmpeg -version | head -1
 
       - name: Install Python dependencies
-        run: pip install requests gtts edge-tts feedparser rapidfuzz
+        run: pip install requests gtts edge-tts feedparser rapidfuzz Pillow
 
       - name: Create runtime directories
         run: |

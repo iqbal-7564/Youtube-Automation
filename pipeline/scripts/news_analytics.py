@@ -4,13 +4,13 @@ STEP 13 — Analytics
 Phase 1 (active): Logs per-video result to pipeline/logs/video_results.json.
 
 Phase 2 (passive — run separately after 30 days of data):
-  Polls YouTube Analytics API every 24h, stores metrics,
-  and computes feedback hints for script_generator.
+  Polls YouTube Analytics API, stores metrics, computes per-category
+  performance weights written to performance_history.json.
+  topic_selector.py reads these weights to prioritise well-performing categories.
 
-Feedback signals:
+Feedback signals used:
   avg_view_pct < 40%  → shorten hook
   avg_view_pct > 70%  → lock current script structure
-  CTR < 3%            → shift thumbnail extraction from 2s to 5s
   retention_drop < 8s → TENSION segment not working
 """
 
@@ -46,6 +46,8 @@ def log_result(
         "",
     )
 
+    engines = list({sc.get("tts_engine", "") for sc in timeline["scenes"]} - {""})
+
     results.append({
         "video_id":               video_id,
         "intent":                 topic["intent"],
@@ -57,6 +59,7 @@ def log_result(
         "quality_gate_passed":    gate["passed"],
         "uploaded_at":            datetime.utcnow().isoformat(),
         "profile":                profile,
+        "tts_engines":            engines,
     })
 
     path.write_text(json.dumps(results[-200:], indent=2, ensure_ascii=False))
@@ -67,11 +70,14 @@ def log_result(
 
 def fetch_analytics_feedback(logs_dir: Path) -> dict:
     """
-    Polls YouTube Analytics for recent videos and returns feedback hints.
-    Called from a separate scheduled job — not the main pipeline.
+    Polls YouTube Analytics for recent videos.
+    Updates video_results.json with metrics.
+    Writes performance_history.json keyed by category.
+    Returns feedback hints for script_generator.
     """
     results_path = logs_dir / "video_results.json"
     data_path    = logs_dir / "analytics_data.json"
+    perf_path    = logs_dir / "performance_history.json"
 
     if not results_path.exists():
         return {}
@@ -100,9 +106,12 @@ def fetch_analytics_feedback(logs_dir: Path) -> dict:
         existing = json.loads(data_path.read_text()) if data_path.exists() else []
         existing.extend(updated)
         data_path.write_text(json.dumps(existing[-500:], indent=2))
+        results_path.write_text(json.dumps(results[-200:], indent=2))
         log.info("Analytics updated for %d videos", len(updated))
 
-    return _feedback_hints(results)
+    hints = _feedback_hints(results)
+    _write_performance_history(results, perf_path)
+    return hints
 
 
 def _fetch_stats(video_id: str, token: str) -> dict:
@@ -151,6 +160,33 @@ def _feedback_hints(results: list) -> dict:
         hints["template_note"] = "script structure performing well — keep"
 
     return hints
+
+
+def _write_performance_history(results: list, perf_path: Path) -> None:
+    """Aggregate avg_view_pct by category and write performance_history.json."""
+    by_cat: dict[str, list[float]] = {}
+    for r in results:
+        cat = r.get("intent", "")
+        pct = r.get("avg_view_pct")
+        if cat and pct is not None:
+            by_cat.setdefault(cat, []).append(float(pct))
+
+    history: dict[str, dict] = {}
+    existing = json.loads(perf_path.read_text()) if perf_path.exists() else {}
+    history.update(existing)
+
+    for cat, vals in by_cat.items():
+        if not vals:
+            continue
+        avg = round(sum(vals) / len(vals), 2)
+        history[cat] = {
+            "avg_retention_pct": avg,
+            "sample_count":      len(vals),
+            "updated_at":        datetime.utcnow().isoformat(),
+        }
+
+    perf_path.write_text(json.dumps(history, indent=2))
+    log.info("Performance history updated for %d categories", len(history))
 
 
 def _token() -> str | None:

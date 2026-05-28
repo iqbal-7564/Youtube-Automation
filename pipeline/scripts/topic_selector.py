@@ -135,25 +135,39 @@ _GROQ_MODEL = "llama3-70b-8192"
 
 
 def select_topic(logs_dir: Path) -> dict | None:
-    produced_today  = _load_produced_today(logs_dir)
-    used_categories = {v.get("intent", "") for v in produced_today}
+    produced_today   = _load_produced_today(logs_dir)
+    full_history     = _load_full_history(logs_dir)
+    used_categories  = {v.get("intent", "") for v in produced_today}
+    perf_weights     = _load_performance_weights(logs_dir)
 
-    for cat in CATEGORIES:
-        if cat in used_categories:
-            log.debug("Skipping %s — already produced today", cat)
-            continue
+    # Build ordered category list, performance-weighted, today-deduped
+    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights)
 
+    for cat in ordered:
         seed  = random.choice(_SEEDS[cat])
-        topic = _build_topic(cat, seed, produced_today)
+        topic = _build_topic(cat, seed, full_history)
         if topic:
             log.info("Selected [%s]: %s", cat, topic["title"][:80])
             return topic
 
-    # All categories used today — pick any and generate a fresh angle
-    log.info("All categories used today — generating fresh angle")
-    cat  = random.choice(CATEGORIES)
+    # All categories exhausted — pick highest-weight and ignore history
+    log.info("All categories exhausted — generating fresh angle")
+    cat  = ordered[0] if ordered else random.choice(CATEGORIES)
     seed = random.choice(_SEEDS[cat])
     return _build_topic(cat, seed, [])
+
+
+def _prioritise_categories(
+    cats: list[str],
+    used_today: set[str],
+    weights: dict[str, float],
+) -> list[str]:
+    """Sort categories by performance weight, skip ones used today."""
+    available = [c for c in cats if c not in used_today]
+    if not available:
+        available = list(cats)
+    available.sort(key=lambda c: weights.get(c, 1.0), reverse=True)
+    return available
 
 
 def _build_topic(category: str, seed: str, produced: list[dict]) -> dict | None:
@@ -243,3 +257,30 @@ def _load_produced_today(logs_dir: Path) -> list[dict]:
                 if r.get("uploaded_at", "").startswith(today)]
     except Exception:
         return []
+
+
+def _load_full_history(logs_dir: Path) -> list[dict]:
+    """Load all video results from the last 12 months for deduplication."""
+    try:
+        path = logs_dir / "video_results.json"
+        if not path.exists():
+            return []
+        from datetime import timedelta
+        cutoff = (datetime.utcnow() - timedelta(days=365)).isoformat()
+        return [r for r in json.loads(path.read_text())
+                if r.get("uploaded_at", "") >= cutoff]
+    except Exception:
+        return []
+
+
+def _load_performance_weights(logs_dir: Path) -> dict[str, float]:
+    """Read per-category average retention from analytics, return as weights."""
+    try:
+        path = logs_dir / "performance_history.json"
+        if not path.exists():
+            return {}
+        data = json.loads(path.read_text())
+        return {cat: info.get("avg_retention_pct", 50.0)
+                for cat, info in data.items()}
+    except Exception:
+        return {}
