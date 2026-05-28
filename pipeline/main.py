@@ -15,10 +15,10 @@ from pathlib import Path
 _PIPELINE_DIR = Path(__file__).parent
 _ROOT_DIR     = _PIPELINE_DIR.parent
 
-# Insert pipeline/scripts first so imports resolve correctly
+# pipeline/scripts must be at index 0 — wins over any same-named module in root/scripts
 sys.path.insert(0, str(_PIPELINE_DIR / "scripts"))
-# Insert root/scripts so notify.py is reachable
-sys.path.insert(0, str(_ROOT_DIR / "scripts"))
+# root/scripts at index 1 — only used for notify.py and other helpers not in pipeline
+sys.path.insert(1, str(_ROOT_DIR / "scripts"))
 
 TEMP_DIR   = _PIPELINE_DIR / "temp"
 OUTPUT_DIR = _PIPELINE_DIR / "output"
