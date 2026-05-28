@@ -113,6 +113,26 @@ def build_timeline(script: dict, intent: str = "") -> dict:
     intent_upper = intent.upper()
     persona_ms   = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
 
+    # Read adaptive params (written by news_analytics after retention analysis)
+    _adaptive: dict = {}
+    try:
+        import json as _json
+        _ap = Path(__file__).parent.parent / "logs" / "adaptive_params.json"
+        if _ap.exists():
+            _adaptive = _json.loads(_ap.read_text())
+    except Exception:
+        pass
+
+    shorts_hook_cap = _adaptive.get("hook_cap_ms", _SHORTS_HOOK_CAP_MS)
+    tension_ivl     = _adaptive.get("tension_interval_s",
+                                     _SCENE_INTERVAL_SHORTS["TENSION"])
+    core_ivl        = _adaptive.get("core_interval_s",
+                                     _SCENE_INTERVAL_SHORTS["CORE"])
+
+    # Apply adaptive values to Shorts intervals
+    _SCENE_INTERVAL_SHORTS["TENSION"] = tension_ivl
+    _SCENE_INTERVAL_SHORTS["CORE"]    = core_ivl
+
     # VIDEO_FORMAT env var takes priority; fall back to word-count estimate
     video_format = os.getenv("VIDEO_FORMAT", "").lower()
     if video_format == "shorts":
@@ -157,9 +177,9 @@ def build_timeline(script: dict, intent: str = "") -> dict:
                      else (est_ms - base_dur_ms * (n_scenes - 1))
             dur_ms = max(dur_ms, min_dur_ms)
 
-            # Shorts: cap HOOK scene to prevent over-long openers
+            # Shorts: cap HOOK scene to adaptive value (auto-adjusted from retention)
             if label == "HOOK" and is_shorts_est:
-                dur_ms = min(dur_ms, _SHORTS_HOOK_CAP_MS)
+                dur_ms = min(dur_ms, shorts_hook_cap)
 
             start_ms = elapsed_ms
             end_ms   = elapsed_ms + dur_ms

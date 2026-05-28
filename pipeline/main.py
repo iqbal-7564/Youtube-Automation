@@ -63,6 +63,7 @@ from script_generator    import generate_script
 from timeline_builder    import build_timeline
 from voice_generator     import generate_voices
 from scene_planner       import plan_scenes
+from cinematic_planner   import plan_cinematics
 from visual_fetcher      import fetch_visuals
 from video_assembler     import assemble_video
 from subtitle_generator  import generate_subtitles
@@ -70,8 +71,9 @@ from audio_processor     import process_audio
 from encoder             import encode_video
 from quality_gate        import run_quality_gate
 from thumbnail_generator import generate_thumbnail
+from ctr_optimizer       import optimize_ctr
 from uploader            import upload_video
-from news_analytics      import log_result
+from news_analytics      import log_result, apply_adaptive_learning, predict_retention_risk
 
 
 def _save(timeline: dict) -> None:
@@ -170,8 +172,18 @@ def run_pipeline() -> bool:
         # ── 5: Scene Planning ────────────────────────────────────────────────
         log.info("[5/14] Scene Planning")
         timeline = plan_scenes(timeline, topic["intent"])
+        timeline = plan_cinematics(timeline)   # shot types, pacing, suspense arc
         _save(timeline)
         log.info("  Keywords assigned to %d scenes", len(timeline["scenes"]))
+
+        # Pre-render retention risk prediction
+        risk = predict_retention_risk(timeline)
+        log.info("  Retention risk: %.2f  WOW moments: %d  weak scenes: %s",
+                 risk["risk_score"], risk["wow_count"],
+                 [w["scene"] for w in risk["weak_scenes"]])
+        if risk["recommendations"]:
+            for rec in risk["recommendations"]:
+                log.warning("  Risk recommendation: %s", rec)
 
         # ── 6: Visual Fetch ──────────────────────────────────────────────────
         log.info("[6/14] Visual Fetch")
@@ -195,6 +207,7 @@ def run_pipeline() -> bool:
         norm_audio = process_audio(
             TEMP_DIR / "voice", TEMP_DIR,
             duration_cap_s=timeline["total_duration_seconds"],
+            scenes=timeline["scenes"],
         )
         log.info("  Normalized: %s", norm_audio.name)
 
@@ -251,6 +264,22 @@ def run_pipeline() -> bool:
         # ── 12: Thumbnail ─────────────────────────────────────────────────────
         log.info("[12/14] Thumbnail Generation")
         thumb_path = OUTPUT_DIR / f"thumb_{ts}.jpg"
+
+        # CTR optimizer: score title+headline synergy and pick best combination
+        hook_text = next(
+            (sc["script_text"] for sc in timeline["scenes"]
+             if sc["segment_label"] == "HOOK"), ""
+        )
+        ctr = optimize_ctr(
+            script.get("metadata", {}).get("title", topic["title"]),
+            hook_text,
+            topic["intent"],
+        )
+        log.info("  CTR score=%.2f synergy=%.2f  title='%s…'",
+                 ctr["ctr_score"], ctr["synergy"], ctr["title"][:50])
+        # Inject optimised title back into script metadata for uploader
+        script.setdefault("metadata", {})["title"] = ctr["title"]
+
         generate_thumbnail(timeline, script, TEMP_DIR / "visuals", thumb_path)
 
         # ── 13: Upload ────────────────────────────────────────────────────────
@@ -267,6 +296,13 @@ def run_pipeline() -> bool:
         # ── 14: Analytics ─────────────────────────────────────────────────────
         log.info("[14/14] Analytics")
         log_result(video_id, topic, timeline, gate, profile, LOGS_DIR)
+
+        # Apply adaptive learning — evolve pipeline parameters from retention signal
+        hints = gate.get("hints", {})
+        if hints.get("retention_signal"):
+            adapted = apply_adaptive_learning(hints, LOGS_DIR)
+            log.info("  Adaptive learning: signal=%s  params updated",
+                     hints["retention_signal"])
 
         log.info("=" * 65)
         log.info("PIPELINE COMPLETE — SUCCESS  video_id=%s", video_id)

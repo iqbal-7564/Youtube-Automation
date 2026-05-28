@@ -43,6 +43,7 @@ def process_audio(
     voice_dir: Path,
     temp_dir: Path,
     duration_cap_s: float = 0.0,
+    scenes: list | None = None,
 ) -> Path:
     raw_files = sorted(
         voice_dir.glob("voice_*.mp3"),
@@ -97,8 +98,16 @@ def process_audio(
             f"merged={merged_dur:.3f}s → normalized={norm_dur:.3f}s"
         )
 
+    # ── Optional: SFX mix (WOW impacts, hook tension, payoff reveal) ─────────
+    assets_dir = Path(__file__).parent.parent / "assets"
+    sfx_dir    = assets_dir / "sfx"
+    if scenes:
+        sfxed = _mix_sfx(normalized, sfx_dir, scenes, norm_dur)
+        if sfxed:
+            normalized = sfxed
+
     # ── Optional: background music mix ───────────────────────────────────────
-    music_dir = Path(__file__).parent.parent / "assets" / "music"
+    music_dir = assets_dir / "music"
     mixed     = _mix_background_music(normalized, music_dir, norm_dur)
     if mixed:
         log.info("  Background music mixed: %s", mixed.name)
@@ -279,6 +288,90 @@ def _probe(path: Path) -> float:
         return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
     except Exception:
         return 0.0
+
+
+def _mix_sfx(voice: Path, sfx_dir: Path, scenes: list, duration_s: float) -> Path | None:
+    """
+    Mix subtle sound effects into the voice track for WOW moments and
+    segment transitions. SFX files live in pipeline/assets/sfx/:
+
+        wow_impact.mp3      — played at each WOW-marked scene start
+        hook_tension.mp3    — played at t=0 (HOOK intro build)
+        transition.mp3      — played at CORE→PAYOFF boundary
+        payoff_reveal.mp3   — played at PAYOFF start
+
+    SFX are mixed quietly (-28 dB / volume=0.04) so they're felt, not heard.
+    Returns None if sfx_dir is empty or files are missing (graceful skip).
+    """
+    if not sfx_dir.exists():
+        return None
+
+    # Build list of (time_s, sfx_file) events
+    events: list[tuple[float, Path]] = []
+    total_ms = sum(sc.get("duration_ms", 0) for sc in scenes)
+
+    for sc in scenes:
+        label     = sc.get("segment_label", "")
+        has_wow   = sc.get("has_wow", False)
+        start_s   = sc.get("start_ms", 0) / 1000.0
+
+        if sc.get("scene_id") == 1:
+            sfx = sfx_dir / "hook_tension.mp3"
+            if sfx.exists():
+                events.append((0.0, sfx))
+
+        if has_wow:
+            sfx = sfx_dir / "wow_impact.mp3"
+            if sfx.exists():
+                events.append((start_s, sfx))
+
+        if label == "PAYOFF":
+            sfx = sfx_dir / "payoff_reveal.mp3"
+            if sfx.exists() and not any(t == start_s and f == sfx for t, f in events):
+                events.append((start_s, sfx))
+
+    if not events:
+        return None
+
+    # Build filter_complex: one delayed_sfx per event, amix everything
+    out = voice.parent / f"sfx_{voice.stem}.m4a"
+    inputs = ["-i", str(voice)]
+    filter_parts = ["[0:a]volume=1.0[voice]"]
+    mix_labels   = ["[voice]"]
+
+    for i, (t_s, sfx_f) in enumerate(events):
+        inputs += ["-i", str(sfx_f)]
+        idx = i + 1
+        label_out = f"[s{idx}]"
+        filter_parts.append(
+            f"[{idx}:a]volume=0.04,adelay={int(t_s * 1000)}|{int(t_s * 1000)}{label_out}"
+        )
+        mix_labels.append(label_out)
+
+    n_inputs = len(mix_labels)
+    mix_filter = (
+        "".join(mix_labels) +
+        f"amix=inputs={n_inputs}:duration=first:dropout_transition=0.5[out]"
+    )
+    filter_parts.append(mix_filter)
+
+    try:
+        _run([
+            "ffmpeg", "-y",
+        ] + inputs + [
+            "-filter_complex", ";".join(filter_parts),
+            "-map", "[out]",
+            "-c:a", "aac", "-b:a", "192k",
+            "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+            str(out),
+        ], "sfx-mix")
+        if out.exists() and out.stat().st_size > 10_000:
+            log.info("  SFX mixed: %d events", len(events))
+            return out
+    except Exception as exc:
+        log.debug("SFX mix failed (non-critical): %s", exc)
+
+    return None
 
 
 def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Path | None:

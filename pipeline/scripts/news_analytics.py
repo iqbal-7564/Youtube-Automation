@@ -264,6 +264,139 @@ def _feedback_hints(results: list) -> dict:
     return hints
 
 
+def apply_adaptive_learning(hints: dict, logs_dir: Path) -> dict:
+    """
+    Translate retention signals into concrete parameter adjustments.
+    Writes adaptive_params.json which timeline_builder and script_generator
+    read on the next run to automatically evolve their behaviour.
+
+    Parameters are adjusted conservatively (small steps) so the system
+    doesn't over-correct on a single bad video.
+    """
+    params_path = logs_dir / "adaptive_params.json"
+    params: dict = json.loads(params_path.read_text()) if params_path.exists() else {}
+
+    signal = hints.get("retention_signal")
+    avg_ret = hints.get("avg_retention_pct", 50.0)
+
+    if signal == "early_drop":
+        # Viewers leave in first 25% — hook/tension is too slow or dull
+        params["hook_cap_ms"]       = max(1500, params.get("hook_cap_ms", 2500) - 150)
+        params["tension_interval_s"]= max(3.0,  params.get("tension_interval_s", 4.5) - 0.3)
+        params["hook_note"]         = "auto-shortened hook and tension intervals"
+        log.info("Adaptive: early_drop — tightened hook cap to %dms", params["hook_cap_ms"])
+
+    elif signal == "mid_drop":
+        # Viewers leave in CORE — scenes too long, pacing too slow
+        params["core_interval_s"]   = max(2.5, params.get("core_interval_s", 3.5) - 0.25)
+        params["core_note"]         = "auto-shortened CORE scene intervals"
+        log.info("Adaptive: mid_drop — CORE interval reduced to %.2fs", params["core_interval_s"])
+
+    elif signal == "late_drop":
+        # Good early retention but PAYOFF/CLOSE is weak
+        params["payoff_tighten"]    = True
+        params["late_note"]         = "auto-flag: PAYOFF/CLOSE structure needs work"
+        log.info("Adaptive: late_drop — flagged PAYOFF/CLOSE for review")
+
+    if avg_ret > 70:
+        # System is working — lock current parameters
+        params["template_lock"]     = True
+        params["lock_note"]         = "retention above 70% — preserving current parameters"
+        log.info("Adaptive: high retention %.1f%% — parameters locked", avg_ret)
+    elif avg_ret > 70 and params.get("template_lock"):
+        # Decay the lock if performance drops
+        params.pop("template_lock", None)
+
+    params["updated_at"] = datetime.utcnow().isoformat()
+    params["last_signal"] = signal or "none"
+    params["last_avg_retention"] = avg_ret
+
+    params_path.write_text(json.dumps(params, indent=2))
+    log.info("Adaptive params written to %s", params_path.name)
+    return params
+
+
+def predict_retention_risk(timeline: dict) -> dict:
+    """
+    Pre-render retention risk scoring — estimates likely drop-off points
+    BEFORE the video is published, based on scene complexity and emotional arc.
+
+    Returns {risk_score: 0.0-1.0, weak_scenes: [...], recommendations: [...]}
+
+    Risk factors per scene:
+      - High complexity in short scene: viewer overwhelmed → leaves
+      - Consecutive same-emotion scenes: emotional monotony → boredom
+      - Long CORE scenes without WOW markers: attention decay
+      - Sudden emotion drop after peak: jarring, breaks flow
+    """
+    scenes  = timeline.get("scenes", [])
+    if not scenes:
+        return {"risk_score": 0.0, "weak_scenes": [], "recommendations": []}
+
+    total_risk  = 0.0
+    weak_scenes = []
+    recs        = []
+    prev_emotion = None
+    consecutive_neutral = 0
+
+    for sc in scenes:
+        label      = sc.get("segment_label", "CORE")
+        complexity = sc.get("complexity", "simple")
+        emotion    = sc.get("emotion", "neutral")
+        dur_ms     = sc.get("duration_ms", 3000)
+        has_wow    = sc.get("has_wow", False)
+        scene_id   = sc["scene_id"]
+        scene_risk = 0.0
+
+        # Risk 1: complex scene too short (viewer can't absorb it)
+        if complexity == "complex" and dur_ms < 3500:
+            scene_risk += 0.15
+            weak_scenes.append({"scene": scene_id, "reason": "complex content, scene too short"})
+
+        # Risk 2: emotional monotony (3+ consecutive neutral scenes)
+        if emotion == "neutral":
+            consecutive_neutral += 1
+        else:
+            consecutive_neutral = 0
+        if consecutive_neutral >= 3:
+            scene_risk += 0.20
+            if scene_id not in [w["scene"] for w in weak_scenes]:
+                weak_scenes.append({"scene": scene_id, "reason": "emotional monotony — 3+ neutral scenes"})
+
+        # Risk 3: long CORE scene without WOW marker
+        if label == "CORE" and dur_ms > 6000 and not has_wow:
+            scene_risk += 0.18
+            weak_scenes.append({"scene": scene_id, "reason": "long CORE scene, no WOW spike"})
+
+        # Risk 4: sudden drop from dramatic/excited → neutral
+        if prev_emotion in ("dramatic", "excited") and emotion == "neutral":
+            scene_risk += 0.10
+
+        total_risk  += scene_risk
+        prev_emotion = emotion
+
+    # Normalise: risk per scene averaged
+    avg_risk = min(total_risk / max(len(scenes), 1), 1.0)
+
+    # Generate recommendations
+    if avg_risk > 0.4:
+        recs.append("High retention risk — consider shortening complex CORE scenes")
+    if consecutive_neutral >= 3:
+        recs.append("Too many consecutive neutral-emotion scenes — inject dramatic or excited scene")
+    wow_count = sum(1 for sc in scenes if sc.get("has_wow"))
+    if wow_count == 0:
+        recs.append("No WOW-marked moments — script may lack a clear peak surprise")
+    if wow_count > 2:
+        recs.append("Multiple WOW markers — ensure they are spaced, not clustered")
+
+    return {
+        "risk_score":      round(avg_risk, 3),
+        "weak_scenes":     weak_scenes[:5],
+        "recommendations": recs,
+        "wow_count":       wow_count,
+    }
+
+
 def _write_performance_history(results: list, perf_path: Path) -> None:
     """Aggregate avg_view_pct by category and write performance_history.json."""
     by_cat: dict[str, list[float]] = {}

@@ -140,12 +140,15 @@ def select_topic(logs_dir: Path) -> dict | None:
     used_categories  = {v.get("intent", "") for v in produced_today}
     perf_weights     = _load_performance_weights(logs_dir)
 
+    # Fetch trending hints once (used to enrich all topic expansions this run)
+    trending_hints = _fetch_trending_hints()
+
     # Build ordered category list, performance-weighted, today-deduped
     ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights)
 
     for cat in ordered:
         seed  = random.choice(_SEEDS[cat])
-        topic = _build_topic(cat, seed, full_history)
+        topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
         if topic:
             log.info("Selected [%s]: %s", cat, topic["title"][:80])
             return topic
@@ -154,7 +157,7 @@ def select_topic(logs_dir: Path) -> dict | None:
     log.info("All categories exhausted — generating fresh angle")
     cat  = ordered[0] if ordered else random.choice(CATEGORIES)
     seed = random.choice(_SEEDS[cat])
-    return _build_topic(cat, seed, [])
+    return _build_topic(cat, seed, [], trending_hints.get(cat, ""))
 
 
 def _prioritise_categories(
@@ -170,8 +173,57 @@ def _prioritise_categories(
     return available
 
 
-def _build_topic(category: str, seed: str, produced: list[dict]) -> dict | None:
-    title, description = _groq_expand(category, seed)
+def _fetch_trending_hints() -> dict[str, str]:
+    """Use Groq to fetch one trending angle hint per category."""
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
+    for key in keys:
+        if not key:
+            continue
+        try:
+            cats_str = ", ".join(CATEGORIES)
+            r = requests.post(
+                _GROQ_URL,
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                json={
+                    "model": _GROQ_MODEL,
+                    "messages": [{
+                        "role": "system",
+                        "content": (
+                            "You are a viral content strategist. "
+                            "Return ONLY valid JSON no markdown. "
+                            "Format: {"CATEGORY": "hint"} for each category."
+                        ),
+                    }, {
+                        "role": "user",
+                        "content": (
+                            f"For each category: {cats_str}
+"
+                            "Give ONE trending angle in 8-12 words — fresh, specific, "
+                            "currently viral on YouTube in 2025. Focus on recent discoveries, "
+                            "counterintuitive facts, or newly revealed historical truths."
+                        ),
+                    }],
+                    "temperature": 0.7,
+                    "max_tokens": 400,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                m = re.search(r"\{.*\}", raw, re.DOTALL)
+                if m:
+                    data = json.loads(m.group())
+                    if isinstance(data, dict):
+                        return data
+        except Exception as exc:
+            log.debug("Trend hints: %s", exc)
+        break
+    return {}
+
+
+def _build_topic(category: str, seed: str, produced: list[dict],
+                 trend_hint: str = "") -> dict | None:
+    title, description = _groq_expand(category, seed, trend_hint)
 
     if not title:
         title       = f"Incredible Facts About {seed.title()}"
@@ -185,14 +237,15 @@ def _build_topic(category: str, seed: str, produced: list[dict]) -> dict | None:
         "title":        title[:200],
         "description":  description[:500],
         "intent":       category,
-        "source":       "VisionaryMinds",
+        "source":       "MindBlownFacts",
         "published_at": datetime.utcnow().isoformat(),
         "article_url":  "",
         "seed":         seed,
+        "trend_hint":   trend_hint[:100] if trend_hint else "",
     }
 
 
-def _groq_expand(category: str, seed: str) -> tuple[str, str]:
+def _groq_expand(category: str, seed: str, trend_hint: str = "") -> tuple[str, str]:
     keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
     for key in keys:
         if not key:
@@ -226,9 +279,10 @@ def _groq_expand(category: str, seed: str) -> tuple[str, str]:
                             "content": (
                                 f"Category: {category}\n"
                                 f"Seed topic: {seed}\n"
+                                + (f"Trending angle hint: {trend_hint}\n" if trend_hint else "") +
                                 "Generate a fresh, surprising angle on this topic for a viral "
                                 "YouTube Shorts video. Prioritize recent discoveries or "
-                                "counterintuitive facts over general overviews."
+                                "counterintuitive facts. Use the trending hint if provided."
                             ),
                         },
                     ],
