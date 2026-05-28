@@ -7,8 +7,9 @@ Returns {passed, checks, fail_reason}.
 Tolerances are calibrated to the actual pipeline characteristics:
   duration  : ±2.5 s  (accounts for xfade transition duration reduction)
   audio_sync: ±0.3 s  (accounts for -shortest boundary rounding)
-  audio_gaps: only gaps > 1.0 s  (intentional 300ms inter-scene silences
-              are excluded by design)
+  audio_gaps: only gaps > 1.5 s  (edge-tts adds ~800ms trailing silence +
+              300ms pipeline padding = ~1.1s per scene; 1.5s threshold
+              excludes these intentional inter-scene silences)
   voice_quality: WARNING only — does not block upload when a fallback TTS
               engine (gTTS) was the only option available
 
@@ -254,15 +255,18 @@ def _dropped_frames(path: Path):
 
 
 def _audio_gaps(path: Path, timeline: dict):
-    """Detect unintentional silence gaps > 1.0 s in the audio track.
+    """Detect unintentional silence gaps > 1.5 s in the audio track.
 
-    Threshold is 1.0 s to exclude intentional 300ms inter-scene silences
-    that are part of the production design.  The check ignores the first
-    0.6 s (fade-in) and the last 2 s (fade-out).
+    Threshold is 1.5 s, not 1.0 s.  Each TTS scene file carries ~800ms of
+    natural trailing silence from edge-tts plus 300ms appended by the
+    pipeline = ~1.1s of intentional inter-scene silence.  A 1.0s threshold
+    fires on these false positives; 1.5s clears them while still catching
+    genuinely broken audio.  The check ignores the first 0.6 s (fade-in)
+    and the last 2 s (fade-out).
     """
     r = subprocess.run(
         ["ffmpeg", "-i", str(path),
-         "-af", "silencedetect=noise=-50dB:d=1.0",
+         "-af", "silencedetect=noise=-50dB:d=1.5",
          "-f", "null", "-"],
         capture_output=True, text=True, timeout=60,
     )
