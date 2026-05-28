@@ -17,6 +17,11 @@ from truncating the final seconds of long audio files.
   apad=whole_dur=<clean_dur> pads any missing tail back to the exact
   source length so Stage 3 always receives the full waveform.
 
+Stage 3 appends apad=whole_dur=<real_dur> after alimiter to flush
+alimiter's lookahead buffer before EOF (some ffmpeg versions drop the
+buffered tail silently).  Output is M4A so ffprobe reads duration from
+the container header rather than estimating from bitrate.
+
 Rules:
   • loudnorm and afade must NEVER share a filter chain.
   • afade start time must always be read from the ACTUAL Stage 2 output.
@@ -79,7 +84,7 @@ def process_audio(
     tmp_dir = temp_dir / "audio_tmp"
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    normalized = voice_dir / "normalized_voice.aac"
+    normalized = voice_dir / "normalized_voice.m4a"
     _normalize_3stage(merged, normalized, tmp_dir)
 
     norm_dur = _probe(normalized)
@@ -174,7 +179,8 @@ def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
          "-af", (
              f"afade=t=in:st=0.000:d=0.500,"
              f"afade=t=out:st={fade_out_start:.3f}:d=1.000,"
-             "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50"
+             "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50,"
+             f"apad=whole_dur={real_dur:.6f}"
          ),
          "-c:a", "aac", "-b:a", "192k",
          "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
