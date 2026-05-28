@@ -91,6 +91,29 @@ def _log_quality_failure(gate: dict, topic: dict, attempt: int) -> None:
     path.write_text(json.dumps(existing[-100:], indent=2))
 
 
+def _assert_audio_integrity(audio_path: Path, locked_s: float) -> None:
+    """Fail fast if audio merge lost more than 1 second."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_format", str(audio_path)],
+            capture_output=True, text=True, timeout=15,
+        )
+        actual = float(json.loads(r.stdout).get("format", {}).get("duration", 0))
+    except Exception:
+        actual = 0.0
+
+    diff = locked_s - actual
+    log.info("  Audio integrity: actual=%.3fs locked=%.3fs diff=%.3fs",
+             actual, locked_s, diff)
+
+    if diff > 1.0:
+        raise RuntimeError(
+            f"Audio merge lost {diff:.2f}s — actual={actual:.3f}s "
+            f"locked={locked_s:.3f}s. Check voice_std/ files."
+        )
+
+
 def _tts_degraded(timeline: dict) -> bool:
     return any(
         sc.get("tts_engine") in ("gtts", "silence")
@@ -163,14 +186,16 @@ def run_pipeline() -> bool:
 
         # ── 9: Audio Processing ──────────────────────────────────────────────
         log.info("[9/14] Audio Processing")
-        # Pass locked duration so atrim caps audio to the timeline total.
-        # This prevents audio from running longer than the video (which xfade
-        # transitions may have shortened slightly) and eliminates A/V drift.
         norm_audio = process_audio(
             TEMP_DIR / "voice", TEMP_DIR,
             duration_cap_s=timeline["total_duration_seconds"],
         )
         log.info("  Normalized: %s", norm_audio.name)
+
+        # Hard assertion: catch audio merge failures BEFORE the encoder.
+        # If merged audio is more than 1s shorter than the locked timeline,
+        # something was dropped during TTS concatenation — fail loudly here.
+        _assert_audio_integrity(norm_audio, timeline["total_duration_seconds"])
 
         # ── 10: Encoding ─────────────────────────────────────────────────────
         log.info("[10/14] Encoding")

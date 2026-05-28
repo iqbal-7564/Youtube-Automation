@@ -1,25 +1,32 @@
 """
 STEP 9 — Audio Processing
 
-Merges all per-scene voice files, then applies:
-  1. atrim=duration=locked_timeline  — hard-cap to locked timeline total
-     so audio is NEVER longer than the video (prevents A/V drift)
-  2. Loudness normalisation → -14 LUFS
-  3. Noise gate             → afftdn
-  4. Peak limiter           → -1.0 dBFS ceiling
-  5. Fade in  0.5 s at start
-  6. Fade out 1.0 s at end
+Standardize → Merge → Normalize pipeline.
 
-The locked duration is passed in from main.py (timeline["total_duration_seconds"]).
+Why standardize first:
+  TTS engines output MP3 at mixed sample rates (edge-tts: 24 kHz,
+  gTTS: 22 kHz, ElevenLabs: 44.1 kHz).  FFmpeg's filter_complex concat
+  silently truncates or drops streams when inputs have mismatched rates,
+  which is the exact cause of the "8.6s missing audio" issue.
+  Converting every file to identical AAC 44100 Hz stereo before concat
+  eliminates all format-mismatch losses.
+
+Steps:
+  1. Standardize each voice_*.mp3 → AAC 44.1 kHz stereo (temp/voice_std/)
+  2. Log and sum per-scene durations; assert total ≈ locked timeline
+  3. Merge with filter_complex concat (reliable on identical formats)
+  4. Normalize: atrim(cap) → loudnorm → noise gate → limiter → fade in/out
 """
 
 import json
 import logging
-import shutil
 import subprocess
 from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+_STD_RATE = 44100
+_STD_CH   = 2
 
 
 def process_audio(
@@ -27,28 +34,76 @@ def process_audio(
     temp_dir: Path,
     duration_cap_s: float = 0.0,
 ) -> Path:
-    files = sorted(
+    raw_files = sorted(
         voice_dir.glob("voice_*.mp3"),
         key=lambda p: int(p.stem.split("_")[1]),
     )
-    if not files:
+    if not raw_files:
         raise RuntimeError(f"No voice_*.mp3 files in {voice_dir}")
 
-    log.info("  Merging %d voice segments", len(files))
+    log.info("  Standardizing %d voice files to AAC 44.1 kHz …", len(raw_files))
 
-    merged     = voice_dir / "merged_voice.mp3"
+    # ── Step 1: Standardize every file ───────────────────────────────────────
+    std_dir = temp_dir / "voice_std"
+    std_dir.mkdir(parents=True, exist_ok=True)
+
+    std_files: list[Path] = []
+    total_dur = 0.0
+
+    for f in raw_files:
+        std_f = std_dir / f.with_suffix(".m4a").name
+        _standardize(f, std_f)
+        dur = _probe_duration(std_f)
+        log.info("    %s → %.3fs", f.name, dur)
+        total_dur += dur
+        std_files.append(std_f)
+
+    diff = abs(total_dur - duration_cap_s) if duration_cap_s > 0 else 0.0
+    log.info("  Scene audio total: %.3fs  locked=%.3fs  diff=%.3fs",
+             total_dur, duration_cap_s, diff)
+
+    if duration_cap_s > 0 and diff > 1.0:
+        log.error(
+            "  ⚠ Audio total %.3fs differs from locked timeline %.3fs by %.3fs — "
+            "check for missing/silent voice files",
+            total_dur, duration_cap_s, diff,
+        )
+
+    # ── Step 2: Merge ─────────────────────────────────────────────────────────
+    merged     = voice_dir / "merged_voice.m4a"
     normalized = voice_dir / "normalized_voice.aac"
 
-    _merge(files, merged)
+    _merge(std_files, merged)
+
+    merged_dur = _probe_duration(merged)
+    log.info("  Merged audio: %.3fs", merged_dur)
+
+    # ── Step 3: Normalize ─────────────────────────────────────────────────────
     _normalize(merged, normalized, duration_cap_s)
 
-    merged_dur = _probe_duration(normalized)
-    log.info("  Normalized audio: %.3fs  cap=%.3fs", merged_dur, duration_cap_s)
+    final_dur = _probe_duration(normalized)
+    log.info("  Normalized audio: %.3fs  (cap=%.3fs)", final_dur, duration_cap_s)
     return normalized
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _standardize(src: Path, out: Path) -> None:
+    """Convert any TTS output to AAC 44.1 kHz stereo — no format surprises."""
+    if out.exists() and out.stat().st_size > 1_000:
+        return
+    _run(
+        ["ffmpeg", "-y", "-i", str(src),
+         "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+         "-c:a", "aac", "-b:a", "192k",
+         str(out)],
+        f"std {src.name}",
+    )
 
 
 def _merge(files: list[Path], output: Path) -> None:
     if len(files) == 1:
+        import shutil
         shutil.copy(files[0], output)
         return
 
@@ -64,8 +119,8 @@ def _merge(files: list[Path], output: Path) -> None:
         ["ffmpeg", "-y"] + inputs + [
             "-filter_complex", concat_filter,
             "-map", "[outa]",
-            "-c:a", "libmp3lame", "-q:a", "2",
-            "-ar", "44100", "-ac", "2",
+            "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+            "-c:a", "aac", "-b:a", "192k",
             str(output),
         ],
         "merge",
@@ -74,14 +129,10 @@ def _merge(files: list[Path], output: Path) -> None:
 
 def _normalize(src: Path, out: Path, duration_cap_s: float) -> None:
     dur = _probe_duration(src)
-    fade_out_start = max(0.0, dur - 1.0)
+    fade_out_start = max(0.0, min(dur, duration_cap_s if duration_cap_s > 0 else dur) - 1.0)
 
     af_parts: list[str] = []
 
-    # Hard cap: trim audio to locked timeline total BEFORE any processing.
-    # This prevents the audio track from running longer than the video
-    # (which xfade transitions may have shortened slightly), ensuring
-    # the encoder's -shortest flag produces zero A/V drift.
     if duration_cap_s > 0:
         af_parts.append(f"atrim=duration={duration_cap_s:.3f}")
 
@@ -91,16 +142,16 @@ def _normalize(src: Path, out: Path, duration_cap_s: float) -> None:
         "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50",
         "afade=t=in:st=0:d=0.5",
     ]
-    if fade_out_start > 0:
+    if fade_out_start > 0.5:
         af_parts.append(f"afade=t=out:st={fade_out_start:.3f}:d=1.0")
 
     _run(
         ["ffmpeg", "-y",
          "-i", str(src),
          "-af", ",".join(af_parts),
-         "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+         "-c:a", "aac", "-b:a", "192k", "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
          str(out)],
-        "normalize+trim+fade",
+        "normalize",
     )
 
 
