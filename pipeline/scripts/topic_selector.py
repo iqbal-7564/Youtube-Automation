@@ -131,7 +131,7 @@ _SEEDS: dict[str, list[str]] = {
 }
 
 _GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions"
-_GROQ_MODEL = "llama3-70b-8192"
+_GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 def select_topic(logs_dir: Path) -> dict | None:

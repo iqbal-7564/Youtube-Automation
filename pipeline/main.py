@@ -1,13 +1,30 @@
 #!/usr/bin/env python3
 """
 News Video Pipeline — Main Orchestrator (14 steps, sequential).
-master_timeline.json is the single source of truth updated by each step.
+master_timeline.json is the single source of truth.
 
-Quality gate failure triggers up to 3 retry attempts with degraded renders:
-  Attempt 1 — full render (normal)
-  Attempt 2 — strip xfade transitions, re-assemble
-  Attempt 3 — single title-card fallback (black + text)
-If all 3 fail, the slot is logged and skipped with an alert.
+Timeline is LOCKED after step 4 (voice generation).
+No downstream step may change total_duration_ms / total_duration_seconds.
+
+Correct step order (per production-grade requirements):
+  1  topic_selector      — pick topic
+  2  script_generator    — write script
+  3  timeline_builder    — build timeline (estimated durations)
+  4  voice_generator     — generate audio, LOCK real durations
+  5  scene_planner       — assign visual keywords
+  6  visual_fetcher      — download + trim visuals
+  7  video_assembler     — render scenes (no subtitles burned in)
+  8  subtitle_generator  — write SRT using LOCKED timings
+  9  audio_processor     — normalise + fade audio
+  10 encoder             — mux video + audio (cap = locked duration + 1s)
+  11 quality_gate        — 10 checks
+  12 thumbnail_generator — design thumbnail
+  13 uploader            — upload video + captions + comment
+  14 news_analytics      — log results
+
+Quality gate failure triggers up to 3 retry attempts:
+  Attempt 2 — re-assemble without xfade transitions
+  Attempt 3 — title-card fallback video
 """
 
 import json
@@ -18,9 +35,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
 _PIPELINE_DIR = Path(__file__).parent
-
 sys.path.insert(0, str(_PIPELINE_DIR / "scripts"))
 
 TEMP_DIR   = _PIPELINE_DIR / "temp"
@@ -36,7 +51,6 @@ for _d in [
 
 TIMELINE_PATH = TEMP_DIR / "master_timeline.json"
 
-# ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -44,15 +58,14 @@ logging.basicConfig(
 )
 log = logging.getLogger("pipeline.main")
 
-# ── Imports (after sys.path is set) ───────────────────────────────────────────
 from topic_selector      import select_topic
 from script_generator    import generate_script
 from timeline_builder    import build_timeline
 from voice_generator     import generate_voices
 from scene_planner       import plan_scenes
 from visual_fetcher      import fetch_visuals
-from subtitle_generator  import generate_subtitles
 from video_assembler     import assemble_video
+from subtitle_generator  import generate_subtitles
 from audio_processor     import process_audio
 from encoder             import encode_video
 from quality_gate        import run_quality_gate
@@ -60,8 +73,6 @@ from thumbnail_generator import generate_thumbnail
 from uploader            import upload_video
 from news_analytics      import log_result
 
-
-# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _save(timeline: dict) -> None:
     TIMELINE_PATH.write_text(json.dumps(timeline, indent=2, ensure_ascii=False))
@@ -80,42 +91,12 @@ def _log_quality_failure(gate: dict, topic: dict, attempt: int) -> None:
     path.write_text(json.dumps(existing[-100:], indent=2))
 
 
-def _probe_duration(path: Path) -> float:
-    """Return actual file duration in seconds via ffprobe."""
-    try:
-        r = subprocess.run(
-            ["ffprobe", "-v", "quiet", "-print_format", "json",
-             "-show_format", str(path)],
-            capture_output=True, text=True, timeout=15,
-        )
-        return float(json.loads(r.stdout).get("format", {}).get("duration", 0))
-    except Exception:
-        return 0.0
-
-
-def _sync_timeline_to_assembled(timeline: dict, assembled: Path) -> None:
-    """
-    Update total_duration_seconds/ms in the timeline to match the assembled
-    video's actual length. The assembler adds pre-roll, hook card, and end card
-    on top of the content duration; without this sync the encoder cap and the
-    quality gate both use the wrong expected value.
-    """
-    dur = _probe_duration(assembled)
-    if dur > 0 and abs(dur - timeline["total_duration_seconds"]) > 0.1:
-        log.info("  Timeline synced: %.2fs → %.2fs (assembler additions)",
-                 timeline["total_duration_seconds"], dur)
-        timeline["total_duration_seconds"] = round(dur, 2)
-        timeline["total_duration_ms"]      = int(dur * 1000)
-
-
 def _tts_degraded(timeline: dict) -> bool:
     return any(
         sc.get("tts_engine") in ("gtts", "silence")
         for sc in timeline.get("scenes", [])
     )
 
-
-# ── Pipeline ───────────────────────────────────────────────────────────────────
 
 def run_pipeline() -> bool:
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -138,54 +119,47 @@ def run_pipeline() -> bool:
         log.info("  Segments: %d  Est. %ds",
                  len(script["segments"]), script["total_estimated_seconds"])
 
-        # ── 3: Master Timeline Build ─────────────────────────────────────────
+        # ── 3: Timeline Build ────────────────────────────────────────────────
         log.info("[3/14] Timeline Build")
         timeline = build_timeline(script, topic["intent"])
         _save(timeline)
-        log.info("  Scenes: %d  Duration: %.1fs  Profile: %s",
+        log.info("  Scenes: %d  Est. %.1fs  Profile: %s",
                  len(timeline["scenes"]),
                  timeline["total_duration_seconds"],
                  timeline["profile"])
 
-        # ── 4: Voice Generation ──────────────────────────────────────────────
+        # ── 4: Voice Generation — LOCKS timeline durations ───────────────────
         log.info("[4/14] Voice Generation")
         timeline = generate_voices(timeline, TEMP_DIR / "voice")
         _save(timeline)
-        log.info("  Actual duration: %.1fs", timeline["total_duration_seconds"])
+        locked_duration_s = timeline["total_duration_seconds"]
+        log.info("  Actual duration: %.3fs  ← LOCKED", locked_duration_s)
 
         if _tts_degraded(timeline):
-            log.warning("  ⚠  TTS DEGRADED: one or more scenes used gTTS/silence. "
-                        "Check ELEVENLABS_API_KEY / edge-tts availability.")
+            log.warning("  ⚠  TTS DEGRADED — check ELEVENLABS_API_KEY / edge-tts")
 
-        # ── 5: Subtitle Generation (uses voice-exact scene durations) ─────────
-        # Must run BEFORE scene planning so SRT files are available for burn-in.
-        # Must run AFTER voice so subtitle timings match actual audio lengths.
-        log.info("[5/14] Subtitle Generation")
-        generate_subtitles(timeline, TEMP_DIR / "subtitles")
-        log.info("  SRT files written (relative timestamps, %d scenes)",
-                 len(timeline["scenes"]))
-
-        # ── 6: Scene Planning ────────────────────────────────────────────────
-        log.info("[6/14] Scene Planning")
+        # ── 5: Scene Planning ────────────────────────────────────────────────
+        log.info("[5/14] Scene Planning")
         timeline = plan_scenes(timeline, topic["intent"])
         _save(timeline)
         log.info("  Keywords assigned to %d scenes", len(timeline["scenes"]))
 
-        # ── 7: Visual Fetch + Validation ─────────────────────────────────────
-        log.info("[7/14] Visual Fetch")
+        # ── 6: Visual Fetch ──────────────────────────────────────────────────
+        log.info("[6/14] Visual Fetch")
         timeline = fetch_visuals(timeline, TEMP_DIR / "visuals")
         _save(timeline)
         log.info("  Visuals ready for %d scenes", len(timeline["scenes"]))
 
-        # ── 8: Video Assembly ────────────────────────────────────────────────
-        log.info("[8/14] Video Assembly")
+        # ── 7: Video Assembly ────────────────────────────────────────────────
+        log.info("[7/14] Video Assembly")
         assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
-        log.info("  Assembled: %s", assembled.name)
+        log.info("  Assembled: %s  (locked_duration=%.3fs)",
+                 assembled.name, locked_duration_s)
 
-        # Sync timeline duration to assembled file (pre-roll + hook card + end
-        # card are added by the assembler and are not in the original timeline).
-        _sync_timeline_to_assembled(timeline, assembled)
-        _save(timeline)
+        # ── 8: Subtitle Generation (after assembly, uses locked timings) ─────
+        log.info("[8/14] Subtitle Generation")
+        generate_subtitles(timeline, TEMP_DIR / "subtitles")
+        log.info("  SRT files written (%d scenes)", len(timeline["scenes"]))
 
         # ── 9: Audio Processing ──────────────────────────────────────────────
         log.info("[9/14] Audio Processing")
@@ -196,13 +170,15 @@ def run_pipeline() -> bool:
         log.info("[10/14] Encoding")
         profile     = timeline["profile"]
         output_path = OUTPUT_DIR / f"{topic['intent']}_{ts}_{profile}.mp4"
+        # Pass LOCKED duration — encoder uses this as the hard cap.
+        # timeline["total_duration_seconds"] must never change after step 4.
         encode_video(assembled, norm_audio, output_path, profile,
                      timeline["total_duration_seconds"])
         log.info("  Output: %s  (%.1f MB)",
                  output_path.name,
                  output_path.stat().st_size / 1_048_576)
 
-        # ── 11: Quality Gate (with retry) ─────────────────────────────────────
+        # ── 11: Quality Gate (up to 3 attempts) ──────────────────────────────
         log.info("[11/14] Quality Gate")
         gate = None
         for attempt in range(1, 4):
@@ -217,33 +193,30 @@ def run_pipeline() -> bool:
                 log.error("  All 3 gate attempts failed — skipping upload")
                 return False
 
-            # Attempt 2: re-assemble without xfade transitions
             if attempt == 1:
                 log.info("  Retry: re-assembling without transitions …")
                 for sc in timeline["scenes"]:
                     sc["transition"] = "cut"
                 assembled = assemble_video(timeline, TEMP_DIR, topic["intent"])
-                _sync_timeline_to_assembled(timeline, assembled)
-                _save(timeline)
                 encode_video(assembled, norm_audio, output_path, profile,
                              timeline["total_duration_seconds"])
 
-            # Attempt 3: minimal title-card fallback
             elif attempt == 2:
-                log.info("  Retry: minimal title-card fallback …")
-                _title_card_fallback(output_path, topic, timeline, norm_audio, profile)
+                log.info("  Retry: title-card fallback …")
+                _title_card_fallback(output_path, topic, timeline,
+                                     norm_audio, profile)
 
         assert gate is not None
         if not gate["passed"]:
             return False
         log.info("  All 10 checks passed")
 
-        # ── 12: Thumbnail Generation ──────────────────────────────────────────
+        # ── 12: Thumbnail ─────────────────────────────────────────────────────
         log.info("[12/14] Thumbnail Generation")
         thumb_path = OUTPUT_DIR / f"thumb_{ts}.jpg"
         generate_thumbnail(timeline, script, TEMP_DIR / "visuals", thumb_path)
 
-        # ── 13: Upload + Metadata ─────────────────────────────────────────────
+        # ── 13: Upload ────────────────────────────────────────────────────────
         log.info("[13/14] Upload")
         video_id = upload_video(
             output_path, thumb_path, script, topic, timeline, profile,
@@ -276,16 +249,13 @@ def _title_card_fallback(
     audio_path: Path,
     profile: str,
 ) -> None:
-    """Minimal fallback: black background + title text, full audio."""
-    import subprocess
-    W, H    = timeline["width"], timeline["height"]
-    dur_s   = timeline["total_duration_seconds"]
-    title   = topic["title"][:60].replace("'", "\\'").replace(":", "\\:")
-    font    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    vf      = (f"drawtext=text='{title}':"
-               f"fontfile='{font}':fontcolor=white:fontsize=56:"
-               f"bordercolor=black:borderw=3:"
-               f"x=(w-tw)/2:y=(h-th)/2")
+    W, H  = timeline["width"], timeline["height"]
+    dur_s = timeline["total_duration_seconds"]
+    title = topic["title"][:60].replace("'", "\\'").replace(":", "\\:")
+    font  = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    vf    = (f"drawtext=text='{title}':"
+             f"fontfile='{font}':fontcolor=white:fontsize=56:"
+             f"bordercolor=black:borderw=3:x=(w-tw)/2:y=(h-th)/2")
     video_only = output_path.with_suffix(".fallback_v.mp4")
     subprocess.run(
         ["ffmpeg", "-y", "-f", "lavfi",
@@ -295,7 +265,6 @@ def _title_card_fallback(
          str(video_only)],
         capture_output=True, timeout=120,
     )
-    from encoder import encode_video
     encode_video(video_only, audio_path, output_path, profile, dur_s)
 
 

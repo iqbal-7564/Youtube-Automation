@@ -20,7 +20,7 @@ _GROQ_KEYS = [
     os.getenv("GROQ_API_KEY_1", "").strip(),
     os.getenv("GROQ_API_KEY_2", "").strip(),
 ]
-_MODEL = "llama3-70b-8192"
+_MODEL = "llama-3.3-70b-versatile"
 
 _SYSTEM = """You are a world-class educational YouTube Shorts scriptwriter for the channel "MindBlownFacts".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
