@@ -1,4 +1,6 @@
 .env
-output/
+pipeline/temp/
+pipeline/output/
 __pycache__/
 *.pyc
+*.pyo

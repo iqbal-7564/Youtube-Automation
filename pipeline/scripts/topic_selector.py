@@ -179,7 +179,7 @@ def _build_topic(category: str, seed: str, produced: list[dict]) -> dict | None:
 
 
 def _groq_expand(category: str, seed: str) -> tuple[str, str]:
-    keys = [os.getenv("GROQ_API_KEY_1", ""), os.getenv("GROQ_API_KEY_2", "")]
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
     for key in keys:
         if not key:
             continue

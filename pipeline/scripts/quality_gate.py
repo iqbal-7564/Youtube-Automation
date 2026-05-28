@@ -184,7 +184,7 @@ def _freeze(path: Path):
         prev  = None
         for f in frames:
             pts = f.get("pkt_pts_time")
-            if pts == prev:
+            if pts is not None and pts == prev:
                 dupes += 1
             prev = pts
         if dupes >= 3:

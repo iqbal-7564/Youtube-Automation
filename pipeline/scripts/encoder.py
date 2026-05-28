@@ -21,8 +21,8 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 _PROFILES: dict[str, dict] = {
-    "shorts":   {"W": 1080, "H": 1920, "crf": "18", "preset": "slow"},
-    "standard": {"W": 1920, "H": 1080, "crf": "18", "preset": "slow"},
+    "shorts":   {"W": 1080, "H": 1920, "crf": "20", "preset": "medium"},
+    "standard": {"W": 1920, "H": 1080, "crf": "20", "preset": "medium"},
 }
 
 
@@ -73,7 +73,7 @@ def encode_video(
 
     log.info("  Encoding [%s] %dx%d crf=%s preset=%s …",
              profile, W, H, spec["crf"], spec["preset"])
-    res = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
 
     if res.returncode != 0:
         log.error("Encoder FAILED:\n%s", res.stderr[-800:])

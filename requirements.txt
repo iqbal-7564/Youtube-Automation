@@ -1,5 +1,4 @@
 requests
 gtts
 edge-tts
-feedparser
 rapidfuzz

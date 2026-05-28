@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 _GROQ_URL  = "https://api.groq.com/openai/v1/chat/completions"
 _GROQ_KEYS = [
-    os.getenv("GROQ_API_KEY_1", ""),
-    os.getenv("GROQ_API_KEY_2", ""),
+    os.getenv("GROQ_API_KEY_1", "").strip(),
+    os.getenv("GROQ_API_KEY_2", "").strip(),
 ]
 _MODEL = "llama3-70b-8192"
 
