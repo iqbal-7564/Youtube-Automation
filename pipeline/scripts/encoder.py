@@ -5,13 +5,11 @@ Muxes assembled video-only track + normalised audio into final MP4.
 Video stream is COPIED (no re-encode) — assembler already outputs H.264
 at the correct resolution and fps. Only audio is encoded (AAC 192k).
 
-This keeps encoding time under 10 seconds on any runner.
-
-Both outputs:
-  -movflags +faststart  (moov atom at start)
-  apad                  (pad audio to video length — prevents A/V drift)
-  -shortest             (stop at video end)
-  -t cap                (hard ceiling at expected_duration_s + 3s)
+Duration contract:
+  -t is set to the EXACT assembled video duration (probed via ffprobe).
+  apad then pads silence to precisely that length — no more, no less.
+  This prevents the audio track from inflating the container beyond the
+  video end, which was causing a persistent +3.0s drift in the quality gate.
 """
 
 import json
@@ -34,46 +32,60 @@ def encode_video(
     if not audio_path.exists():
         raise FileNotFoundError(f"Processed audio not found: {audio_path}")
 
-    # Diagnostic — log what we're actually encoding
-    vdur = _probe_duration(video_path)
-    vmb  = video_path.stat().st_size / 1_048_576
-    log.info("  Assembled video: %.1fs  %.1f MB", vdur, vmb)
-    if expected_duration_s and vdur > expected_duration_s * 3:
-        log.warning("  Assembled video is %.1fx longer than expected — will be capped",
-                    vdur / max(expected_duration_s, 1))
+    # Probe the assembled video's actual duration — this is the authoritative
+    # length. Using expected_duration_s alone is wrong because the assembler
+    # adds pre-roll / hook card / end card that the timeline doesn't count.
+    actual_video_dur = _probe_duration(video_path)
+    vmb = video_path.stat().st_size / 1_048_576
+    log.info("  Assembled video: %.3fs  %.1f MB", actual_video_dur, vmb)
+
+    # Decide the hard cap for -t:
+    # 1. Use probed duration if available — apad will pad audio to exactly this.
+    # 2. Fall back to expected + 3s safety margin only if probe failed.
+    if actual_video_dur > 0:
+        t_cap = actual_video_dur
+    elif expected_duration_s > 0:
+        t_cap = expected_duration_s + 3.0
+        log.warning("  ffprobe failed — using expected+3s cap (%.1fs)", t_cap)
+    else:
+        t_cap = 0.0
 
     cmd = [
         "ffmpeg", "-y",
         "-i", str(video_path),
         "-i", str(audio_path),
-        # Copy video bitstream unchanged — no re-encode needed
-        "-map",  "0:v",
-        "-map",  "1:a",
-        "-c:v",  "copy",
-        # Pad audio with silence so it's never shorter than the video
-        "-af",   "apad",
-        "-c:a",  "aac",
-        "-b:a",  "192k",
-        "-ar",   "44100",
-        "-ac",   "2",
+        "-map", "0:v",
+        "-map", "1:a",
+        "-c:v", "copy",
+        # apad extends audio to t_cap; -t ensures it stops exactly there.
+        "-af",  "apad",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-ar",  "44100",
+        "-ac",  "2",
         "-movflags", "+faststart",
     ]
 
-    # Hard cap: never produce a video longer than expected + 3s buffer
-    if expected_duration_s > 0:
-        cmd += ["-t", str(expected_duration_s + 3.0)]
+    if t_cap > 0:
+        cmd += ["-t", str(t_cap)]
 
     cmd.append(str(output_path))
 
-    log.info("  Muxing [%s] (copy video + encode audio) …", profile)
+    log.info("  Muxing [%s] cap=%.3fs …", profile, t_cap)
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
     if res.returncode != 0:
         log.error("Encoder FAILED:\n%s", res.stderr[-800:])
         raise RuntimeError("FFmpeg encoder failed")
 
+    out_dur = _probe_duration(output_path)
     size_mb = output_path.stat().st_size / 1_048_576
-    log.info("  Encoded: %.1f MB → %s", size_mb, output_path.name)
+    log.info("  Encoded: %.3fs  %.1f MB → %s", out_dur, size_mb, output_path.name)
+
+    # Sanity-check our own output so surprises surface here, not at the gate.
+    if t_cap > 0 and abs(out_dur - t_cap) > 0.5:
+        log.warning("  Output duration %.3fs differs from cap %.3fs by %.3fs",
+                    out_dur, t_cap, abs(out_dur - t_cap))
 
 
 def _probe_duration(path: Path) -> float:

@@ -110,7 +110,7 @@ def _duration(path: Path, timeline: dict):
         actual   = float(data["format"]["duration"])
         expected = timeline["total_duration_seconds"]
         diff     = abs(actual - expected)
-        if diff > 2.0:
+        if diff > 1.0:
             return False, f"drift {diff:.2f}s (expected {expected:.2f}s got {actual:.2f}s)"
         return True, f"{actual:.2f}s"
     except (KeyError, ValueError, TypeError) as exc:
