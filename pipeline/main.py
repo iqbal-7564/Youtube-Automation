@@ -163,7 +163,13 @@ def run_pipeline() -> bool:
 
         # ── 9: Audio Processing ──────────────────────────────────────────────
         log.info("[9/14] Audio Processing")
-        norm_audio = process_audio(TEMP_DIR / "voice", TEMP_DIR)
+        # Pass locked duration so atrim caps audio to the timeline total.
+        # This prevents audio from running longer than the video (which xfade
+        # transitions may have shortened slightly) and eliminates A/V drift.
+        norm_audio = process_audio(
+            TEMP_DIR / "voice", TEMP_DIR,
+            duration_cap_s=timeline["total_duration_seconds"],
+        )
         log.info("  Normalized: %s", norm_audio.name)
 
         # ── 10: Encoding ─────────────────────────────────────────────────────
