@@ -334,13 +334,15 @@ def _concat(scene_files: list[tuple[Path, dict]], assembled: Path,
         "\n".join(f"file '{str(p).replace(chr(92), '/')}'" for p in segments),
         encoding="utf-8",
     )
+    # All scene files are already libx264/yuv420p/30fps — stream-copy avoids
+    # a full re-encode pass that would easily exceed the timeout on CI runners.
     _run(
         ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
          "-i", str(lst),
-         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-         "-pix_fmt", "yuv420p", "-r", "30", "-an",
+         "-c", "copy",
          str(assembled)],
         "final concat",
+        timeout=600,
     )
 
 
@@ -519,9 +521,9 @@ def _font_dir() -> str:
     return d if os.path.isdir(d) else ""
 
 
-def _run(cmd: list, label: str = "ffmpeg") -> None:
+def _run(cmd: list, label: str = "ffmpeg", timeout: int = 180) -> None:
     log.debug("FFmpeg [%s] %s …", label, " ".join(str(c) for c in cmd[:5]))
-    res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if res.returncode != 0:
         log.error("FFmpeg [%s] FAILED:\n%s", label, res.stderr[-600:])
         raise RuntimeError(f"FFmpeg failed: {label}")
