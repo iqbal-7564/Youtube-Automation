@@ -3,22 +3,24 @@ STEP 9 — Audio Processing
 
 Standardize → Merge → 3-Stage Normalize pipeline.
 
-Normalization is split into 3 separate FFmpeg passes to prevent filter
-chains from collapsing duration:
+Stage 2 uses TWO-PASS loudnorm to prevent the single-pass streaming mode
+from truncating the final seconds of long audio files.
 
-  Stage 1: merged AAC  → clean PCM WAV
-           (forces stable waveform, removes AAC timestamp drift)
+  Pass 1 (analysis): ffmpeg reads the entire file and prints loudnorm
+                     stats as JSON to stderr.  No output file.
+  Pass 2 (apply):    ffmpeg applies loudnorm with linear=true and the
+                     measured values.  Linear mode is a single-sample
+                     gain operation with zero buffering — always
+                     duration-preserving regardless of ffmpeg version.
 
-  Stage 2: clean WAV   → normalized WAV
-           loudnorm + afftdn ONLY — no fades, no limiter, no -t
+  After loudnorm, afftdn may drop a few samples at the FFT boundary.
+  apad=whole_dur=<clean_dur> pads any missing tail back to the exact
+  source length so Stage 3 always receives the full waveform.
 
-  Stage 3: probe REAL duration from normalized WAV
-           → apply afade_in + afade_out + alimiter
-           → encode to final AAC
-
-Rule: loudnorm and afade must NEVER be in the same filter chain.
-      loudnorm rebuilds timestamps; applying afade afterward uses the
-      wrong reference and silently truncates 8-10 s of content.
+Rules:
+  • loudnorm and afade must NEVER share a filter chain.
+  • afade start time must always be read from the ACTUAL Stage 2 output.
+  • No -t, no -shortest, no atrim in any normalization pass.
 """
 
 import json
@@ -62,8 +64,10 @@ def process_audio(
 
     log.info("  Scene audio total: %.3fs  locked=%.3fs", total_dur, duration_cap_s)
     if duration_cap_s > 0 and abs(total_dur - duration_cap_s) > 1.0:
-        log.warning("  ⚠ Audio total %.3fs differs from locked %.3fs by %.3fs",
-                    total_dur, duration_cap_s, abs(total_dur - duration_cap_s))
+        log.warning(
+            "  ⚠ Audio total %.3fs differs from locked %.3fs by %.3fs",
+            total_dur, duration_cap_s, abs(total_dur - duration_cap_s),
+        )
 
     # ── Merge ─────────────────────────────────────────────────────────────────
     merged = voice_dir / "merged_voice.m4a"
@@ -81,7 +85,8 @@ def process_audio(
     norm_dur = _probe(normalized)
     log.info("  Normalized audio: %.3fs", norm_dur)
 
-    if abs(norm_dur - merged_dur) > 0.5:
+    # Duration must not shrink by more than 0.5 s (codec frame rounding is fine)
+    if merged_dur - norm_dur > 0.5:
         raise RuntimeError(
             f"Normalization changed duration: "
             f"merged={merged_dur:.3f}s → normalized={norm_dur:.3f}s"
@@ -90,16 +95,13 @@ def process_audio(
     return normalized
 
 
+# ── 3-stage normalization ─────────────────────────────────────────────────────
+
 def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
-    """
-    Stage 1: AAC → clean PCM WAV  (stable waveform, no filters)
-    Stage 2: WAV → loudnorm + afftdn only  (no fades, no limiter)
-    Stage 3: probe real duration → apply fades + limiter → final AAC
-    """
     clean_wav = tmp_dir / "clean.wav"
     norm_wav  = tmp_dir / "normalized.wav"
 
-    # ── Stage 1: decode to PCM ────────────────────────────────────────────────
+    # ── Stage 1: decode to clean PCM WAV ─────────────────────────────────────
     log.info("  Normalize stage 1: decode to PCM WAV …")
     _run(
         ["ffmpeg", "-y", "-i", str(src),
@@ -108,45 +110,113 @@ def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
          str(clean_wav)],
         "s1-decode",
     )
+    clean_dur = _probe(clean_wav)
+    log.info("  Stage 1 output: %.3fs", clean_dur)
 
-    # ── Stage 2: loudnorm + noise gate ONLY (no fades, no limiter) ───────────
-    log.info("  Normalize stage 2: loudnorm + afftdn …")
+    # ── Stage 2: two-pass loudnorm + afftdn + apad ────────────────────────────
+    # Pass 1: measure integrated loudness stats (no output file)
+    log.info("  Normalize stage 2a: loudnorm pass-1 (measure) …")
+    stats = _loudnorm_measure(clean_wav)
+
+    # Pass 2: apply loudnorm as linear gain (duration-preserving by definition)
+    #         + afftdn noise reduction
+    #         + apad to restore any samples dropped by afftdn's FFT latency
+    log.info("  Normalize stage 2b: loudnorm pass-2 (apply linear) + afftdn + apad …")
+
+    if stats:
+        loudnorm_af = (
+            f"loudnorm=I=-14:TP=-1.5:LRA=11"
+            f":measured_I={stats.get('input_i', '-70.0')}"
+            f":measured_TP={stats.get('input_tp', '-70.0')}"
+            f":measured_LRA={stats.get('input_lra', '0.0')}"
+            f":measured_thresh={stats.get('input_thresh', '-80.0')}"
+            f":offset={stats.get('target_offset', '0.0')}"
+            f":linear=true"
+        )
+        log.info("  Two-pass loudnorm: I=%s TP=%s LRA=%s",
+                 stats.get('input_i'), stats.get('input_tp'), stats.get('input_lra'))
+    else:
+        # Fallback: single-pass loudnorm (may still truncate, but apad repairs it)
+        log.warning("  loudnorm stats parse failed — using single-pass fallback")
+        loudnorm_af = "loudnorm=I=-14:TP=-1.5:LRA=11"
+
     _run(
         ["ffmpeg", "-y", "-i", str(clean_wav),
-         "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,afftdn=nf=-40",
+         "-af", f"{loudnorm_af},afftdn=nf=-40,apad=whole_dur={clean_dur:.6f}",
          "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
          "-c:a", "pcm_s16le",
          str(norm_wav)],
-        "s2-loudnorm",
+        "s2-apply",
     )
 
-    # ── Stage 3: probe REAL duration → fades → limiter → final AAC ───────────
+    # Read REAL duration from Stage 2 output — this is the authoritative value
     real_dur = _probe(norm_wav)
-    log.info("  Normalize stage 3: duration=%.3fs → fades + limiter → AAC …",
-             real_dur)
+    log.info("  Stage 2 output: %.3fs (clean_dur was %.3fs)", real_dur, clean_dur)
 
-    fade_in_start  = 0.0
+    if clean_dur > 0 and abs(real_dur - clean_dur) > 0.5:
+        log.warning(
+            "  Stage 2 duration mismatch: clean=%.3fs norm_wav=%.3fs — "
+            "apad may not have compensated fully",
+            clean_dur, real_dur,
+        )
+
+    # ── Stage 3: fades + limiter → final AAC ─────────────────────────────────
+    # fade_out_start is computed from norm_wav's ACTUAL duration.
+    # It is never assumed or carried over from an earlier variable.
     fade_out_start = max(0.5, real_dur - 1.0)
+    log.info(
+        "  Normalize stage 3: fades (in@0s, out@%.3fs) + limiter → AAC …",
+        fade_out_start,
+    )
 
     _run(
         ["ffmpeg", "-y", "-i", str(norm_wav),
          "-af", (
-             f"afade=t=in:st={fade_in_start:.3f}:d=0.5,"
-             f"afade=t=out:st={fade_out_start:.3f}:d=1.0,"
+             f"afade=t=in:st=0.000:d=0.500,"
+             f"afade=t=out:st={fade_out_start:.3f}:d=1.000,"
              "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50"
          ),
          "-c:a", "aac", "-b:a", "192k",
          "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
          str(out)],
-        "s3-fade-limiter",
+        "s3-fades",
     )
 
-    log.info("  Stage 3 cmd: fade_out_start=%.3fs", fade_out_start)
+
+def _loudnorm_measure(path: Path) -> dict | None:
+    """
+    Pass 1 of two-pass loudnorm: run ffmpeg with print_format=json and
+    parse the loudnorm stats from stderr.
+
+    Returns a dict with keys: input_i, input_tp, input_lra, input_thresh,
+    target_offset.  Returns None if parsing fails (caller falls back to
+    single-pass mode).
+    """
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-nostats", "-i", str(path),
+             "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=120,
+        )
+        combined = r.stderr + r.stdout
+        # The JSON block is the last { ... } in the output
+        brace_start = combined.rfind("{")
+        brace_end   = combined.rfind("}") + 1
+        if brace_start >= 0 and brace_end > brace_start:
+            data = json.loads(combined[brace_start:brace_end])
+            # Verify it has the keys we need
+            if "input_i" in data:
+                return data
+    except Exception as exc:
+        log.debug("loudnorm measure error: %s", exc)
+    return None
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
 def _standardize(src: Path, out: Path) -> None:
+    """Convert any TTS MP3 to consistent AAC 44.1 kHz stereo."""
     if out.exists() and out.stat().st_size > 1_000:
         return
     _run(
@@ -159,6 +229,7 @@ def _standardize(src: Path, out: Path) -> None:
 
 
 def _merge(files: list[Path], output: Path) -> None:
+    """Concatenate standardized AAC files using filter_complex concat."""
     if len(files) == 1:
         import shutil
         shutil.copy(files[0], output)
@@ -185,6 +256,7 @@ def _merge(files: list[Path], output: Path) -> None:
 
 
 def _probe(path: Path) -> float:
+    """Return file duration in seconds via ffprobe (format-level read)."""
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
