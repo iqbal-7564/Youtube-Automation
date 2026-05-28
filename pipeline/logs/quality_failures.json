@@ -74,5 +74,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
     },
     "fail_reason": "[duration] drift 3.00s (expected 40.95s got 43.95s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:38:24.342980",
+    "topic": "Incredible Facts About Saturn'S Rings Composition",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 31.90s got 34.90s)",
+      "audio_sync": "fail: A/V drift 3.000s",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 5, end=32699ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 31.90s got 34.90s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:39:12.232493",
+    "topic": "Incredible Facts About Saturn'S Rings Composition",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 31.90s got 34.90s)",
+      "audio_sync": "fail: A/V drift 3.000s",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 5, end=32699ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 31.90s got 34.90s)"
+  },
+  {
+    "timestamp": "2026-05-28T12:39:27.181001",
+    "topic": "Incredible Facts About Saturn'S Rings Composition",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "fail: drift 3.00s (expected 31.90s got 34.90s)",
+      "audio_sync": "fail: A/V drift 3.000s",
+      "audio_level": "pass",
+      "subtitles": "fail: subtitle extends past video end (scene 5, end=32699ms)",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+    },
+    "fail_reason": "[duration] drift 3.00s (expected 31.90s got 34.90s)"
   }
 ]
