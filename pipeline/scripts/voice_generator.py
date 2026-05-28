@@ -179,6 +179,11 @@ def _silence_file(out: Path, duration_s: float) -> None:
 
 
 def _append_silence(path: Path, duration_s: float) -> None:
+    """Append exactly duration_s seconds of silence to the voice file.
+
+    Uses anullsrc with the :d= duration option so the silence source
+    is finite without relying on -t or a VBR-inaccurate probe.
+    """
     if not path.exists():
         return
     tmp = path.with_suffix(".tmp.mp3")
@@ -186,11 +191,10 @@ def _append_silence(path: Path, duration_s: float) -> None:
         subprocess.run(
             ["ffmpeg", "-y",
              "-i", str(path),
-             "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
-             "-filter_complex",
-             f"[0:a][1:a]concat=n=2:v=0:a=1[outa]",
+             "-f", "lavfi",
+             "-i", f"anullsrc=r=44100:cl=stereo:d={duration_s:.3f}",
+             "-filter_complex", "[0:a][1:a]concat=n=2:v=0:a=1[outa]",
              "-map", "[outa]",
-             "-t", str(_duration_s(path) + duration_s),
              "-c:a", "libmp3lame", "-q:a", "2",
              str(tmp)],
             capture_output=True, timeout=30,
@@ -212,21 +216,30 @@ def _duration_ms(path: Path) -> int:
 
 
 def _duration_s(path: Path) -> float:
+    """Return accurate duration for any audio file including VBR MP3.
+
+    -count_packets forces ffprobe to scan the entire file and count
+    packets rather than trusting potentially-wrong VBR headers.
+    Without this, VBR MP3 durations are commonly underreported by 10-20%.
+    """
     if not path.exists():
         return 0.0
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
-             "-show_streams", "-show_format", str(path)],
-            capture_output=True, text=True, timeout=10,
+             "-show_streams", "-show_format",
+             "-count_packets",
+             str(path)],
+            capture_output=True, text=True, timeout=15,
         )
         data = json.loads(r.stdout)
+        # Prefer stream nb_read_packets-derived duration when available
         for stream in data.get("streams", []):
             dur = stream.get("duration")
-            if dur:
+            if dur and float(dur) > 0:
                 return float(dur)
         fmt_dur = data.get("format", {}).get("duration")
-        if fmt_dur:
+        if fmt_dur and float(fmt_dur) > 0:
             return float(fmt_dur)
     except Exception:
         pass

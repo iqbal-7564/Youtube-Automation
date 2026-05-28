@@ -92,7 +92,13 @@ def _log_quality_failure(gate: dict, topic: dict, attempt: int) -> None:
 
 
 def _assert_audio_integrity(audio_path: Path, locked_s: float) -> None:
-    """Fail fast if audio merge lost more than 1 second."""
+    """Fail fast if normalized audio is > 1 s shorter than locked timeline.
+
+    Note: normalized audio MAY be slightly longer than locked_s (because
+    accurate VBR scanning reveals more content than the original VBR header
+    reported).  That is acceptable — the encoder's -shortest will align at
+    the video end.  Only fail if audio is shorter (content was dropped).
+    """
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
