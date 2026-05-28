@@ -254,5 +254,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
     },
     "fail_reason": "[audio_gaps] audio gap(s) detected at ['2.66s', '6.07s', '10.85s']"
+  },
+  {
+    "timestamp": "2026-05-28T13:33:54.826202",
+    "topic": "Exoplanet Rain",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "fail: A/V drift 1.713s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.72s', '7.53s', '10.60s']"
+    },
+    "fail_reason": "[audio_sync] A/V drift 1.713s"
+  },
+  {
+    "timestamp": "2026-05-28T13:36:52.102835",
+    "topic": "Exoplanet Rain",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "fail: A/V drift 1.713s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.72s', '7.53s', '10.60s']"
+    },
+    "fail_reason": "[audio_sync] A/V drift 1.713s"
+  },
+  {
+    "timestamp": "2026-05-28T13:37:19.017065",
+    "topic": "Exoplanet Rain",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "fail: A/V drift 1.013s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.72s', '7.53s', '10.60s']"
+    },
+    "fail_reason": "[audio_sync] A/V drift 1.013s"
   }
 ]
