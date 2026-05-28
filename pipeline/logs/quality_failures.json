@@ -374,5 +374,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
     },
     "fail_reason": "[audio_gaps] audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:12:27.425020",
+    "topic": "Before Big Bang",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:15:38.938944",
+    "topic": "Before Big Bang",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:16:05.765638",
+    "topic": "Before Big Bang",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
   }
 ]
