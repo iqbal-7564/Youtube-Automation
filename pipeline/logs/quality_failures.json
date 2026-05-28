@@ -314,5 +314,65 @@
       "audio_gaps": "fail: audio gap(s) detected at ['1.72s', '7.53s', '10.60s']"
     },
     "fail_reason": "[audio_sync] A/V drift 1.013s"
+  },
+  {
+    "timestamp": "2026-05-28T13:52:33.886859",
+    "topic": "Venus Rotates Backwards",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+  },
+  {
+    "timestamp": "2026-05-28T13:55:52.740839",
+    "topic": "Venus Rotates Backwards",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+  },
+  {
+    "timestamp": "2026-05-28T13:56:17.107617",
+    "topic": "Venus Rotates Backwards",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) detected at ['1.55s', '5.90s', '10.47s']"
   }
 ]
