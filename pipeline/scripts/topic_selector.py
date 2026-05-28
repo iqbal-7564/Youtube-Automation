@@ -190,14 +190,13 @@ def _fetch_trending_hints() -> dict[str, str]:
                         "role": "system",
                         "content": (
                             "You are a viral content strategist. "
-                            "Return ONLY valid JSON no markdown. "
-                            "Format: {"CATEGORY": "hint"} for each category."
+                            "Return ONLY valid JSON, no markdown. "
+                            'Format: {"CATEGORY": "hint"} for each category.'
                         ),
                     }, {
                         "role": "user",
                         "content": (
-                            f"For each category: {cats_str}
-"
+                            f"For each category: {cats_str}\n"
                             "Give ONE trending angle in 8-12 words — fresh, specific, "
                             "currently viral on YouTube in 2025. Focus on recent discoveries, "
                             "counterintuitive facts, or newly revealed historical truths."

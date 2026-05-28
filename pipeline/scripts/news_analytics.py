@@ -300,12 +300,14 @@ def apply_adaptive_learning(hints: dict, logs_dir: Path) -> dict:
 
     if avg_ret > 70:
         # System is working — lock current parameters
-        params["template_lock"]     = True
-        params["lock_note"]         = "retention above 70% — preserving current parameters"
+        params["template_lock"] = True
+        params["lock_note"]     = "retention above 70% — preserving current parameters"
         log.info("Adaptive: high retention %.1f%% — parameters locked", avg_ret)
-    elif avg_ret > 70 and params.get("template_lock"):
-        # Decay the lock if performance drops
+    elif avg_ret <= 70 and params.get("template_lock"):
+        # Performance dropped below threshold — release the parameter lock
         params.pop("template_lock", None)
+        params.pop("lock_note", None)
+        log.info("Adaptive: retention dropped to %.1f%% — parameter lock released", avg_ret)
 
     params["updated_at"] = datetime.utcnow().isoformat()
     params["last_signal"] = signal or "none"

@@ -24,6 +24,7 @@ COMPLEXITY-BASED minimum dwell times are further adjusted per persona:
 """
 
 import logging
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -124,14 +125,13 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         pass
 
     shorts_hook_cap = _adaptive.get("hook_cap_ms", _SHORTS_HOOK_CAP_MS)
-    tension_ivl     = _adaptive.get("tension_interval_s",
-                                     _SCENE_INTERVAL_SHORTS["TENSION"])
-    core_ivl        = _adaptive.get("core_interval_s",
-                                     _SCENE_INTERVAL_SHORTS["CORE"])
 
-    # Apply adaptive values to Shorts intervals
-    _SCENE_INTERVAL_SHORTS["TENSION"] = tension_ivl
-    _SCENE_INTERVAL_SHORTS["CORE"]    = core_ivl
+    # Use local copies — never mutate module-level dicts (breaks on repeated calls)
+    _shorts_ivl = dict(_SCENE_INTERVAL_SHORTS)
+    _shorts_ivl["TENSION"] = _adaptive.get("tension_interval_s",
+                                            _SCENE_INTERVAL_SHORTS["TENSION"])
+    _shorts_ivl["CORE"]    = _adaptive.get("core_interval_s",
+                                            _SCENE_INTERVAL_SHORTS["CORE"])
 
     # VIDEO_FORMAT env var takes priority; fall back to word-count estimate
     video_format = os.getenv("VIDEO_FORMAT", "").lower()
@@ -145,7 +145,7 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         est_total_s   = total_words / _WPS
         is_shorts_est = est_total_s <= 65
 
-    scene_interval = _SCENE_INTERVAL_SHORTS if is_shorts_est else _SCENE_INTERVAL_STANDARD
+    scene_interval = _shorts_ivl if is_shorts_est else _SCENE_INTERVAL_STANDARD
 
     scenes: list[dict] = []
     elapsed_ms = 0
