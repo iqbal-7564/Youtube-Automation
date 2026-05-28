@@ -434,5 +434,65 @@
       "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
     },
     "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.83s', '9.47s', '13.35s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:26:36.045484",
+    "topic": "Venus Spins Backwards",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:29:58.268422",
+    "topic": "Venus Spins Backwards",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+  },
+  {
+    "timestamp": "2026-05-28T18:30:27.093941",
+    "topic": "Venus Spins Backwards",
+    "intent": "SPACE",
+    "attempt": 3,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
   }
 ]
