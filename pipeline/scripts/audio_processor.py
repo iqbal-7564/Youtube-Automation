@@ -1,19 +1,24 @@
 """
 STEP 9 — Audio Processing
 
-Standardize → Merge → Normalize pipeline.
+Standardize → Merge → 3-Stage Normalize pipeline.
 
-Why standardize first:
-  TTS engines output MP3 at mixed sample rates.  FFmpeg's filter_complex
-  concat silently truncates streams on format mismatch.  Converting every
-  file to identical AAC 44.1 kHz stereo before concat is the only reliable
-  approach.
+Normalization is split into 3 separate FFmpeg passes to prevent filter
+chains from collapsing duration:
 
-Normalization rule: NEVER change duration.
-  atrim / -t / -shortest are all banned from the normalize step.
-  Fade-out start is calculated from the actual merged duration so it
-  can never exceed the file length.
-  An assertion after normalization verifies duration stayed within ±0.5 s.
+  Stage 1: merged AAC  → clean PCM WAV
+           (forces stable waveform, removes AAC timestamp drift)
+
+  Stage 2: clean WAV   → normalized WAV
+           loudnorm + afftdn ONLY — no fades, no limiter, no -t
+
+  Stage 3: probe REAL duration from normalized WAV
+           → apply afade_in + afade_out + alimiter
+           → encode to final AAC
+
+Rule: loudnorm and afade must NEVER be in the same filter chain.
+      loudnorm rebuilds timestamps; applying afade afterward uses the
+      wrong reference and silently truncates 8-10 s of content.
 """
 
 import json
@@ -41,56 +46,105 @@ def process_audio(
 
     log.info("  Standardizing %d voice files to AAC 44.1 kHz …", len(raw_files))
 
-    # ── Step 1: Standardize every file ───────────────────────────────────────
+    # ── Standardize ──────────────────────────────────────────────────────────
     std_dir = temp_dir / "voice_std"
     std_dir.mkdir(parents=True, exist_ok=True)
 
     std_files: list[Path] = []
     total_dur = 0.0
-
     for f in raw_files:
         std_f = std_dir / f.with_suffix(".m4a").name
         _standardize(f, std_f)
-        dur = _probe_duration(std_f)
+        dur = _probe(std_f)
         log.info("    %s → %.3fs", f.name, dur)
         total_dur += dur
         std_files.append(std_f)
 
-    log.info("  Scene audio total: %.3fs  locked=%.3fs",
-             total_dur, duration_cap_s)
+    log.info("  Scene audio total: %.3fs  locked=%.3fs", total_dur, duration_cap_s)
+    if duration_cap_s > 0 and abs(total_dur - duration_cap_s) > 1.0:
+        log.warning("  ⚠ Audio total %.3fs differs from locked %.3fs by %.3fs",
+                    total_dur, duration_cap_s, abs(total_dur - duration_cap_s))
 
-    if duration_cap_s > 0:
-        diff = abs(total_dur - duration_cap_s)
-        if diff > 1.0:
-            log.warning(
-                "  ⚠ Actual audio total %.3fs vs locked %.3fs (diff %.3fs). "
-                "Timeline may have been locked from inaccurate VBR durations.",
-                total_dur, duration_cap_s, diff,
-            )
-
-    # ── Step 2: Merge ─────────────────────────────────────────────────────────
+    # ── Merge ─────────────────────────────────────────────────────────────────
     merged = voice_dir / "merged_voice.m4a"
     _merge(std_files, merged)
-    merged_dur = _probe_duration(merged)
+    merged_dur = _probe(merged)
     log.info("  Merged audio: %.3fs", merged_dur)
 
-    # ── Step 3: Normalize (duration MUST NOT change) ──────────────────────────
-    normalized = voice_dir / "normalized_voice.aac"
-    _normalize(merged, normalized, merged_dur)
+    # ── 3-Stage Normalization ─────────────────────────────────────────────────
+    tmp_dir = temp_dir / "audio_tmp"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    norm_dur = _probe_duration(normalized)
+    normalized = voice_dir / "normalized_voice.aac"
+    _normalize_3stage(merged, normalized, tmp_dir)
+
+    norm_dur = _probe(normalized)
     log.info("  Normalized audio: %.3fs", norm_dur)
 
     if abs(norm_dur - merged_dur) > 0.5:
         raise RuntimeError(
-            f"Normalization changed duration: merged={merged_dur:.3f}s "
-            f"normalized={norm_dur:.3f}s — check filter chain"
+            f"Normalization changed duration: "
+            f"merged={merged_dur:.3f}s → normalized={norm_dur:.3f}s"
         )
 
     return normalized
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
+    """
+    Stage 1: AAC → clean PCM WAV  (stable waveform, no filters)
+    Stage 2: WAV → loudnorm + afftdn only  (no fades, no limiter)
+    Stage 3: probe real duration → apply fades + limiter → final AAC
+    """
+    clean_wav = tmp_dir / "clean.wav"
+    norm_wav  = tmp_dir / "normalized.wav"
+
+    # ── Stage 1: decode to PCM ────────────────────────────────────────────────
+    log.info("  Normalize stage 1: decode to PCM WAV …")
+    _run(
+        ["ffmpeg", "-y", "-i", str(src),
+         "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+         "-c:a", "pcm_s16le",
+         str(clean_wav)],
+        "s1-decode",
+    )
+
+    # ── Stage 2: loudnorm + noise gate ONLY (no fades, no limiter) ───────────
+    log.info("  Normalize stage 2: loudnorm + afftdn …")
+    _run(
+        ["ffmpeg", "-y", "-i", str(clean_wav),
+         "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,afftdn=nf=-40",
+         "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+         "-c:a", "pcm_s16le",
+         str(norm_wav)],
+        "s2-loudnorm",
+    )
+
+    # ── Stage 3: probe REAL duration → fades → limiter → final AAC ───────────
+    real_dur = _probe(norm_wav)
+    log.info("  Normalize stage 3: duration=%.3fs → fades + limiter → AAC …",
+             real_dur)
+
+    fade_in_start  = 0.0
+    fade_out_start = max(0.5, real_dur - 1.0)
+
+    _run(
+        ["ffmpeg", "-y", "-i", str(norm_wav),
+         "-af", (
+             f"afade=t=in:st={fade_in_start:.3f}:d=0.5,"
+             f"afade=t=out:st={fade_out_start:.3f}:d=1.0,"
+             "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50"
+         ),
+         "-c:a", "aac", "-b:a", "192k",
+         "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+         str(out)],
+        "s3-fade-limiter",
+    )
+
+    log.info("  Stage 3 cmd: fade_out_start=%.3fs", fade_out_start)
+
+
+# ── Shared helpers ────────────────────────────────────────────────────────────
 
 def _standardize(src: Path, out: Path) -> None:
     if out.exists() and out.stat().st_size > 1_000:
@@ -130,32 +184,7 @@ def _merge(files: list[Path], output: Path) -> None:
     )
 
 
-def _normalize(src: Path, out: Path, src_dur: float) -> None:
-    """Apply loudness / EQ / fade processing.  Must NOT change duration."""
-    # Fade-out start: 1 s before end, but never negative
-    fade_out_start = max(0.5, src_dur - 1.0)
-
-    af_parts = [
-        "loudnorm=I=-14:TP=-1.5:LRA=11",
-        "afftdn=nf=-40",
-        "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50",
-        "afade=t=in:st=0:d=0.5",
-        f"afade=t=out:st={fade_out_start:.3f}:d=1.0",
-    ]
-    # NO atrim, NO -t, NO -shortest — duration must be preserved
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(src),
-        "-af", ",".join(af_parts),
-        "-c:a", "aac", "-b:a", "192k",
-        "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
-        str(out),
-    ]
-    log.info("  Normalize cmd: %s", " ".join(cmd))
-    _run(cmd, "normalize")
-
-
-def _probe_duration(path: Path) -> float:
+def _probe(path: Path) -> float:
     try:
         r = subprocess.run(
             ["ffprobe", "-v", "quiet", "-print_format", "json",
