@@ -137,15 +137,23 @@ def build_timeline(script: dict, intent: str = "") -> dict:
     video_format = os.getenv("VIDEO_FORMAT", "").lower()
     if video_format == "shorts":
         is_shorts_est = True
+        format_explicit = "shorts"
     elif video_format in ("standard", "long"):
         is_shorts_est = False
+        format_explicit = "standard"
     else:
         # Auto-detect from script word count
         total_words   = sum(len(s["text"].split()) for s in script["segments"])
         est_total_s   = total_words / _WPS
         is_shorts_est = est_total_s <= 65
+        format_explicit = ""
 
     scene_interval = _shorts_ivl if is_shorts_est else _SCENE_INTERVAL_STANDARD
+
+    # Shorts: scale down persona minimums so total stays ≤60s.
+    # Standard persona values are tuned for 3-10 min videos; they blow out
+    # a 60s short by 20-40s when applied unscaled.
+    _SHORTS_PERSONA_SCALE = 0.45
 
     scenes: list[dict] = []
     elapsed_ms = 0
@@ -163,9 +171,10 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         n_scenes   = max(1, round((est_ms / 1000) / interval_s))
         base_dur_ms = est_ms // n_scenes
 
-        # Persona-based minimum dwell, adjusted by complexity
+        # Persona-based minimum dwell, adjusted by complexity.
+        # In shorts mode, scale down so scenes fit within 60s.
         base_min = persona_ms.get(complexity, 3_000)
-        min_dur_ms = base_min
+        min_dur_ms = int(base_min * _SHORTS_PERSONA_SCALE) if is_shorts_est else base_min
 
         for sc_idx in range(n_scenes):
             wpsc    = max(1, len(words) // n_scenes)
@@ -227,7 +236,13 @@ def build_timeline(script: dict, intent: str = "") -> dict:
             sc["motion_emotion"] = arc[label]
 
     total_s = elapsed_ms / 1000
-    profile = "shorts"  if total_s <= 60 else "standard"
+    # Honour explicit VIDEO_FORMAT; fall back to duration-based detection.
+    if format_explicit == "shorts":
+        profile = "shorts"
+    elif format_explicit == "standard":
+        profile = "standard"
+    else:
+        profile = "shorts" if total_s <= 60 else "standard"
     W, H    = (1080, 1920) if profile == "shorts" else (1920, 1080)
 
     return {
