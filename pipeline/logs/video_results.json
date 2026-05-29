@@ -73,5 +73,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Edk873GHD8A",
+    "intent": "HISTORY",
+    "title": "Roman Empire's Dark Secret",
+    "hook_text": "Everything you know about Rome's fall is wrong.",
+    "total_duration_seconds": 67.04,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-29T22:48:36.506258",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
