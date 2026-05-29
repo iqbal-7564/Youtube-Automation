@@ -58,5 +58,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "t3IB0QhMSmk",
+    "intent": "SCIENCE",
+    "title": "Dreams Aren't Random",
+    "hook_text": "Your brain cleans toxic waste during dreams.",
+    "total_duration_seconds": 108.45,
+    "scene_count": 15,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-29T20:53:10.751565",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
