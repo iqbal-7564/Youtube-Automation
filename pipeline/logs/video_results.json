@@ -43,5 +43,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "md4g6_B8R1A",
+    "intent": "SPACE",
+    "title": "Venus' Dark Secret",
+    "hook_text": "243 Earth days make one day on Venus.",
+    "total_duration_seconds": 66.54,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-29T18:22:52.438229",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
