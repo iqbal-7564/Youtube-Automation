@@ -133,5 +133,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Qh2qArCjdg4",
+    "intent": "ANIMALS",
+    "title": "Whales Talk Across Oceans",
+    "hook_text": "Whales talk across oceans.",
+    "total_duration_seconds": 63.84,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-30T13:35:32.644562",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
