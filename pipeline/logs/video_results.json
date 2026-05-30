@@ -118,5 +118,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "XQHSgo66hlw",
+    "intent": "HISTORY",
+    "title": "Beer Led to Writing",
+    "hook_text": "Writing exists because of beer.",
+    "total_duration_seconds": 59.41,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-30T12:53:40.087063",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
