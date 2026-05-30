@@ -88,5 +88,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "_Ld5TKcTJDU",
+    "intent": "SPACE",
+    "title": "Incredible Facts About A Day On Venus Is Longer Than Its Year",
+    "hook_text": "This fact will completely change how you see the world.",
+    "total_duration_seconds": 41.13,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-30T10:49:46.027881",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
