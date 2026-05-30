@@ -246,35 +246,42 @@ def _hf_to_visual_prompt(
         f"Category: {intent}"
     )
 
-    try:
-        r = requests.post(
-            HF_TEXT_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type":  "application/json",
-            },
-            json={
-                "model":      HF_TEXT_MODEL,
-                "messages":   [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user",   "content": user_message},
-                ],
-                "max_tokens": 120,
-                "temperature": 0.4,
-            },
-            timeout=20,
-        )
-        if r.ok:
-            prompt = r.json()["choices"][0]["message"]["content"].strip()
-            # Enforce token limit — FLUX.1 truncates at ~77 tokens (~55 words)
-            words = prompt.split()
-            if len(words) > 55:
-                prompt = " ".join(words[:55])
-            return prompt
-        else:
-            log.warning("HF text API %d: %s", r.status_code, r.text[:200])
-    except Exception as exc:
-        log.warning("HF text prompt call failed: %s", exc)
+    for attempt in range(1, 3):   # 2 attempts before falling back
+        try:
+            r = requests.post(
+                HF_TEXT_URL,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type":  "application/json",
+                },
+                json={
+                    "model":      HF_TEXT_MODEL,
+                    "messages":   [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user",   "content": user_message},
+                    ],
+                    "max_tokens": 120,
+                    "temperature": 0.4,
+                },
+                timeout=20,
+            )
+            if r.ok:
+                prompt = r.json()["choices"][0]["message"]["content"].strip()
+                # Enforce token limit — FLUX.1 truncates at ~77 tokens (~55 words)
+                words = prompt.split()
+                if len(words) > 55:
+                    prompt = " ".join(words[:55])
+                return prompt
+            else:
+                log.warning("HF text API %d: %s", r.status_code, r.text[:200])
+                break   # HTTP error — no point retrying
+        except requests.exceptions.ConnectionError as exc:
+            log.warning("HF text connection error (attempt %d/2) — waiting 10s: %s",
+                        attempt, str(exc)[:120])
+            time.sleep(10)
+        except Exception as exc:
+            log.warning("HF text prompt call failed: %s", exc)
+            break
 
     return _fallback_prompt(keywords, emotion, shot_type, portrait)
 
@@ -382,8 +389,14 @@ def _flux_generate_image(prompt: str, out_path: Path, W: int, H: int) -> bool:
         except requests.Timeout:
             log.warning("HF request timeout (attempt %d/%d)", attempt, MAX_RETRIES)
             time.sleep(RETRY_BASE_S * attempt)
+        except requests.exceptions.ConnectionError as exc:
+            # DNS / network blip — wait and retry (transient on GitHub Actions runners)
+            wait = RETRY_BASE_S * (2 ** (attempt - 1))
+            log.warning("HF connection error (attempt %d/%d) — waiting %ds: %s",
+                        attempt, MAX_RETRIES, wait, str(exc)[:120])
+            time.sleep(wait)
         except Exception as exc:
-            log.error("HF generation error: %s", exc)
+            log.error("HF generation unexpected error: %s", exc)
             return False
 
     log.error("FLUX.1 failed after %d attempts for prompt: %s", MAX_RETRIES, prompt[:80])
