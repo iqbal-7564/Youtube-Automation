@@ -48,6 +48,17 @@ _INTENT_LABEL = {k: k for k in _INTENT_COLOR}
 _FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 _FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
+# Emotion-based color grade filters applied per scene for cinematic look
+_COLOR_GRADE: dict[str, str] = {
+    "excited":    "eq=saturation=1.18:brightness=0.02:contrast=1.05,"
+                  "curves=r='0/0 0.5/0.54 1/1':b='0/0 0.5/0.46 1/1'",   # warm, vibrant
+    "mysterious": "eq=saturation=0.82:brightness=-0.03:contrast=1.08,"
+                  "curves=r='0/0 0.5/0.46 1/1':b='0/0 0.5/0.54 1/1'",   # cool, desaturated
+    "dramatic":   "eq=saturation=1.12:brightness=-0.04:contrast=1.18,"
+                  "curves=all='0/0 0.25/0.2 0.75/0.8 1/1'",              # high contrast, punchy
+    "neutral":    "eq=saturation=1.0:brightness=0.0:contrast=1.0",        # no grade
+}
+
 
 def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
     visuals_dir = temp_dir / "visuals"
@@ -133,6 +144,14 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
             f"zoompan=z='{z_expr}':d={frames}:"
             f"x='{x_expr}':y='{y_expr}':s={W}x{H}:fps=30"
         )
+
+    # Emotion-based color grade for cinematic look
+    grade = _COLOR_GRADE.get(motion_emotion, _COLOR_GRADE["neutral"])
+    vf_parts.append(grade)
+
+    # Vignette on dramatic/mysterious scenes — draws focus to center
+    if motion_emotion in ("dramatic", "mysterious"):
+        vf_parts.append("vignette=PI/4")
 
     # Brand overlays — intent pill top-right only (channel name removed per design update)
     # Logo image (top-left) is added via filter_complex overlay below.

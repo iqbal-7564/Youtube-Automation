@@ -59,6 +59,8 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
         )
         pad_s = (_SECTION_BOUNDARY_PAD_MS if is_core_payoff else _SCENE_PAD_MS) / 1000
 
+        sc["_voice_pad_ms"] = int(pad_s * 1000)   # stored for subtitle sync
+
         is_fresh = not (path.exists() and path.stat().st_size > 500)
         if is_fresh:
             engine = _generate(sc["script_text"], path, emotion)
@@ -96,8 +98,12 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
         timeline["profile"], timeline["width"], timeline["height"] = "standard", 1920, 1080
 
     for sc in scenes:
+        # Exclude silence padding from subtitle window so subtitles never
+        # run into the gap between scenes (the main cause of voice/sub mismatch).
+        pad_ms = sc.get("_voice_pad_ms", _SCENE_PAD_MS)
+        voice_end_ms = max(sc["start_ms"] + 500, sc["end_ms"] - pad_ms)
         sc["subtitle_lines"] = _rescale_subs(
-            sc["subtitle_lines"], sc["start_ms"], sc["end_ms"]
+            sc["subtitle_lines"], sc["start_ms"], voice_end_ms
         )
 
     engines_used = [sc.get("tts_engine", "") for sc in scenes]

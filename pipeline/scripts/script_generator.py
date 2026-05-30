@@ -37,14 +37,22 @@ _MODEL = "llama-3.3-70b-versatile"
 
 # ── Narrative templates ───────────────────────────────────────────────────────
 
+_CLOSE_RULE = (
+    "ONE short sentence only — a subscribe CTA. "
+    "Examples: 'Follow MindBlownFacts for more mind-blowing facts every day.' "
+    "/ 'Subscribe to MindBlownFacts — a new mind-blowing fact drops every day.' "
+    "/ 'Follow for more facts that will change how you see the world.' "
+    "Vary the exact wording each time. NEVER say 'Like and subscribe' or 'Hit the bell'."
+)
+
 _NARRATIVE_VARIANTS: dict[str, dict] = {
     "classic": {
-        "description": "Classic curiosity-gap structure: hook teases → tension builds mystery → core delivers facts → payoff resolves → close teases next",
+        "description": "Classic curiosity-gap structure: hook teases → tension builds mystery → core delivers facts → payoff resolves → close subscribe CTA",
         "hook_rule":    "ONE sentence, max 12 words. State something astonishing WITHOUT explaining it. Pure curiosity gap.",
         "tension_rule": "2-3 sentences. Raise MORE questions. Make it feel like forbidden knowledge they were never taught.",
         "core_rule":    "4-6 short sentences. Most surprising fact FIRST. One fact per sentence. Vary rhythm: short. Longer context. Short again. Mark your single most shocking sentence with [WOW].",
         "payoff_rule":  "Max 2 sentences. Deliver the satisfying answer that resolves the hook.",
-        "close_rule":   "ONE sentence. Tease the NEXT mind-blowing fact they must see.",
+        "close_rule":   _CLOSE_RULE,
     },
     "mystery": {
         "description": "Unsolved mystery structure: open with an ancient or scientific mystery — answer is withheld until the very last moment",
@@ -52,7 +60,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
         "tension_rule": "2-3 sentences. Deepen the mystery. Add conflicting evidence. Make it feel completely unsolvable.",
         "core_rule":    "4-6 sentences. Present evidence step by step — do NOT reveal the answer yet. Escalate the puzzle. Mark the most paradoxical fact with [WOW].",
         "payoff_rule":  "Max 2 sentences. Finally reveal the surprising answer. Make it feel worth the wait.",
-        "close_rule":   "ONE sentence. Hint there is a DEEPER connected mystery.",
+        "close_rule":   _CLOSE_RULE,
     },
     "shock_first": {
         "description": "Lead with the most impossible-sounding fact as if it is obvious, then spend the rest of the video proving it",
@@ -60,7 +68,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
         "tension_rule": "2-3 sentences. Immediately challenge the viewer's disbelief. 'This sounds impossible. Here is exactly why it is real.'",
         "core_rule":    "4-6 sentences. Prove the shocking claim with layered evidence. Each sentence escalates the proof. Mark the most undeniable evidence with [WOW].",
         "payoff_rule":  "Max 2 sentences. Show the real-world implication — why this changes how we see everything.",
-        "close_rule":   "ONE sentence. Reveal there is an even more extreme version of this fact.",
+        "close_rule":   _CLOSE_RULE,
     },
     "reverse": {
         "description": "Reverse storytelling: start at the unbelievable outcome, work backward to reveal the hidden cause",
@@ -68,7 +76,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
         "tension_rule": "2-3 sentences. Ask how this is even possible. Begin tracing backward through the chain of cause.",
         "core_rule":    "4-6 sentences. Unpack the hidden chain of causes in reverse order. Mark the most surprising cause with [WOW].",
         "payoff_rule":  "Max 2 sentences. Reveal the original tiny hidden cause that triggered the entire chain.",
-        "close_rule":   "ONE sentence. Point out this exact hidden-cause pattern exists in something else entirely.",
+        "close_rule":   _CLOSE_RULE,
     },
 }
 
@@ -86,25 +94,27 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "max_tokens":    1500,
     },
     "standard": {
-        "word_target":   "450-600 words total",
-        "duration_hint": "3-5 minutes",
+        "word_target":   "680-840 words total",
+        "duration_hint": "4-5 minutes",
         "core_depth":    (
-            "12-18 sentences spread across 3 sub-topics. Go deeper on each fact. "
-            "Include real numbers, comparisons, and a counterintuitive twist. "
-            "Vary sentence length: short punch. Longer explanatory follow-up. Short again."
+            "18-24 sentences spread across 4 sub-topics. Go deep on each fact. "
+            "Include real numbers, scale comparisons, and a counterintuitive twist. "
+            "Vary sentence length: short punch. Longer explanatory follow-up. Short again. "
+            "Mark the single most shocking sentence in CORE with [WOW]."
         ),
-        "max_tokens":    3000,
+        "max_tokens":    4000,
     },
     "long": {
-        "word_target":   "900-1200 words total",
-        "duration_hint": "7-10 minutes",
+        "word_target":   "900-1344 words total",
+        "duration_hint": "6-8 minutes",
         "core_depth":    (
-            "25-35 sentences covering 5-6 distinct angles on the topic. "
-            "Each angle gets 4-6 sentences: state the fact, explain the mechanism, "
+            "28-38 sentences covering 5-6 distinct angles on the topic. "
+            "Each angle gets 5-7 sentences: state the fact, explain the mechanism, "
             "give a real-world comparison, reveal the surprising implication. "
-            "Include historical context, modern research, and a future implication."
+            "Include historical context, modern research, and a future implication. "
+            "Mark the single most shocking sentence in CORE with [WOW]."
         ),
-        "max_tokens":    5000,
+        "max_tokens":    6000,
     },
 }
 
@@ -181,9 +191,12 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 
 def generate_script(topic: dict) -> dict:
     import os
-    video_format  = os.getenv("VIDEO_FORMAT", "shorts").lower()
+    video_format = os.getenv("VIDEO_FORMAT", "shorts").lower()
     if video_format not in _FORMAT_PROFILES:
         video_format = "shorts"
+    # For standard (non-shorts) runs randomly alternate 4-5 min vs 6-8 min
+    if video_format == "standard":
+        video_format = random.choice(["standard", "long"])
     fmt_profile = _FORMAT_PROFILES[video_format]
 
     # Rotate narrative template + hook formula — double variety prevents formula fatigue

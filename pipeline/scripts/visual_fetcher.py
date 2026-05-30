@@ -101,7 +101,7 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         session_prompts.add(qh)
         used_registry.append(qh)
 
-        # Step 2 — Fetch image: Pexels → Pixabay → black clip
+        # Step 2 — Fetch primary image: Pexels → Pixabay → black clip
         success = _pexels_fetch(query, out_path)
 
         if not success:
@@ -121,8 +121,25 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
             sc["clip_type"]   = "black"
             sc["clip_score"]  = 0.0
 
-        sc["retry_count"]        = 0
-        sc["extra_visual_files"] = []
+        sc["retry_count"] = 0
+
+        # Step 3 — Fetch 1-2 extra images for slideshow (only when primary succeeded
+        # and scene is long enough to benefit from multiple images)
+        extra_files: list[str] = []
+        if success and dur_s >= 4.0 and len(kw_list) >= 2:
+            # Use different keyword combination for variety
+            alt_query = _ensure_unique_query(
+                _fallback_query(kw_list[1:]), session_prompts, used_registry, scene_id + 1000
+            )
+            extra_path = visuals_dir / f"scene_{scene_id}_visual_b.png"
+            extra_ok = _pexels_fetch(alt_query, extra_path)
+            if not extra_ok:
+                extra_ok = _pixabay_fetch(alt_query, extra_path)
+            if extra_ok:
+                extra_files.append(extra_path.name)
+                log.info("Scene %d | extra image: %s", scene_id, extra_path.name)
+
+        sc["extra_visual_files"] = extra_files
 
     # Persist updated registry (trimmed to REGISTRY_LIMIT)
     _save_prompt_registry(used_registry)
