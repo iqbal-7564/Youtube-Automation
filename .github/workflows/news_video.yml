@@ -65,8 +65,9 @@ jobs:
         env:
           VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
           INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override || '' }}
-          GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
-          GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
+          HF_API_KEY:            ${{ secrets.HF_API_KEY }}
+          # GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
+          # GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
           PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
