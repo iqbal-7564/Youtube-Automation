@@ -110,15 +110,23 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         session_prompts.add(ph)
         used_registry.append(ph)
 
-        # Step 2 — Generate image via FLUX.1-schnell
+        # Step 2 — Generate image: FLUX.1 → Pexels → Pixabay → black clip
         success = _flux_generate_image(prompt, out_path, W, H)
+
+        if not success:
+            log.warning("Scene %d: FLUX failed — trying Pexels", scene_id)
+            success = _pexels_fetch(kw_list, out_path)
+
+        if not success:
+            log.warning("Scene %d: Pexels failed — trying Pixabay", scene_id)
+            success = _pixabay_fetch(kw_list, out_path)
 
         if success:
             sc["visual_file"]       = out_path.name
             sc["clip_type"]         = "image"
             sc["clip_score"]        = 1.0
         else:
-            log.warning("Scene %d: FLUX generation failed — black fallback", scene_id)
+            log.warning("Scene %d: all sources failed — black fallback", scene_id)
             bp = _black_clip(
                 visuals_dir / f"scene_{scene_id}_visual.mp4", dur_s, W, H
             )
@@ -311,6 +319,61 @@ def _fallback_prompt(
         f"{shot_str} of {kw_str}, {mood_str}, "
         f"{orient} composition, photorealistic, cinematic, sharp focus, 8k"
     )
+
+
+# ── Pexels / Pixabay fallback fetchers ───────────────────────────────────────
+
+def _pexels_fetch(keywords: list[str], out_path: Path) -> bool:
+    api_key = os.getenv("PEXELS_API_KEY", "")
+    if not api_key:
+        return False
+    query = " ".join(keywords[:3])
+    try:
+        r = requests.get(
+            "https://api.pexels.com/v1/search",
+            headers={"Authorization": api_key},
+            params={"query": query, "per_page": 1, "orientation": "landscape"},
+            timeout=15,
+        )
+        if r.ok:
+            photos = r.json().get("photos", [])
+            if photos:
+                img_url = photos[0]["src"].get("large2x") or photos[0]["src"]["original"]
+                return _download(img_url, out_path)
+        else:
+            log.warning("Pexels API %d: %s", r.status_code, r.text[:120])
+    except Exception as exc:
+        log.warning("Pexels fetch error: %s", exc)
+    return False
+
+
+def _pixabay_fetch(keywords: list[str], out_path: Path) -> bool:
+    api_key = os.getenv("PIXABAY_API_KEY", "")
+    if not api_key:
+        return False
+    query = "+".join(keywords[:3])
+    try:
+        r = requests.get(
+            "https://pixabay.com/api/",
+            params={
+                "key":        api_key,
+                "q":          query,
+                "image_type": "photo",
+                "per_page":   3,
+                "safesearch": "true",
+            },
+            timeout=15,
+        )
+        if r.ok:
+            hits = r.json().get("hits", [])
+            if hits:
+                img_url = hits[0].get("largeImageURL") or hits[0].get("webformatURL")
+                return _download(img_url, out_path)
+        else:
+            log.warning("Pixabay API %d: %s", r.status_code, r.text[:120])
+    except Exception as exc:
+        log.warning("Pixabay fetch error: %s", exc)
+    return False
 
 
 # ── HF FLUX.1-schnell: prompt → image ────────────────────────────────────────
