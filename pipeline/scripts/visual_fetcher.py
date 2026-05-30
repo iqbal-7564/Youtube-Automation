@@ -1,16 +1,16 @@
 """
-STEP 6 — Visual Fetch via AI Image Generation
+STEP 6 — Visual Fetch (Pexels / Pixabay)
 
 For each scene:
-  1. HF text model converts scene keywords + emotion + shot_type → optimized FLUX.1 visual prompt
-  2. HF FLUX.1-schnell generates a semantically matched image
+  1. Groq converts scene keywords + emotion + shot_type → optimised search query
+  2. Pexels is tried first; Pixabay is the fallback
   3. Image saved to visuals_dir as scene_{id}_visual.png
 
 Image deduplication:
-  - Within a video:  session_prompts set prevents identical prompts across scenes
+  - Within a video:  session_prompts set prevents identical queries across scenes
   - Across videos:   stale PNG files (> 2 h old) are purged before each run;
                      a persistent registry (logs/used_prompts.json) tracks recently
-                     used prompt hashes and forces unique modifiers when needed
+                     used query hashes and forces unique modifiers when needed
 """
 
 import hashlib
@@ -28,26 +28,18 @@ log = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-HF_MODEL        = "black-forest-labs/FLUX.1-schnell"
-HF_API_BASE     = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
+GROQ_MODEL    = "llama3-8b-8192"
+GROQ_API_BASE = "https://api.groq.com/openai/v1/chat/completions"
 
-# HF text model for semantic prompt generation (OpenAI-compatible endpoint)
-HF_TEXT_MODEL   = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-HF_TEXT_URL     = "https://api-inference.huggingface.co/v1/chat/completions"
-
-# FLUX.1-schnell specific — DO NOT change these
-FLUX_STEPS      = 4      # schnell is optimized at exactly 4 steps
-FLUX_GUIDANCE   = 0.0   # schnell requires guidance_scale = 0.0
-
-MAX_RETRIES     = 5      # HF model loading retries
-RETRY_BASE_S    = 5      # exponential backoff base (seconds)
+MAX_RETRIES   = 3
+RETRY_BASE_S  = 5
 
 # Cross-video prompt registry (rolling, keeps last 300 entries)
 _LOGS_DIR       = Path(__file__).parent.parent / "logs"
 PROMPT_REGISTRY = _LOGS_DIR / "used_prompts.json"
 REGISTRY_LIMIT  = 300
 
-# Modifiers cycled when a duplicate prompt is detected
+# Modifiers cycled when a duplicate query is detected
 _UNIQUE_MODIFIERS = [
     "different angle", "alternative perspective", "unique composition",
     "contrasting viewpoint", "shifted framing", "varied lighting",
@@ -67,7 +59,7 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     visuals_dir.mkdir(parents=True, exist_ok=True)
 
     # Remove PNG files from previous runs (> 2 h old) so images are never reused
-    # across videos.  Files from the current run (recent) are kept for retry safety.
+    # across videos. Files from the current run (recent) are kept for retry safety.
     _cleanup_stale_visuals(visuals_dir, max_age_hours=2)
 
     W, H   = timeline["width"], timeline["height"]
@@ -75,7 +67,7 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
     # Load cross-video registry and build within-video session set
     used_registry   = _load_prompt_registry()
-    session_prompts: set[str] = set()   # hashes of prompts used this run
+    session_prompts: set[str] = set()   # hashes of queries used this run
 
     for sc in timeline["scenes"]:
         # Close scene is a branded card — skip visual fetch
@@ -92,39 +84,34 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
         out_path  = visuals_dir / f"scene_{scene_id}_visual.png"
 
-        # Step 1 — Convert scene metadata → FLUX.1 visual prompt via HF text model
-        raw_prompt = _hf_to_visual_prompt(
+        # Step 1 — Build search query via Groq (falls back to keyword join)
+        raw_query = _groq_to_search_query(
             keywords  = kw_list,
             emotion   = emotion,
             shot_type = shot_type,
             intent    = intent,
-            portrait  = (W < H),
         )
 
-        # Ensure the prompt is unique (within this video and across recent videos)
-        prompt = _ensure_unique_prompt(raw_prompt, session_prompts, used_registry, scene_id)
-        log.info("Scene %d | prompt: %s", scene_id, prompt)
+        # Ensure the query is unique within this video and across recent videos
+        query = _ensure_unique_query(raw_query, session_prompts, used_registry, scene_id)
+        log.info("Scene %d | query: %s", scene_id, query)
 
-        # Record prompt in session and registry to prevent future reuse
-        ph = _prompt_hash(prompt)
-        session_prompts.add(ph)
-        used_registry.append(ph)
+        # Record query in session and registry to prevent future reuse
+        qh = _prompt_hash(query)
+        session_prompts.add(qh)
+        used_registry.append(qh)
 
-        # Step 2 — Generate image: FLUX.1 → Pexels → Pixabay → black clip
-        success = _flux_generate_image(prompt, out_path, W, H)
-
-        if not success:
-            log.warning("Scene %d: FLUX failed — trying Pexels", scene_id)
-            success = _pexels_fetch(kw_list, out_path)
+        # Step 2 — Fetch image: Pexels → Pixabay → black clip
+        success = _pexels_fetch(query, out_path)
 
         if not success:
             log.warning("Scene %d: Pexels failed — trying Pixabay", scene_id)
-            success = _pixabay_fetch(kw_list, out_path)
+            success = _pixabay_fetch(query, out_path)
 
         if success:
-            sc["visual_file"]       = out_path.name
-            sc["clip_type"]         = "image"
-            sc["clip_score"]        = 1.0
+            sc["visual_file"]  = out_path.name
+            sc["clip_type"]    = "image"
+            sc["clip_score"]   = 1.0
         else:
             log.warning("Scene %d: all sources failed — black fallback", scene_id)
             bp = _black_clip(
@@ -145,12 +132,11 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
 # ── Image deduplication helpers ───────────────────────────────────────────────
 
-def _prompt_hash(prompt: str) -> str:
-    return hashlib.sha256(prompt.encode()).hexdigest()[:16]
+def _prompt_hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
 def _load_prompt_registry() -> list[str]:
-    """Returns list of recent prompt hashes (oldest first)."""
     try:
         if PROMPT_REGISTRY.exists():
             data = json.loads(PROMPT_REGISTRY.read_text(encoding="utf-8"))
@@ -164,46 +150,39 @@ def _load_prompt_registry() -> list[str]:
 def _save_prompt_registry(registry: list[str]) -> None:
     try:
         _LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        trimmed = registry[-REGISTRY_LIMIT:]
         PROMPT_REGISTRY.write_text(
-            json.dumps(trimmed, indent=2), encoding="utf-8"
+            json.dumps(registry[-REGISTRY_LIMIT:], indent=2), encoding="utf-8"
         )
     except Exception as exc:
         log.debug("Registry save error: %s", exc)
 
 
-def _ensure_unique_prompt(
-    prompt: str,
+def _ensure_unique_query(
+    query: str,
     session_prompts: set[str],
     used_registry: list[str],
     scene_id: int,
 ) -> str:
-    """
-    Add a modifier to prompt if its hash appears in the session or registry,
-    cycling through _UNIQUE_MODIFIERS until a unique hash is found.
-    """
     registry_set = set(used_registry)
     modifier_idx = 0
+    current = query
 
-    current = prompt
     for _ in range(len(_UNIQUE_MODIFIERS) + 1):
-        ph = _prompt_hash(current)
-        if ph not in session_prompts and ph not in registry_set:
+        qh = _prompt_hash(current)
+        if qh not in session_prompts and qh not in registry_set:
             return current
         if modifier_idx < len(_UNIQUE_MODIFIERS):
-            mod = _UNIQUE_MODIFIERS[modifier_idx % len(_UNIQUE_MODIFIERS)]
-            current = f"{prompt}, {mod}"
+            mod = _UNIQUE_MODIFIERS[modifier_idx]
+            current = f"{query} {mod}"
             modifier_idx += 1
         else:
-            # Last resort: append scene_id to guarantee uniqueness
-            current = f"{prompt}, scene variant {scene_id}"
+            current = f"{query} scene {scene_id}"
             break
 
     return current
 
 
 def _cleanup_stale_visuals(visuals_dir: Path, max_age_hours: int = 2) -> None:
-    """Delete PNG visual files older than max_age_hours (cross-video reuse prevention)."""
     cutoff = time.time() - max_age_hours * 3600
     for f in visuals_dir.glob("scene_*_visual.png"):
         try:
@@ -214,37 +193,30 @@ def _cleanup_stale_visuals(visuals_dir: Path, max_age_hours: int = 2) -> None:
             pass
 
 
-# ── HF text model: scene metadata → visual prompt ────────────────────────────
+# ── Groq: scene metadata → search query ──────────────────────────────────────
 
-def _hf_to_visual_prompt(
+def _groq_to_search_query(
     keywords:  list[str],
     emotion:   str,
     shot_type: str,
     intent:    str,
-    portrait:  bool,
 ) -> str:
     """
-    Uses HF Inference API (OpenAI-compatible) with Meta-Llama-3.1-8B-Instruct
-    to convert scene metadata into a 40-55 word FLUX.1 image generation prompt.
-    Falls back to keyword-based prompt if HF_API_KEY is missing or call fails.
+    Sends scene metadata to Groq llama3-8b-8192 and gets back a short
+    Pexels/Pixabay-optimised search query (3-6 words).
+    Falls back to a plain keyword join if keys are missing or the call fails.
     """
-    api_key = os.getenv("HF_API_KEY", "")
+    api_key = os.getenv("GROQ_API_KEY_1") or os.getenv("GROQ_API_KEY_2", "")
     if not api_key:
-        return _fallback_prompt(keywords, emotion, shot_type, portrait)
-
-    orientation_hint = "vertical portrait composition" if portrait else "wide cinematic landscape"
+        return _fallback_query(keywords)
 
     system_prompt = (
-        "You convert scene metadata into image generation prompts for FLUX.1.\n"
+        "You convert scene metadata into short stock-photo search queries.\n"
         "Rules:\n"
-        "- Output ONLY the prompt. No explanation, no preamble, no quotes.\n"
-        "- 40 to 55 words maximum.\n"
-        "- Describe VISIBLE elements only — no abstract concepts.\n"
-        "- Include the shot type naturally (aerial view / extreme close-up / wide shot etc.).\n"
-        "- Match the emotion in lighting and mood (mysterious=dark fog; excited=golden light; "
-        "dramatic=storm contrast; neutral=clean natural light).\n"
-        f"- Composition must suit {orientation_hint}.\n"
-        "- End with: photorealistic, cinematic, sharp focus, 8k"
+        "- Output ONLY the search query. No explanation, no preamble, no quotes.\n"
+        "- 3 to 6 words maximum.\n"
+        "- Use concrete, visual, searchable nouns and adjectives.\n"
+        "- Avoid abstract words like 'concept', 'idea', 'mystery'."
     )
 
     user_message = (
@@ -254,85 +226,65 @@ def _hf_to_visual_prompt(
         f"Category: {intent}"
     )
 
-    for attempt in range(1, 3):   # 2 attempts before falling back
+    for attempt in range(1, MAX_RETRIES + 1):
         try:
             r = requests.post(
-                HF_TEXT_URL,
+                GROQ_API_BASE,
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type":  "application/json",
                 },
                 json={
-                    "model":      HF_TEXT_MODEL,
-                    "messages":   [
+                    "model":       GROQ_MODEL,
+                    "messages":    [
                         {"role": "system", "content": system_prompt},
                         {"role": "user",   "content": user_message},
                     ],
-                    "max_tokens": 120,
-                    "temperature": 0.4,
+                    "max_tokens":  30,
+                    "temperature": 0.3,
                 },
-                timeout=20,
+                timeout=15,
             )
             if r.ok:
-                prompt = r.json()["choices"][0]["message"]["content"].strip()
-                # Enforce token limit — FLUX.1 truncates at ~77 tokens (~55 words)
-                words = prompt.split()
-                if len(words) > 55:
-                    prompt = " ".join(words[:55])
-                return prompt
+                query = r.json()["choices"][0]["message"]["content"].strip()
+                return " ".join(query.split()[:6])   # hard cap at 6 words
             else:
-                log.warning("HF text API %d: %s", r.status_code, r.text[:200])
-                break   # HTTP error — no point retrying
+                log.warning("Groq query API %d: %s", r.status_code, r.text[:200])
+                break
         except requests.exceptions.ConnectionError as exc:
-            log.warning("HF text connection error (attempt %d/2) — waiting 10s: %s",
-                        attempt, str(exc)[:120])
-            time.sleep(10)
+            wait = RETRY_BASE_S * attempt
+            log.warning("Groq connection error (attempt %d/%d) — waiting %ds: %s",
+                        attempt, MAX_RETRIES, wait, str(exc)[:120])
+            time.sleep(wait)
         except Exception as exc:
-            log.warning("HF text prompt call failed: %s", exc)
+            log.warning("Groq query call failed: %s", exc)
             break
 
-    return _fallback_prompt(keywords, emotion, shot_type, portrait)
+    return _fallback_query(keywords)
 
 
-def _fallback_prompt(
-    keywords: list[str], emotion: str, shot_type: str, portrait: bool
-) -> str:
-    shot_map = {
-        "WIDE":          "wide shot",
-        "AERIAL":        "aerial drone view",
-        "MEDIUM":        "medium shot",
-        "CLOSE":         "close-up shot",
-        "EXTREME_CLOSE": "extreme close-up",
-    }
-    mood_map = {
-        "excited":    "golden hour lighting, vibrant",
-        "mysterious": "dark foggy atmosphere, moody",
-        "dramatic":   "storm clouds, high contrast lighting",
-        "neutral":    "natural daylight, clean",
-    }
-    shot_str  = shot_map.get(shot_type, "cinematic shot")
-    mood_str  = mood_map.get(emotion, "cinematic lighting")
-    orient    = "vertical portrait" if portrait else "wide landscape"
-    kw_str    = ", ".join(keywords[:2])
-
-    return (
-        f"{shot_str} of {kw_str}, {mood_str}, "
-        f"{orient} composition, photorealistic, cinematic, sharp focus, 8k"
-    )
+def _fallback_query(keywords: list[str]) -> str:
+    return " ".join(keywords[:4])
 
 
-# ── Pexels / Pixabay fallback fetchers ───────────────────────────────────────
+# ── Pexels / Pixabay fetchers ─────────────────────────────────────────────────
 
-def _pexels_fetch(keywords: list[str], out_path: Path) -> bool:
+def _pexels_fetch(query: str, out_path: Path) -> bool:
     api_key = os.getenv("PEXELS_API_KEY", "")
     if not api_key:
         return False
-    query = " ".join(keywords[:3])
+
+    # Reuse if already downloaded this run (< 2 h old)
+    cutoff = time.time() - 2 * 3600
+    if out_path.exists() and out_path.stat().st_mtime > cutoff and out_path.stat().st_size > 10_000:
+        log.info("Reusing current-run image: %s", out_path.name)
+        return True
+
     try:
         r = requests.get(
             "https://api.pexels.com/v1/search",
             headers={"Authorization": api_key},
-            params={"query": query, "per_page": 1, "orientation": "landscape"},
+            params={"query": query, "per_page": 5, "orientation": "landscape"},
             timeout=15,
         )
         if r.ok:
@@ -347,19 +299,25 @@ def _pexels_fetch(keywords: list[str], out_path: Path) -> bool:
     return False
 
 
-def _pixabay_fetch(keywords: list[str], out_path: Path) -> bool:
+def _pixabay_fetch(query: str, out_path: Path) -> bool:
     api_key = os.getenv("PIXABAY_API_KEY", "")
     if not api_key:
         return False
-    query = "+".join(keywords[:3])
+
+    # Reuse if already downloaded this run (< 2 h old)
+    cutoff = time.time() - 2 * 3600
+    if out_path.exists() and out_path.stat().st_mtime > cutoff and out_path.stat().st_size > 10_000:
+        log.info("Reusing current-run image: %s", out_path.name)
+        return True
+
     try:
         r = requests.get(
             "https://pixabay.com/api/",
             params={
                 "key":        api_key,
-                "q":          query,
+                "q":          "+".join(query.split()[:4]),
                 "image_type": "photo",
-                "per_page":   3,
+                "per_page":   5,
                 "safesearch": "true",
             },
             timeout=15,
@@ -376,101 +334,9 @@ def _pixabay_fetch(keywords: list[str], out_path: Path) -> bool:
     return False
 
 
-# ── HF FLUX.1-schnell: prompt → image ────────────────────────────────────────
-
-def _flux_generate_image(prompt: str, out_path: Path, W: int, H: int) -> bool:
-    """
-    POST to HF Inference API → FLUX.1-schnell generates PNG → written to out_path.
-
-    File reuse: only reuses an existing file if it was written in the current run
-    (i.e., modified within the last 2 hours — stale files are purged by
-    _cleanup_stale_visuals before this function is ever called).
-
-    Handles 503 (model loading) with exponential backoff and 429 (rate limit)
-    with a 60 s wait.  Returns False after MAX_RETRIES exhausted.
-    """
-    api_key = os.getenv("HF_API_KEY", "")
-    if not api_key:
-        log.error("HF_API_KEY not set — cannot generate image")
-        return False
-
-    # Reuse only files written in this run (within 2 h) — handles pipeline retries
-    # without carrying over images from previous video runs.
-    cutoff = time.time() - 2 * 3600
-    if out_path.exists() and out_path.stat().st_mtime > cutoff and out_path.stat().st_size > 10_000:
-        log.info("Reusing current-run image: %s", out_path.name)
-        return True
-
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "width":               W,
-            "height":              H,
-            "num_inference_steps": FLUX_STEPS,
-            "guidance_scale":      FLUX_GUIDANCE,
-        },
-    }
-
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            r = requests.post(
-                HF_API_BASE,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type":  "application/json",
-                    "Accept":        "image/png",
-                },
-                json=payload,
-                timeout=120,
-            )
-
-            if r.status_code == 503:
-                wait = RETRY_BASE_S * (2 ** (attempt - 1))
-                log.info("HF model loading (attempt %d/%d) — waiting %ds",
-                         attempt, MAX_RETRIES, wait)
-                time.sleep(wait)
-                continue
-
-            if r.status_code == 429:
-                log.warning("HF rate limit hit — waiting 60s")
-                time.sleep(60)
-                continue
-
-            if not r.ok:
-                log.error("HF API error %d: %s", r.status_code, r.text[:300])
-                return False
-
-            image_bytes = r.content
-            if len(image_bytes) < 10_000:
-                log.warning("HF returned suspiciously small image (%d bytes)", len(image_bytes))
-                return False
-
-            out_path.write_bytes(image_bytes)
-            log.info("Generated image: %s (%d KB)", out_path.name, len(image_bytes) // 1024)
-            return True
-
-        except requests.Timeout:
-            log.warning("HF request timeout (attempt %d/%d)", attempt, MAX_RETRIES)
-            time.sleep(RETRY_BASE_S * attempt)
-        except requests.exceptions.ConnectionError as exc:
-            # DNS / network blip — wait and retry (transient on GitHub Actions runners)
-            wait = RETRY_BASE_S * (2 ** (attempt - 1))
-            log.warning("HF connection error (attempt %d/%d) — waiting %ds: %s",
-                        attempt, MAX_RETRIES, wait, str(exc)[:120])
-            time.sleep(wait)
-        except Exception as exc:
-            log.error("HF generation unexpected error: %s", exc)
-            return False
-
-    log.error("FLUX.1 failed after %d attempts for prompt: %s", MAX_RETRIES, prompt[:80])
-    return False
-
-
-# ── Unchanged helpers ─────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _download(url: str, path: Path) -> bool:
-    if path.exists() and path.stat().st_size > 10_000:
-        return True
     try:
         r = requests.get(url, timeout=30, stream=True)
         if r.ok:
