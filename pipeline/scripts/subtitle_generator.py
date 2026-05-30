@@ -59,26 +59,35 @@ def generate_subtitles(timeline: dict, out_dir: Path) -> None:
         sc_dur   = sc["duration_ms"]
         srt: list[str] = []
 
+        written = 0
+        skipped = 0
         for idx, ln in enumerate(lines, start=1):
             # Convert absolute timeline timestamps → relative to this scene
             rel_start = max(0, ln["start_ms"] - sc_start)
             rel_end   = min(ln["end_ms"] - sc_start, sc_dur)
 
             if rel_end <= rel_start:
+                skipped += 1
                 continue                     # subtitle falls outside scene window
             if rel_end - rel_start < 300:
                 rel_end = rel_start + 300    # enforce minimum display time
 
             srt += [
-                str(idx),
+                str(written + 1),
                 f"{_ms_to_srt(rel_start)} --> {_ms_to_srt(rel_end)}",
                 ln["text"],
                 "",
             ]
+            written += 1
+
+        if skipped:
+            log.warning("Scene %d: %d/%d subtitle line(s) fell outside scene window "
+                        "— voice/subtitle mismatch detected",
+                        sc["scene_id"], skipped, len(lines))
 
         path.write_text("\n".join(srt), encoding="utf-8")
-        log.debug("SRT scene %d: %d lines (relative, marginV=%d)",
-                  sc["scene_id"], len(lines), margin_v)
+        log.debug("SRT scene %d: %d lines written, %d skipped (marginV=%d)",
+                  sc["scene_id"], written, skipped, margin_v)
 
     log.info("SRT files written for %d scenes (profile=%s, marginV=%d)",
              len(timeline["scenes"]), profile, margin_v)

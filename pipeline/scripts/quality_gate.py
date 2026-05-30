@@ -43,6 +43,11 @@ def run_quality_gate(
     checks: dict[str, str] = {}
     fail: str | None       = None
 
+    # Scale ffprobe/ffmpeg timeouts by video duration so long videos don't time out
+    dur_s   = timeline.get("total_duration_seconds", 60)
+    t_probe = max(30,  int(dur_s * 0.4))   # ffprobe reads — scale with duration
+    t_audio = max(90,  int(dur_s * 1.0))   # ebur128 loudness scan reads full file
+
     def chk(name: str, fn):
         nonlocal fail
         try:
@@ -55,16 +60,16 @@ def run_quality_gate(
             if fail is None:
                 fail = f"[{name}] exception: {exc}"
 
-    chk("file_integrity",  lambda: _integrity(video_path))
-    chk("resolution",      lambda: _resolution(video_path, timeline))
-    chk("duration",        lambda: _duration(video_path, timeline))
-    chk("audio_sync",      lambda: _audio_sync(video_path))
-    chk("audio_level",     lambda: _audio_level(video_path))
+    chk("file_integrity",  lambda: _integrity(video_path, t_probe))
+    chk("resolution",      lambda: _resolution(video_path, timeline, t_probe))
+    chk("duration",        lambda: _duration(video_path, timeline, t_probe))
+    chk("audio_sync",      lambda: _audio_sync(video_path, t_probe))
+    chk("audio_level",     lambda: _audio_level(video_path, t_audio))
     chk("subtitles",       lambda: _subtitles(subtitles_dir, timeline))
-    chk("freeze_frame",    lambda: _freeze(video_path))
+    chk("freeze_frame",    lambda: _freeze(video_path, t_probe))
     chk("voice_quality",   lambda: _voice_quality(timeline))
-    chk("dropped_frames",  lambda: _dropped_frames(video_path))
-    chk("audio_gaps",      lambda: _audio_gaps(video_path, timeline))
+    chk("dropped_frames",  lambda: _dropped_frames(video_path, t_probe))
+    chk("audio_gaps",      lambda: _audio_gaps(video_path, timeline, t_audio))
 
     passed = fail is None
     log.info("  Gate: %s  %s", "PASS" if passed else "FAIL", fail or "all clear")
@@ -74,30 +79,30 @@ def run_quality_gate(
 
 # ── Checks ────────────────────────────────────────────────────────────────────
 
-def _fp(path: Path, *args) -> dict:
+def _fp(path: Path, *args, timeout: int = 30) -> dict:
     r = subprocess.run(
         ["ffprobe", "-v", "quiet", "-print_format", "json", *args, str(path)],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, text=True, timeout=timeout,
     )
     return json.loads(r.stdout) if r.stdout.strip() else {}
 
 
-def _integrity(path: Path):
+def _integrity(path: Path, timeout: int = 30):
     if not path.exists():
         return False, "file not found"
     if path.stat().st_size < 100_000:
         return False, f"too small ({path.stat().st_size} bytes)"
     r = subprocess.run(
         ["ffprobe", "-v", "error", "-i", str(path)],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, text=True, timeout=timeout,
     )
     if r.returncode != 0 or r.stderr.strip():
         return False, f"container error: {r.stderr[:120]}"
     return True, "ok"
 
 
-def _resolution(path: Path, timeline: dict):
-    data = _fp(path, "-show_streams", "-select_streams", "v:0")
+def _resolution(path: Path, timeline: dict, timeout: int = 30):
+    data = _fp(path, "-show_streams", "-select_streams", "v:0", timeout=timeout)
     s    = (data.get("streams") or [{}])[0]
     w, h = int(s.get("width", 0)), int(s.get("height", 0))
     fps_s = s.get("r_frame_rate", "0/1")
@@ -111,13 +116,12 @@ def _resolution(path: Path, timeline: dict):
     return True, f"{w}×{h}@{fps}"
 
 
-def _duration(path: Path, timeline: dict):
-    data = _fp(path, "-show_format")
+def _duration(path: Path, timeline: dict, timeout: int = 30):
+    data = _fp(path, "-show_format", timeout=timeout)
     try:
         actual   = float(data["format"]["duration"])
         expected = timeline["total_duration_seconds"]
         diff     = abs(actual - expected)
-        # ±2.5 s tolerance: xfade transitions can reduce video by up to ~2 s
         if diff > 2.5:
             return False, f"drift {diff:.2f}s (expected {expected:.2f}s got {actual:.2f}s)"
         return True, f"{actual:.2f}s (diff {diff:.2f}s)"
@@ -125,8 +129,8 @@ def _duration(path: Path, timeline: dict):
         return False, str(exc)
 
 
-def _audio_sync(path: Path):
-    data    = _fp(path, "-show_streams")
+def _audio_sync(path: Path, timeout: int = 30):
+    data    = _fp(path, "-show_streams", timeout=timeout)
     streams = data.get("streams", [])
     vd = ad = None
     for s in streams:
@@ -141,18 +145,17 @@ def _audio_sync(path: Path):
     if vd is None or ad is None:
         return False, f"missing stream (video={vd} audio={ad})"
     diff = abs(vd - ad)
-    # ±0.3 s: -shortest alignment + codec boundary rounding
     if diff > 0.3:
         return False, f"A/V drift {diff:.3f}s"
     return True, f"drift={diff:.3f}s"
 
 
-def _audio_level(path: Path):
+def _audio_level(path: Path, timeout: int = 90):
     r = subprocess.run(
         ["ffmpeg", "-i", str(path),
          "-af", "ebur128=framelog=verbose",
          "-f", "null", "-"],
-        capture_output=True, text=True, timeout=90,
+        capture_output=True, text=True, timeout=timeout,
     )
     combined = r.stdout + r.stderr
     for line in combined.splitlines():
@@ -188,13 +191,13 @@ def _subtitles(subtitles_dir: Path, timeline: dict):
     return True, "ok"
 
 
-def _freeze(path: Path):
+def _freeze(path: Path, timeout: int = 30):
     r = subprocess.run(
         ["ffprobe", "-v", "quiet",
          "-show_frames", "-select_streams", "v:0",
          "-read_intervals", "%+#60",
          "-print_format", "json", str(path)],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, text=True, timeout=timeout,
     )
     try:
         frames = json.loads(r.stdout).get("frames", [])
@@ -227,13 +230,13 @@ def _voice_quality(timeline: dict):
     return True, "ok"
 
 
-def _dropped_frames(path: Path):
+def _dropped_frames(path: Path, timeout: int = 30):
     r = subprocess.run(
         ["ffprobe", "-v", "quiet",
          "-show_frames", "-select_streams", "v:0",
          "-read_intervals", "%+#90",
          "-print_format", "json", str(path)],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True, text=True, timeout=timeout,
     )
     try:
         frames = json.loads(r.stdout).get("frames", [])
@@ -255,7 +258,7 @@ def _dropped_frames(path: Path):
     return True, "ok"
 
 
-def _audio_gaps(path: Path, timeline: dict):
+def _audio_gaps(path: Path, timeline: dict, timeout: int = 60):
     """Detect unintentional silence gaps > 2.0 s in the audio track.
 
     Threshold is 2.0 s.  Each TTS scene file carries up to ~1.2s of natural
@@ -270,7 +273,7 @@ def _audio_gaps(path: Path, timeline: dict):
         ["ffmpeg", "-i", str(path),
          "-af", "silencedetect=noise=-50dB:d=2.0",
          "-f", "null", "-"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True, text=True, timeout=timeout,
     )
     combined = r.stdout + r.stderr
     try:

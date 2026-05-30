@@ -129,11 +129,29 @@ def _tts_degraded(timeline: dict) -> bool:
     )
 
 
+def _preflight() -> None:
+    """Log warnings for missing API keys before any work begins."""
+    import os
+    checks = [
+        ("GROQ_API_KEY_1",        "Script/topic generation will use fallback"),
+        ("ELEVENLABS_API_KEY",    "TTS will fall back to edge-tts/gTTS"),
+        ("PEXELS_API_KEY",        "Pexels image fetch disabled — Pixabay only"),
+        ("PIXABAY_API_KEY",       "Pixabay image fetch disabled — black clips likely"),
+        ("YOUTUBE_CLIENT_ID",     "Upload will FAIL — YouTube credentials missing"),
+        ("YOUTUBE_CLIENT_SECRET", "Upload will FAIL — YouTube credentials missing"),
+        ("YOUTUBE_REFRESH_TOKEN", "Upload will FAIL — YouTube credentials missing"),
+    ]
+    for key, msg in checks:
+        if not os.getenv(key, "").strip():
+            log.warning("PREFLIGHT: %s not set — %s", key, msg)
+
+
 def run_pipeline() -> bool:
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     log.info("=" * 65)
     log.info("NEWS VIDEO PIPELINE — START  %s", ts)
     log.info("=" * 65)
+    _preflight()
 
     try:
         # ── 1: Topic Selection ───────────────────────────────────────────────

@@ -110,17 +110,16 @@ def generate_thumbnail(
 
 def _pick_headline(timeline: dict, script: dict) -> str:
     """Pick the most curiosity-driving headline for the thumbnail."""
-    # Prefer the metadata title — it's already CTR-psychology optimised by the LLM
-    title = script.get("metadata", {}).get("title", "").strip()
+    intent = timeline.get("intent", "SCIENCE").upper()
+    title  = script.get("metadata", {}).get("title", "").strip()
     if title:
-        return _ctr_enhance(title)[:72]
+        return _ctr_enhance(title, intent)[:72]
 
-    # Fall back to HOOK text
     for sc in timeline.get("scenes", []):
         if sc.get("segment_label") == "HOOK":
             text = sc.get("script_text", "").strip()
             if text:
-                return _ctr_enhance(text)[:72]
+                return _ctr_enhance(text, intent)[:72]
 
     return "The Fact That Changes Everything"
 
@@ -132,29 +131,56 @@ _CTR_POWER_WORDS = {
     "why", "how", "what", "until", "real reason", "not what",
 }
 
-def _ctr_enhance(title: str) -> str:
+# Category-specific curiosity-gap frames so each category has its own voice
+_CATEGORY_FRAMES: dict[str, list[str]] = {
+    "SPACE":     ["The Cosmic Secret Behind {t}",
+                  "NASA Never Told You About {t}",
+                  "The Universe Is Hiding {t}"],
+    "SCIENCE":   ["Scientists Found Something Impossible About {t}",
+                  "The Lab Discovery That Changes {t}",
+                  "Physics Cannot Explain {t}"],
+    "HISTORY":   ["The Ancient Secret of {t} Was Buried For Centuries",
+                  "Nobody Told You The Real History of {t}",
+                  "Archaeologists Finally Uncovered {t}"],
+    "ANIMALS":   ["The Survival Secret Behind {t}",
+                  "Nature's Hidden Weapon: {t}",
+                  "Wildlife Experts Can't Explain {t}"],
+    "NATURE":    ["The Hidden Force Behind {t}",
+                  "Earth's Most Extreme: {t}",
+                  "Nature Just Did The Impossible With {t}"],
+    "GEOGRAPHY": ["The Remote Truth About {t}",
+                  "The Map Doesn't Show You {t}",
+                  "Nobody Lives Here — {t}"],
+    "OCEAN":     ["The Deep-Sea Secret of {t}",
+                  "Divers Found Something Terrifying: {t}",
+                  "The Abyss Is Hiding {t}"],
+    "CULTURE":   ["The Ancient Ritual Behind {t}",
+                  "Civilisations Kept {t} Secret For Millennia",
+                  "The Forbidden Knowledge of {t}"],
+}
+_DEFAULT_FRAMES = [
+    "Nobody Told You The Truth About {t}",
+    "The Real Reason {t} Will Surprise You",
+    "Scientists Found Something Impossible About {t}",
+]
+
+
+def _ctr_enhance(title: str, intent: str = "SCIENCE") -> str:
     """
     If the title already uses curiosity-gap language, return as-is.
-    Otherwise wrap in a curiosity-gap frame to improve CTR.
+    Otherwise wrap in a category-specific curiosity-gap frame.
     """
     title_lower = title.lower()
-    # Already has CTR power words — trust it
     if any(w in title_lower for w in _CTR_POWER_WORDS):
         return title
 
-    # Generic title — apply curiosity frame
-    # Strip trailing period
-    clean = title.rstrip(".")
-    frames = [
-        f"Nobody Told You The Truth About {clean}",
-        f"The Real Reason {clean} Will Surprise You",
-        f"Scientists Found Something Impossible About {clean}",
-    ]
-    # Pick shortest that fits thumbnail line wrap
-    for f in frames:
-        if len(f) <= 72:
-            return f
-    return clean
+    clean  = title.rstrip(".")
+    frames = _CATEGORY_FRAMES.get(intent, _DEFAULT_FRAMES)
+    for frame in frames:
+        candidate = frame.format(t=clean)
+        if len(candidate) <= 72:
+            return candidate
+    return clean[:72]
 
 
 def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.Image":

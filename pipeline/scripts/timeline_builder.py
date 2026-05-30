@@ -235,6 +235,15 @@ def build_timeline(script: dict, intent: str = "") -> dict:
             sc["emotion"]       = arc[label]
             sc["motion_emotion"] = arc[label]
 
+    # WOW fallback: if LLM forgot the [WOW] marker, mark the most content-rich
+    # CORE scene so downstream intensity spikes still fire on the best moment
+    if not any(sc.get("has_wow") for sc in scenes):
+        core_scenes = [sc for sc in scenes if sc["segment_label"] == "CORE"]
+        if core_scenes:
+            best = max(core_scenes, key=lambda s: len(s["script_text"].split()))
+            best["has_wow"] = True
+            log.info("  WOW fallback: auto-marked scene %d", best["scene_id"])
+
     total_s = elapsed_ms / 1000
     # Honour explicit VIDEO_FORMAT; fall back to duration-based detection.
     if format_explicit == "shorts":

@@ -12,6 +12,7 @@ Post-upload:
 
 import logging
 import os
+import random
 import time
 from pathlib import Path
 
@@ -64,11 +65,16 @@ def upload_video(
     if subtitles_dir:
         _upload_captions(video_id, subtitles_dir, timeline, token)
 
-    # Pin engagement comment
-    question = script.get("metadata", {}).get(
-        "engagement_question",
-        "Which fact surprised you the most? Tell us below!"
-    )
+    # Pin engagement comment — topic-specific fallback if LLM didn't provide one
+    question = script.get("metadata", {}).get("engagement_question", "")
+    if not question or "Which fact" in question:
+        title = topic.get("title", "this topic")[:45]
+        question = random.choice([
+            f"What did you NOT know about {title}? Tell us below! 👇",
+            f"Did you already know this? Comment YES or NO! 🤔",
+            f"Which part surprised you most? Drop it below! 💬",
+            f"Would you have believed this before watching? 🌍",
+        ])
     _post_pinned_comment(video_id, question, token)
 
     pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(), "MindBlownFacts — World")
@@ -129,10 +135,8 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     parts += [
         meta.get("description", f"{title}\n\nCategory: {cat}"),
         "",
-        f"#MindBlownFacts #Facts #DidYouKnow #WorldFacts #{cat.capitalize()} #Educational",
+        _build_hashtags(cat, meta.get("tags", []), profile),
     ]
-    if profile == "shorts":
-        parts.append("#Shorts")
 
     description = "\n".join(parts)[:4900]
 
@@ -145,6 +149,41 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     return {"title": title, "description": description, "tags": tags}
 
 
+# Category-specific hashtag pools — rotated per video to avoid spam flags
+_CAT_HASHTAGS: dict[str, list[str]] = {
+    "SPACE":     ["#Space", "#Universe", "#NASA", "#Cosmos", "#Astronomy",
+                  "#Galaxy", "#BlackHole", "#SolarSystem", "#Planets"],
+    "SCIENCE":   ["#Science", "#Physics", "#Biology", "#Discovery",
+                  "#Research", "#Experiment", "#Technology", "#Innovation"],
+    "HISTORY":   ["#History", "#Ancient", "#Archaeology", "#HistoryFacts",
+                  "#AncientCivilization", "#Mythology", "#Historical"],
+    "ANIMALS":   ["#Animals", "#Wildlife", "#Nature", "#WildAnimals",
+                  "#AnimalFacts", "#Predator", "#Survival", "#WildLife"],
+    "NATURE":    ["#Nature", "#Earth", "#NatureFacts", "#NaturalDisaster",
+                  "#Environment", "#Planet", "#Climate", "#Geography"],
+    "GEOGRAPHY": ["#Geography", "#Earth", "#WorldFacts", "#Travel",
+                  "#Countries", "#Maps", "#Geopolitics", "#Exploration"],
+    "OCEAN":     ["#Ocean", "#DeepSea", "#MarineLife", "#Underwater",
+                  "#OceanFacts", "#SeaCreatures", "#Marine", "#Diving"],
+    "CULTURE":   ["#Culture", "#Ancient", "#History", "#Tradition",
+                  "#CulturalFacts", "#Civilisation", "#Ritual", "#Heritage"],
+}
+
+
+def _build_hashtags(cat: str, script_tags: list, profile: str) -> str:
+    """Build varied hashtags per video to avoid repetition spam flags."""
+    base = ["#MindBlownFacts", "#Facts", "#DidYouKnow", "#WorldFacts", "#Educational"]
+    pool = _CAT_HASHTAGS.get(cat.upper(), ["#WorldFacts"])
+    # Pick 3 random from pool each time — avoids identical tags every video
+    chosen_cat = random.sample(pool, min(3, len(pool)))
+    # Pull 1-2 tags from LLM-generated script tags
+    script_ht  = [f"#{t.replace(' ', '')}" for t in script_tags[:2] if t and len(t) < 20]
+    all_tags   = base + chosen_cat + script_ht
+    if profile == "shorts":
+        all_tags.append("#Shorts")
+    return " ".join(all_tags)
+
+
 # ── Upload ────────────────────────────────────────────────────────────────────
 
 def _upload(video_path: Path, meta: dict, token: str,
@@ -152,7 +191,7 @@ def _upload(video_path: Path, meta: dict, token: str,
     size   = video_path.stat().st_size
     cat_id = "27"
 
-    for attempt in range(3):
+    for attempt in range(5):   # 5 attempts with jittered backoff
         try:
             r = requests.post(
                 "https://www.googleapis.com/upload/youtube/v3/videos"
@@ -196,8 +235,11 @@ def _upload(video_path: Path, meta: dict, token: str,
 
         except Exception as exc:
             log.warning("Upload attempt %d: %s", attempt + 1, exc)
-            if attempt == 2:
+            if attempt == 4:
                 return None
+            # Exponential backoff with jitter — prevents rate-limit thundering herd
+            wait = (2 ** attempt) + random.uniform(0.5, 2.0)
+            time.sleep(wait)
 
 
 # ── Thumbnail ─────────────────────────────────────────────────────────────────

@@ -63,7 +63,8 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 
         is_fresh = not (path.exists() and path.stat().st_size > 500)
         if is_fresh:
-            engine = _generate(sc["script_text"], path, emotion)
+            engine = _generate(sc["script_text"], path, emotion,
+                               fallback_duration_s=sc["duration_ms"] / 1000)
             sc["tts_engine"] = engine
             # Silence padding appended ONLY to freshly generated files.
             # Cached files already have silence from their original generation.
@@ -117,14 +118,15 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
-def _generate(text: str, out: Path, emotion: str) -> str:
+def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3.0) -> str:
     if _edge_tts(text, out, emotion):
         return "edge-tts"
     if _elevenlabs(text, out, emotion):
         return "elevenlabs"
     if _gtts(text, out):
         return "gtts"
-    _silence_file(out, max(1.0, len(text.split()) / 2.8))
+    # Use actual locked scene duration so silence matches the visual exactly
+    _silence_file(out, max(1.0, fallback_duration_s))
     log.error("All TTS engines failed — silence for: %s", text[:50])
     return "silence"
 
@@ -261,7 +263,8 @@ def _rescale_subs(lines: list, new_start: int, new_end: int) -> list:
     scale      = new_dur / orig_dur
     result     = []
     for ln in lines:
-        ns = new_start + int((ln["start_ms"] - orig_start) * scale)
-        ne = new_start + int((ln["end_ms"]   - orig_start) * scale)
+        # Round to nearest 50ms grid — prevents drift accumulation in long videos
+        ns = new_start + round((ln["start_ms"] - orig_start) * scale / 50) * 50
+        ne = new_start + round((ln["end_ms"]   - orig_start) * scale / 50) * 50
         result.append({"text": ln["text"], "start_ms": ns, "end_ms": max(ne, ns + 500)})
     return result

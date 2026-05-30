@@ -429,7 +429,7 @@ def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Pa
         if out.exists() and out.stat().st_size > 10_000:
             return out
     except Exception as exc:
-        log.debug("Background music mix failed (non-critical): %s", exc)
+        log.warning("Background music mix failed — video will have no background music: %s", exc)
 
     return None
 

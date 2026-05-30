@@ -65,9 +65,10 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     W, H   = timeline["width"], timeline["height"]
     intent = timeline.get("intent", "SCIENCE")
 
-    # Load cross-video registry and build within-video session set
-    used_registry   = _load_prompt_registry()
+    # Load cross-video registry and build within-video session sets
+    used_registry    = _load_prompt_registry()
     session_prompts: set[str] = set()   # hashes of queries used this run
+    session_img_hashes: set[str] = set()  # MD5 hashes of downloaded images (dedup content)
 
     for sc in timeline["scenes"]:
         # Close scene is a branded card — skip visual fetch
@@ -102,11 +103,39 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         used_registry.append(qh)
 
         # Step 2 — Fetch primary image: Pexels → Pixabay → black clip
-        success = _pexels_fetch(query, out_path)
+        # Pass shot_type so orientation matches (AERIAL/WIDE → landscape, etc.)
+        success = _pexels_fetch(query, out_path, shot_type)
 
         if not success:
             log.warning("Scene %d: Pexels failed — trying Pixabay", scene_id)
             success = _pixabay_fetch(query, out_path)
+
+        # Fix #2: validate file actually exists with valid content after fetch
+        if success and not _validate_image(out_path, scene_id):
+            out_path.unlink(missing_ok=True)
+            success = False
+
+        # Fix #11: detect duplicate image content via MD5 hash — re-fetch if same
+        # image was used by a previous scene in this run
+        if success:
+            img_hash = _img_hash(out_path)
+            if img_hash in session_img_hashes:
+                log.warning("Scene %d: duplicate image detected — fetching alternate",
+                            scene_id)
+                alt_q = _ensure_unique_query(
+                    _fallback_query(kw_list[1:] if len(kw_list) > 1 else kw_list),
+                    session_prompts, used_registry, scene_id + 5000,
+                )
+                alt_path = visuals_dir / f"scene_{scene_id}_visual_alt.png"
+                alt_ok = _pexels_fetch(alt_q, alt_path, shot_type) or \
+                         _pixabay_fetch(alt_q, alt_path)
+                if alt_ok and _validate_image(alt_path, scene_id):
+                    out_path.unlink(missing_ok=True)
+                    alt_path.rename(out_path)
+                    img_hash = _img_hash(out_path)
+                else:
+                    alt_path.unlink(missing_ok=True)
+            session_img_hashes.add(img_hash)
 
         if success:
             sc["visual_file"]  = out_path.name
@@ -123,21 +152,26 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
         sc["retry_count"] = 0
 
-        # Step 3 — Fetch 1-2 extra images for slideshow (only when primary succeeded
-        # and scene is long enough to benefit from multiple images)
+        # Step 3 — Fetch extra image for slideshow (scenes ≥ 4s with multiple keywords)
         extra_files: list[str] = []
         if success and dur_s >= 4.0 and len(kw_list) >= 2:
-            # Use different keyword combination for variety
             alt_query = _ensure_unique_query(
                 _fallback_query(kw_list[1:]), session_prompts, used_registry, scene_id + 1000
             )
             extra_path = visuals_dir / f"scene_{scene_id}_visual_b.png"
-            extra_ok = _pexels_fetch(alt_query, extra_path)
+            extra_ok = _pexels_fetch(alt_query, extra_path, shot_type)
             if not extra_ok:
                 extra_ok = _pixabay_fetch(alt_query, extra_path)
-            if extra_ok:
-                extra_files.append(extra_path.name)
-                log.info("Scene %d | extra image: %s", scene_id, extra_path.name)
+            if extra_ok and _validate_image(extra_path, scene_id):
+                extra_hash = _img_hash(extra_path)
+                if extra_hash not in session_img_hashes:
+                    session_img_hashes.add(extra_hash)
+                    extra_files.append(extra_path.name)
+                    log.info("Scene %d | extra image: %s", scene_id, extra_path.name)
+                else:
+                    extra_path.unlink(missing_ok=True)
+            else:
+                extra_path.unlink(missing_ok=True)
 
         sc["extra_visual_files"] = extra_files
 
@@ -284,9 +318,40 @@ def _fallback_query(keywords: list[str]) -> str:
     return " ".join(keywords[:4])
 
 
+# ── Image validation & hash helpers ──────────────────────────────────────────
+
+# Shot types that produce naturally tall subjects — prefer portrait orientation
+_PORTRAIT_SHOTS = {"EXTREME_CLOSE", "CLOSE"}
+
+def _validate_image(path: Path, scene_id: int) -> bool:
+    """Fix #2 & #9: verify file exists, is large enough, and meets min resolution."""
+    if not path.exists() or path.stat().st_size < 5_000:
+        log.warning("Scene %d: image file missing or too small after fetch", scene_id)
+        return False
+    try:
+        from PIL import Image
+        with Image.open(path) as img:
+            w, h = img.size
+            if w < 640 or h < 360:
+                log.warning("Scene %d: image resolution too low (%dx%d) — skipping",
+                            scene_id, w, h)
+                return False
+    except Exception:
+        pass   # PIL not available or corrupt — accept file based on size alone
+    return True
+
+
+def _img_hash(path: Path) -> str:
+    """Fix #11: fast MD5 of first 64 KB — enough to detect duplicate images."""
+    try:
+        return hashlib.md5(path.read_bytes()[:65536]).hexdigest()
+    except Exception:
+        return ""
+
+
 # ── Pexels / Pixabay fetchers ─────────────────────────────────────────────────
 
-def _pexels_fetch(query: str, out_path: Path) -> bool:
+def _pexels_fetch(query: str, out_path: Path, shot_type: str = "MEDIUM") -> bool:
     api_key = os.getenv("PEXELS_API_KEY", "")
     if not api_key:
         return False
@@ -297,11 +362,13 @@ def _pexels_fetch(query: str, out_path: Path) -> bool:
         log.info("Reusing current-run image: %s", out_path.name)
         return True
 
+    # Fix #12: use portrait for close-up shots, landscape for everything else
+    orientation = "portrait" if shot_type in _PORTRAIT_SHOTS else "landscape"
     try:
         r = requests.get(
             "https://api.pexels.com/v1/search",
             headers={"Authorization": api_key},
-            params={"query": query, "per_page": 5, "orientation": "landscape"},
+            params={"query": query, "per_page": 5, "orientation": orientation},
             timeout=15,
         )
         if r.ok:
