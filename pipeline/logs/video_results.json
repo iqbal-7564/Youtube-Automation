@@ -163,5 +163,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Lcg8ZXKllzY",
+    "intent": "GEOGRAPHY",
+    "title": "Earth's Secret Speed",
+    "hook_text": "Earth moves at 1670 km/h",
+    "total_duration_seconds": 63.44,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-30T20:43:31.634709",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
