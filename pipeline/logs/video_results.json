@@ -103,5 +103,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "5lHpqnDMryg",
+    "intent": "SCIENCE",
+    "title": "Thermodynamics' Dark Secret",
+    "hook_text": "100% of physical systems obey the second law of thermodynamics, or so we thought.",
+    "total_duration_seconds": 107.57,
+    "scene_count": 15,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-30T12:07:46.793966",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
