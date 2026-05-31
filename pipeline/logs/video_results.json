@@ -178,5 +178,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "RlJCM5Q_g6E",
+    "intent": "OCEAN",
+    "title": "Incredible Facts About Ocean Discovery Seaworld San Antonio",
+    "hook_text": "This fact will completely change how you see the world.",
+    "total_duration_seconds": 38.97,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-31T12:07:08.974613",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
