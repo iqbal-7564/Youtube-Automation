@@ -497,62 +497,117 @@ def _xfade(a: Path, b: Path, dur: float, xf_type: str, out: Path) -> None:
 # Varied presets prevent the "same zoom every video" audience fatigue.
 
 _MOTION_PRESETS: dict[str, tuple[str, str, str]] = {
-    # Slow gentle drift — calm, beauty, payoff scenes
+    # ── Original 8 ───────────────────────────────────────────────────────────
+
+    # 1. Slow gentle drift — calm, beauty, payoff scenes
     "slow_drift": (
         "min(zoom+0.0005,1.25)",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)",
     ),
-    # Classic push-in — standard hook/tension
+    # 2. Classic push-in — standard hook/tension
     "push_in": (
         "min(zoom+0.001,1.5)",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)",
     ),
-    # Dramatic fast zoom — WOW moments, impact
+    # 3. Dramatic fast zoom — WOW moments, impact
     "impact_zoom": (
         "min(zoom+0.003,2.0)",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)",
     ),
-    # Pull back (reveal) — mystery, reverse narrative
+    # 4. Pull back (reveal) — mystery, reverse narrative
     "reveal_pull": (
         "if(eq(on\\,1)\\,1.8\\,max(zoom-0.002\\,1.0))",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)",
     ),
-    # Pan right — geography, scale, exploration
+    # 5. Pan right — geography, scale, exploration
     "pan_right": (
         "min(zoom+0.0008,1.3)",
         "iw/2-(iw/zoom/2)+on*0.4",
         "ih/2-(ih/zoom/2)",
     ),
-    # Pan left — alternative direction
+    # 6. Pan left — alternative direction
     "pan_left": (
         "min(zoom+0.0008,1.3)",
         "iw/2-(iw/zoom/2)-on*0.4",
         "ih/2-(ih/zoom/2)",
     ),
-    # Rise up — discovery, emergence, wonder
+    # 7. Rise up — discovery, emergence, wonder
     "rise_up": (
         "min(zoom+0.001,1.4)",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)-on*0.25",
     ),
-    # Descend — underground, ocean deep, threat
+    # 8. Descend — underground, ocean deep, threat
     "descend": (
         "min(zoom+0.001,1.4)",
         "iw/2-(iw/zoom/2)",
         "ih/2-(ih/zoom/2)+on*0.25",
     ),
+
+    # ── New 8 ────────────────────────────────────────────────────────────────
+
+    # 9. Zoom into top-left corner — subject anchored top-left (e.g. space corner)
+    "zoom_corner_tl": (
+        "min(zoom+0.001,1.6)",
+        "0",
+        "0",
+    ),
+    # 10. Zoom into bottom-right corner — subject anchored bottom-right
+    "zoom_corner_br": (
+        "min(zoom+0.001,1.6)",
+        "iw*(1-1/zoom)",
+        "ih*(1-1/zoom)",
+    ),
+    # 11. Diagonal drift — zoom + simultaneous X+Y pan (top-left → bottom-right)
+    "diagonal_drift": (
+        "min(zoom+0.0004,1.2)",
+        "iw/2-(iw/zoom/2)+on*0.5",
+        "ih/2-(ih/zoom/2)+on*0.3",
+    ),
+    # 12. Tilt reveal — start at bottom frame, pan camera upward (like a tilt shot)
+    "tilt_reveal": (
+        "min(zoom+0.0008,1.3)",
+        "iw/2-(iw/zoom/2)",
+        "max(0\\,ih*(1-1/zoom)-on*0.4)",
+    ),
+    # 13. Fast push — aggressive tension zoom, more intense than push_in
+    "fast_push": (
+        "min(zoom+0.004,2.5)",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
+    # 14. Orbit left — zoom + arc pan sweeping left-and-down (circular feel)
+    "orbit_left": (
+        "min(zoom+0.001,1.4)",
+        "iw/2-(iw/zoom/2)-on*0.35",
+        "ih/2-(ih/zoom/2)+on*0.15",
+    ),
+    # 15. Orbit right — zoom + arc pan sweeping right-and-up
+    "orbit_right": (
+        "min(zoom+0.001,1.4)",
+        "iw/2-(iw/zoom/2)+on*0.35",
+        "ih/2-(ih/zoom/2)-on*0.15",
+    ),
+    # 16. Breathe — slow sinusoidal zoom pulse; almost static but alive
+    "breathe": (
+        "max(1.0\\,1.05+0.07*sin(on/30))",
+        "iw/2-(iw/zoom/2)",
+        "ih/2-(ih/zoom/2)",
+    ),
 }
 
-# emotion + segment → preferred preset(s), cycled by scene_id for variety
+# emotion + segment → preferred presets, cycled by scene_id for variety.
+# 5 options per emotion means consecutive scenes of the same emotion
+# use a different animation every time for up to 5 scenes before repeating.
 _PRESET_BY_EMOTION: dict[str, list[str]] = {
-    "excited":    ["push_in",     "pan_right",   "pan_left"],
-    "dramatic":   ["impact_zoom", "reveal_pull", "push_in"],
-    "mysterious": ["reveal_pull", "descend",     "slow_drift"],
-    "neutral":    ["slow_drift",  "rise_up",     "pan_right"],
+    "excited":    ["push_in",     "pan_right",     "fast_push",     "orbit_right", "pan_left"],
+    "dramatic":   ["impact_zoom", "reveal_pull",   "fast_push",     "zoom_corner_br", "orbit_left"],
+    "mysterious": ["reveal_pull", "descend",       "breathe",       "zoom_corner_tl", "slow_drift"],
+    "neutral":    ["slow_drift",  "rise_up",       "diagonal_drift","tilt_reveal", "orbit_right"],
 }
 
 

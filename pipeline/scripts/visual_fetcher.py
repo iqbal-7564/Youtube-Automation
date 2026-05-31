@@ -3,14 +3,18 @@ STEP 6 — Visual Fetch (Pexels / Pixabay)
 
 For each scene:
   1. Groq converts scene keywords + emotion + shot_type → optimised search query
-  2. Pexels is tried first; Pixabay is the fallback
-  3. Image saved to visuals_dir as scene_{id}_visual.png
+  2. Pexels is tried first (per_page=15, size=large, original URL);
+     Pixabay is the fallback (per_page=15, min_width=1920, imageURL preferred)
+  3. Up to 15 candidate photos are iterated per source; the first one whose
+     MD5 hash is not in the persistent image registry is selected.
+  4. Image saved to visuals_dir as scene_{id}_visual.png
 
-Image deduplication:
-  - Within a video:  session_prompts set prevents identical queries across scenes
-  - Across videos:   stale PNG files (> 2 h old) are purged before each run;
-                     a persistent registry (logs/used_prompts.json) tracks recently
-                     used query hashes and forces unique modifiers when needed
+Image deduplication — two levels:
+  - Query-level  : used_prompts.json tracks query hashes (prevents same search
+                   across videos, forcing modifier suffixes)
+  - Content-level: used_images.json tracks MD5 hashes of downloaded images
+                   (prevents the same photo appearing twice, even if fetched
+                   via a different query)
 """
 
 import hashlib
@@ -34,10 +38,15 @@ GROQ_API_BASE = "https://api.groq.com/openai/v1/chat/completions"
 MAX_RETRIES   = 3
 RETRY_BASE_S  = 5
 
-# Cross-video prompt registry (rolling, keeps last 300 entries)
-_LOGS_DIR       = Path(__file__).parent.parent / "logs"
-PROMPT_REGISTRY = _LOGS_DIR / "used_prompts.json"
-REGISTRY_LIMIT  = 300
+_LOGS_DIR = Path(__file__).parent.parent / "logs"
+
+# Query registry — prevents reusing the same search string across videos
+PROMPT_REGISTRY  = _LOGS_DIR / "used_prompts.json"
+REGISTRY_LIMIT   = 300
+
+# Image registry — prevents the same photo content appearing in any two videos
+IMAGE_REGISTRY       = _LOGS_DIR / "used_images.json"
+IMAGE_REGISTRY_LIMIT = 2000      # ~180 days at 3 videos/day × 10 scenes
 
 # Modifiers cycled when a duplicate query is detected
 _UNIQUE_MODIFIERS = [
@@ -45,6 +54,9 @@ _UNIQUE_MODIFIERS = [
     "contrasting viewpoint", "shifted framing", "varied lighting",
     "opposite vantage point", "distinct atmosphere",
 ]
+
+# Shot types that produce naturally tall subjects — prefer portrait orientation
+_PORTRAIT_SHOTS = {"EXTREME_CLOSE", "CLOSE"}
 
 
 # ── Main entry ────────────────────────────────────────────────────────────────
@@ -59,16 +71,18 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     visuals_dir.mkdir(parents=True, exist_ok=True)
 
     # Remove PNG files from previous runs (> 2 h old) so images are never reused
-    # across videos. Files from the current run (recent) are kept for retry safety.
     _cleanup_stale_visuals(visuals_dir, max_age_hours=2)
 
     W, H   = timeline["width"], timeline["height"]
     intent = timeline.get("intent", "SCIENCE")
 
-    # Load cross-video registry and build within-video session sets
-    used_registry    = _load_prompt_registry()
-    session_prompts: set[str] = set()   # hashes of queries used this run
-    session_img_hashes: set[str] = set()  # MD5 hashes of downloaded images (dedup content)
+    # Load both registries
+    used_registry      = _load_prompt_registry()    # list[str] — query hashes
+    used_img_registry  = _load_image_registry()     # set[str]  — image MD5 hashes
+    session_img_hashes: set[str] = set()            # added this run (merged at end)
+
+    def _known_images() -> set[str]:
+        return used_img_registry | session_img_hashes
 
     for sc in timeline["scenes"]:
         # Close scene is a branded card — skip visual fetch
@@ -94,48 +108,42 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         )
 
         # Ensure the query is unique within this video and across recent videos
-        query = _ensure_unique_query(raw_query, session_prompts, used_registry, scene_id)
+        query = _ensure_unique_query(raw_query, session_img_hashes, used_registry, scene_id)
         log.info("Scene %d | query: %s", scene_id, query)
 
-        # Record query in session and registry to prevent future reuse
         qh = _prompt_hash(query)
-        session_prompts.add(qh)
         used_registry.append(qh)
 
         # Step 2 — Fetch primary image: Pexels → Pixabay → black clip
-        # Pass shot_type so orientation matches (AERIAL/WIDE → landscape, etc.)
-        success = _pexels_fetch(query, out_path, shot_type)
+        success = _pexels_fetch(query, out_path, shot_type, _known_images())
 
         if not success:
             log.warning("Scene %d: Pexels failed — trying Pixabay", scene_id)
-            success = _pixabay_fetch(query, out_path)
+            success = _pixabay_fetch(query, out_path, _known_images())
 
-        # Fix #2: validate file actually exists with valid content after fetch
         if success and not _validate_image(out_path, scene_id):
             out_path.unlink(missing_ok=True)
             success = False
 
-        # Fix #11: detect duplicate image content via MD5 hash — re-fetch if same
-        # image was used by a previous scene in this run
         if success:
-            img_hash = _img_hash(out_path)
-            if img_hash in session_img_hashes:
-                log.warning("Scene %d: duplicate image detected — fetching alternate",
-                            scene_id)
-                alt_q = _ensure_unique_query(
+            h = _img_hash(out_path)
+            if h in _known_images():
+                # Content-level duplicate — fetch alternate
+                log.warning("Scene %d: duplicate image content — fetching alternate", scene_id)
+                alt_q    = _ensure_unique_query(
                     _fallback_query(kw_list[1:] if len(kw_list) > 1 else kw_list),
-                    session_prompts, used_registry, scene_id + 5000,
+                    session_img_hashes, used_registry, scene_id + 5000,
                 )
                 alt_path = visuals_dir / f"scene_{scene_id}_visual_alt.png"
-                alt_ok = _pexels_fetch(alt_q, alt_path, shot_type) or \
-                         _pixabay_fetch(alt_q, alt_path)
+                alt_ok   = (_pexels_fetch(alt_q, alt_path, shot_type, _known_images()) or
+                            _pixabay_fetch(alt_q, alt_path, _known_images()))
                 if alt_ok and _validate_image(alt_path, scene_id):
                     out_path.unlink(missing_ok=True)
                     alt_path.rename(out_path)
-                    img_hash = _img_hash(out_path)
+                    h = _img_hash(out_path)
                 else:
                     alt_path.unlink(missing_ok=True)
-            session_img_hashes.add(img_hash)
+            session_img_hashes.add(h)
 
         if success:
             sc["visual_file"]  = out_path.name
@@ -155,17 +163,16 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         # Step 3 — Fetch extra image for slideshow (scenes ≥ 4s with multiple keywords)
         extra_files: list[str] = []
         if success and dur_s >= 4.0 and len(kw_list) >= 2:
-            alt_query = _ensure_unique_query(
-                _fallback_query(kw_list[1:]), session_prompts, used_registry, scene_id + 1000
+            alt_query  = _ensure_unique_query(
+                _fallback_query(kw_list[1:]), session_img_hashes, used_registry, scene_id + 1000
             )
             extra_path = visuals_dir / f"scene_{scene_id}_visual_b.png"
-            extra_ok = _pexels_fetch(alt_query, extra_path, shot_type)
-            if not extra_ok:
-                extra_ok = _pixabay_fetch(alt_query, extra_path)
+            extra_ok   = (_pexels_fetch(alt_query, extra_path, shot_type, _known_images()) or
+                          _pixabay_fetch(alt_query, extra_path, _known_images()))
             if extra_ok and _validate_image(extra_path, scene_id):
-                extra_hash = _img_hash(extra_path)
-                if extra_hash not in session_img_hashes:
-                    session_img_hashes.add(extra_hash)
+                eh = _img_hash(extra_path)
+                if eh not in _known_images():
+                    session_img_hashes.add(eh)
                     extra_files.append(extra_path.name)
                     log.info("Scene %d | extra image: %s", scene_id, extra_path.name)
                 else:
@@ -175,8 +182,9 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
         sc["extra_visual_files"] = extra_files
 
-    # Persist updated registry (trimmed to REGISTRY_LIMIT)
+    # Persist both registries
     _save_prompt_registry(used_registry)
+    _save_image_registry(used_img_registry | session_img_hashes)
 
     return timeline
 
@@ -194,7 +202,7 @@ def _load_prompt_registry() -> list[str]:
             if isinstance(data, list):
                 return data[-REGISTRY_LIMIT:]
     except Exception as exc:
-        log.debug("Registry load error: %s", exc)
+        log.debug("Prompt registry load error: %s", exc)
     return []
 
 
@@ -205,25 +213,47 @@ def _save_prompt_registry(registry: list[str]) -> None:
             json.dumps(registry[-REGISTRY_LIMIT:], indent=2), encoding="utf-8"
         )
     except Exception as exc:
-        log.debug("Registry save error: %s", exc)
+        log.debug("Prompt registry save error: %s", exc)
+
+
+def _load_image_registry() -> set[str]:
+    try:
+        if IMAGE_REGISTRY.exists():
+            data = json.loads(IMAGE_REGISTRY.read_text(encoding="utf-8"))
+            if isinstance(data, list):
+                return set(data[-IMAGE_REGISTRY_LIMIT:])
+    except Exception as exc:
+        log.debug("Image registry load error: %s", exc)
+    return set()
+
+
+def _save_image_registry(hashes: set[str]) -> None:
+    try:
+        _LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        trimmed = list(hashes)[-IMAGE_REGISTRY_LIMIT:]
+        IMAGE_REGISTRY.write_text(
+            json.dumps(trimmed, indent=2), encoding="utf-8"
+        )
+    except Exception as exc:
+        log.debug("Image registry save error: %s", exc)
 
 
 def _ensure_unique_query(
     query: str,
-    session_prompts: set[str],
+    session_img_hashes: set[str],
     used_registry: list[str],
     scene_id: int,
 ) -> str:
     registry_set = set(used_registry)
     modifier_idx = 0
-    current = query
+    current      = query
 
     for _ in range(len(_UNIQUE_MODIFIERS) + 1):
         qh = _prompt_hash(current)
-        if qh not in session_prompts and qh not in registry_set:
+        if qh not in registry_set:
             return current
         if modifier_idx < len(_UNIQUE_MODIFIERS):
-            mod = _UNIQUE_MODIFIERS[modifier_idx]
+            mod     = _UNIQUE_MODIFIERS[modifier_idx]
             current = f"{query} {mod}"
             modifier_idx += 1
         else:
@@ -235,13 +265,14 @@ def _ensure_unique_query(
 
 def _cleanup_stale_visuals(visuals_dir: Path, max_age_hours: int = 2) -> None:
     cutoff = time.time() - max_age_hours * 3600
-    for f in visuals_dir.glob("scene_*_visual.png"):
-        try:
-            if f.stat().st_mtime < cutoff:
-                f.unlink()
-                log.debug("Removed stale visual: %s", f.name)
-        except Exception:
-            pass
+    for pattern in ("scene_*_visual.png", "scene_*_visual_b.png", "scene_*_visual_alt.png"):
+        for f in visuals_dir.glob(pattern):
+            try:
+                if f.stat().st_mtime < cutoff:
+                    f.unlink()
+                    log.debug("Removed stale visual: %s", f.name)
+            except Exception:
+                pass
 
 
 # ── Groq: scene metadata → search query ──────────────────────────────────────
@@ -252,11 +283,6 @@ def _groq_to_search_query(
     shot_type: str,
     intent:    str,
 ) -> str:
-    """
-    Sends scene metadata to Groq llama3-8b-8192 and gets back a short
-    Pexels/Pixabay-optimised search query (3-6 words).
-    Falls back to a plain keyword join if keys are missing or the call fails.
-    """
     api_key = os.getenv("GROQ_API_KEY_1") or os.getenv("GROQ_API_KEY_2", "")
     if not api_key:
         return _fallback_query(keywords)
@@ -298,7 +324,7 @@ def _groq_to_search_query(
             )
             if r.ok:
                 query = r.json()["choices"][0]["message"]["content"].strip()
-                return " ".join(query.split()[:6])   # hard cap at 6 words
+                return " ".join(query.split()[:6])
             else:
                 log.warning("Groq query API %d: %s", r.status_code, r.text[:200])
                 break
@@ -320,11 +346,7 @@ def _fallback_query(keywords: list[str]) -> str:
 
 # ── Image validation & hash helpers ──────────────────────────────────────────
 
-# Shot types that produce naturally tall subjects — prefer portrait orientation
-_PORTRAIT_SHOTS = {"EXTREME_CLOSE", "CLOSE"}
-
 def _validate_image(path: Path, scene_id: int) -> bool:
-    """Fix #2 & #9: verify file exists, is large enough, and meets min resolution."""
     if not path.exists() or path.stat().st_size < 5_000:
         log.warning("Scene %d: image file missing or too small after fetch", scene_id)
         return False
@@ -332,67 +354,120 @@ def _validate_image(path: Path, scene_id: int) -> bool:
         from PIL import Image
         with Image.open(path) as img:
             w, h = img.size
-            if w < 640 or h < 360:
+            if w < 960 or h < 540:
                 log.warning("Scene %d: image resolution too low (%dx%d) — skipping",
                             scene_id, w, h)
                 return False
     except Exception:
-        pass   # PIL not available or corrupt — accept file based on size alone
+        pass  # PIL not available or corrupt — accept based on file size
     return True
 
 
 def _img_hash(path: Path) -> str:
-    """Fix #11: fast MD5 of first 64 KB — enough to detect duplicate images."""
     try:
         return hashlib.md5(path.read_bytes()[:65536]).hexdigest()
     except Exception:
         return ""
 
 
-# ── Pexels / Pixabay fetchers ─────────────────────────────────────────────────
+# ── Pexels fetcher ────────────────────────────────────────────────────────────
 
-def _pexels_fetch(query: str, out_path: Path, shot_type: str = "MEDIUM") -> bool:
+def _pexels_fetch(query: str, out_path: Path,
+                  shot_type: str = "MEDIUM",
+                  avoid_hashes: set[str] | None = None) -> bool:
+    """
+    Fetches the best available full-HD photo from Pexels.
+    Requests 15 candidates, iterates through them and picks the first
+    whose content MD5 is not in avoid_hashes.
+    Uses original URL for full resolution; size=large filters to ≥ 4 MP.
+    """
     api_key = os.getenv("PEXELS_API_KEY", "")
     if not api_key:
         return False
 
-    # Reuse if already downloaded this run (< 2 h old)
-    cutoff = time.time() - 2 * 3600
-    if out_path.exists() and out_path.stat().st_mtime > cutoff and out_path.stat().st_size > 10_000:
-        log.info("Reusing current-run image: %s", out_path.name)
-        return True
+    avoid = avoid_hashes or set()
 
-    # Fix #12: use portrait for close-up shots, landscape for everything else
+    # Reuse if already downloaded this run (< 2 h old) and not a known duplicate
+    cutoff = time.time() - 2 * 3600
+    if (out_path.exists()
+            and out_path.stat().st_mtime > cutoff
+            and out_path.stat().st_size > 10_000):
+        h = _img_hash(out_path)
+        if h not in avoid:
+            log.info("Reusing current-run image: %s", out_path.name)
+            return True
+        out_path.unlink(missing_ok=True)
+
     orientation = "portrait" if shot_type in _PORTRAIT_SHOTS else "landscape"
     try:
         r = requests.get(
             "https://api.pexels.com/v1/search",
             headers={"Authorization": api_key},
-            params={"query": query, "per_page": 5, "orientation": orientation},
+            params={
+                "query":       query,
+                "per_page":    15,
+                "orientation": orientation,
+                "size":        "large",      # Pexels: only images ≥ 4 MP
+            },
             timeout=15,
         )
-        if r.ok:
-            photos = r.json().get("photos", [])
-            if photos:
-                img_url = photos[0]["src"].get("large2x") or photos[0]["src"]["original"]
-                return _download(img_url, out_path)
-        else:
+        if not r.ok:
             log.warning("Pexels API %d: %s", r.status_code, r.text[:120])
+            return False
+
+        photos = r.json().get("photos", [])
+        for photo in photos:
+            src = photo.get("src", {})
+            # original = full resolution; large2x ≈ 1880 px as fallback
+            img_url = src.get("original") or src.get("large2x")
+            if not img_url:
+                continue
+            tmp = out_path.with_suffix(".tmp.png")
+            if not _download(img_url, tmp):
+                tmp.unlink(missing_ok=True)
+                continue
+            h = _img_hash(tmp)
+            if h and h not in avoid:
+                tmp.rename(out_path)
+                log.debug("Pexels photo id=%s  size=%s",
+                          photo.get("id"), photo.get("width"))
+                return True
+            # This photo is a duplicate — discard and try the next
+            log.debug("Pexels photo id=%s is duplicate — trying next", photo.get("id"))
+            tmp.unlink(missing_ok=True)
+
     except Exception as exc:
         log.warning("Pexels fetch error: %s", exc)
+
     return False
 
 
-def _pixabay_fetch(query: str, out_path: Path) -> bool:
+# ── Pixabay fetcher ───────────────────────────────────────────────────────────
+
+def _pixabay_fetch(query: str, out_path: Path,
+                   avoid_hashes: set[str] | None = None) -> bool:
+    """
+    Fetches the best available full-HD photo from Pixabay.
+    Requests 15 candidates with min_width=1920; prefers imageURL (original
+    resolution) → largeImageURL (1280 px) → webformatURL (640 px).
+    Iterates until finding a photo whose MD5 is not in avoid_hashes.
+    """
     api_key = os.getenv("PIXABAY_API_KEY", "")
     if not api_key:
         return False
 
-    # Reuse if already downloaded this run (< 2 h old)
+    avoid = avoid_hashes or set()
+
+    # Reuse if already downloaded this run (< 2 h old) and not a known duplicate
     cutoff = time.time() - 2 * 3600
-    if out_path.exists() and out_path.stat().st_mtime > cutoff and out_path.stat().st_size > 10_000:
-        log.info("Reusing current-run image: %s", out_path.name)
-        return True
+    if (out_path.exists()
+            and out_path.stat().st_mtime > cutoff
+            and out_path.stat().st_size > 10_000):
+        h = _img_hash(out_path)
+        if h not in avoid:
+            log.info("Reusing current-run image: %s", out_path.name)
+            return True
+        out_path.unlink(missing_ok=True)
 
     try:
         r = requests.get(
@@ -401,20 +476,61 @@ def _pixabay_fetch(query: str, out_path: Path) -> bool:
                 "key":        api_key,
                 "q":          "+".join(query.split()[:4]),
                 "image_type": "photo",
-                "per_page":   5,
+                "per_page":   15,
                 "safesearch": "true",
+                "min_width":  1920,
+                "min_height": 1080,
+                "order":      "popular",
             },
             timeout=15,
         )
-        if r.ok:
-            hits = r.json().get("hits", [])
-            if hits:
-                img_url = hits[0].get("largeImageURL") or hits[0].get("webformatURL")
-                return _download(img_url, out_path)
-        else:
+        if not r.ok:
             log.warning("Pixabay API %d: %s", r.status_code, r.text[:120])
+            return False
+
+        hits = r.json().get("hits", [])
+
+        # Retry without resolution constraint if no results at 1920p
+        if not hits:
+            r2 = requests.get(
+                "https://pixabay.com/api/",
+                params={
+                    "key":        api_key,
+                    "q":          "+".join(query.split()[:4]),
+                    "image_type": "photo",
+                    "per_page":   15,
+                    "safesearch": "true",
+                    "order":      "popular",
+                },
+                timeout=15,
+            )
+            if r2.ok:
+                hits = r2.json().get("hits", [])
+
+        for hit in hits:
+            # Prefer full-resolution → 1280 px → 640 px fallback
+            img_url = (hit.get("imageURL")
+                       or hit.get("fullHDURL")
+                       or hit.get("largeImageURL")
+                       or hit.get("webformatURL"))
+            if not img_url:
+                continue
+            tmp = out_path.with_suffix(".tmp.png")
+            if not _download(img_url, tmp):
+                tmp.unlink(missing_ok=True)
+                continue
+            h = _img_hash(tmp)
+            if h and h not in avoid:
+                tmp.rename(out_path)
+                log.debug("Pixabay id=%s  %dx%d",
+                          hit.get("id"), hit.get("imageWidth", 0), hit.get("imageHeight", 0))
+                return True
+            log.debug("Pixabay id=%s is duplicate — trying next", hit.get("id"))
+            tmp.unlink(missing_ok=True)
+
     except Exception as exc:
         log.warning("Pixabay fetch error: %s", exc)
+
     return False
 
 
