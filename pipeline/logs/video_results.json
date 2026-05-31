@@ -208,5 +208,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "s3SwzxiPZOs",
+    "intent": "SCIENCE",
+    "title": "Scientists Found Life in 4Bn Yr Rocks",
+    "hook_text": "4.4 billion-year-old fossils exist.",
+    "total_duration_seconds": 155.57,
+    "scene_count": 22,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-31T16:20:25.733667",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
