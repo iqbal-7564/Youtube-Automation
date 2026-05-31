@@ -73,7 +73,44 @@ from quality_gate        import run_quality_gate
 from thumbnail_generator import generate_thumbnail
 from ctr_optimizer       import optimize_ctr
 from uploader            import upload_video
-from news_analytics      import log_result, apply_adaptive_learning, predict_retention_risk
+from news_analytics      import log_result, apply_adaptive_learning, predict_retention_risk, fetch_peak_hours, update_velocity_queue
+
+
+def _align_to_peak_window(logs_dir: Path) -> None:
+    """
+    Sleeps up to 25 minutes to align the upload to a peak audience hour.
+    Reads peak_hours.json written by the analytics-refresh job.
+    Never sleeps more than 25 min — keeps well within the 90-min action timeout.
+    If no peak data exists, uploads immediately (no delay).
+    """
+    import time as _time
+    try:
+        path = logs_dir / "peak_hours.json"
+        if not path.exists():
+            return
+        data       = json.loads(path.read_text())
+        peak_hours = data.get("peak_hours", [])
+        if not peak_hours:
+            return
+
+        now             = datetime.utcnow()
+        current_minutes = now.hour * 60 + now.minute
+        best_wait_min   = None
+
+        for peak_hour in peak_hours:
+            wait = peak_hour * 60 - current_minutes
+            if 0 < wait <= 25:
+                if best_wait_min is None or wait < best_wait_min:
+                    best_wait_min = wait
+
+        if best_wait_min:
+            log.info("  Publish time: %d min until peak window — sleeping", best_wait_min)
+            _time.sleep(best_wait_min * 60)
+        else:
+            log.info("  Publish time: already in or past peak window — uploading now")
+
+    except Exception as exc:
+        log.debug("Peak alignment: %s", exc)
 
 
 def _save(timeline: dict) -> None:
@@ -303,6 +340,7 @@ def run_pipeline() -> bool:
 
         # ── 13: Upload ────────────────────────────────────────────────────────
         log.info("[13/14] Upload")
+        _align_to_peak_window(LOGS_DIR)
         video_id = upload_video(
             output_path, thumb_path, script, topic, timeline, profile,
             subtitles_dir=TEMP_DIR / "subtitles",
@@ -315,6 +353,10 @@ def run_pipeline() -> bool:
         # ── 14: Analytics ─────────────────────────────────────────────────────
         log.info("[14/14] Analytics")
         log_result(video_id, topic, timeline, gate, profile, LOGS_DIR)
+
+        # Velocity clustering: check if any recent video is performing above average
+        # and queue related topics for the next pipeline run
+        update_velocity_queue(LOGS_DIR)
 
         # Apply adaptive learning — evolve pipeline parameters from retention signal
         hints = gate.get("hints", {})

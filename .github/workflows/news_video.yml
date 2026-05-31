@@ -38,7 +38,7 @@ jobs:
           ffmpeg -version | head -1
 
       - name: Install Python dependencies
-        run: pip install requests gtts edge-tts feedparser rapidfuzz Pillow
+        run: pip install requests gtts edge-tts rapidfuzz Pillow pytrends
 
       - name: Create runtime directories
         run: |
@@ -64,12 +64,12 @@ jobs:
       - name: Run Video Pipeline
         env:
           VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
-          HF_API_KEY:            ${{ secrets.HF_API_KEY }}
           GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
           PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
+          YOUTUBE_API_KEY:       ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
@@ -107,6 +107,7 @@ jobs:
       - name: Fetch YouTube Analytics
         continue-on-error: true
         env:
+          GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
@@ -115,9 +116,12 @@ jobs:
           import sys
           from pathlib import Path
           sys.path.insert(0, 'pipeline/scripts')
-          from news_analytics import fetch_analytics_feedback
-          hints = fetch_analytics_feedback(Path('pipeline/logs'))
+          from news_analytics import fetch_analytics_feedback, fetch_peak_hours, update_velocity_queue
+          logs = Path('pipeline/logs')
+          hints = fetch_analytics_feedback(logs)
           print('Feedback hints:', hints)
+          fetch_peak_hours(logs)
+          update_velocity_queue(logs)
           "
 
       - name: Save analytics data

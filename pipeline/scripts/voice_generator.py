@@ -93,7 +93,16 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
     timeline["total_duration_ms"]      = t
     timeline["total_duration_seconds"] = round(t / 1000, 2)
 
-    if timeline["total_duration_seconds"] <= 60:
+    # Respect explicit VIDEO_FORMAT; fall back to duration-based detection.
+    # Without this, TTS padding (300-600ms per scene) can push a ~60s shorts
+    # script over 60s and incorrectly flip the profile to standard (1920×1080),
+    # causing shorts to upload as landscape videos instead of vertical Shorts.
+    _vf = os.getenv("VIDEO_FORMAT", "").lower()
+    if _vf == "shorts":
+        timeline["profile"], timeline["width"], timeline["height"] = "shorts",   1080, 1920
+    elif _vf in ("standard", "long"):
+        timeline["profile"], timeline["width"], timeline["height"] = "standard", 1920, 1080
+    elif timeline["total_duration_seconds"] <= 70:
         timeline["profile"], timeline["width"], timeline["height"] = "shorts",   1080, 1920
     else:
         timeline["profile"], timeline["width"], timeline["height"] = "standard", 1920, 1080

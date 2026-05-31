@@ -83,8 +83,8 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
 # ── Format profiles ──────────────────────────────────────────────────────────
 # VIDEO_FORMAT env var controls target length.
 # shorts   → 130-180 words  (~60s)
-# standard → 450-600 words  (~3-4 min)
-# long     → 900-1200 words (~6-8 min)
+# standard → 680-840 words  (~4-5 min)
+# long     → 900-1344 words (~6-8 min)
 
 _FORMAT_PROFILES: dict[str, dict] = {
     "shorts": {
@@ -118,6 +118,55 @@ _FORMAT_PROFILES: dict[str, dict] = {
     },
 }
 
+# ── Format-specific timing hints injected into both prompts ──────────────────
+# These give the LLM concrete duration targets per segment so it writes
+# enough text to actually fill the requested video length.
+
+_FORMAT_TIMING: dict[str, dict] = {
+    "shorts": {
+        "video_label":   "YouTube Shorts",
+        "hook_time":     "0-3s",
+        "tension_time":  "3-15s",
+        "core_time":     "15-45s",
+        "payoff_time":   "45-55s",
+        "close_time":    "55-60s",
+        "hook_dur":      3,
+        "tension_dur":   12,
+        "core_dur":      30,
+        "payoff_dur":    10,
+        "close_dur":     5,
+        "total_est":     60,
+    },
+    "standard": {
+        "video_label":   "YouTube educational video (target 4-5 minutes)",
+        "hook_time":     "0-15s",
+        "tension_time":  "15-60s",
+        "core_time":     "60-270s",
+        "payoff_time":   "270-300s",
+        "close_time":    "300-315s",
+        "hook_dur":      12,
+        "tension_dur":   45,
+        "core_dur":      195,
+        "payoff_dur":    30,
+        "close_dur":     18,
+        "total_est":     300,
+    },
+    "long": {
+        "video_label":   "YouTube educational video (target 6-8 minutes)",
+        "hook_time":     "0-20s",
+        "tension_time":  "20-80s",
+        "core_time":     "80-390s",
+        "payoff_time":   "390-430s",
+        "close_time":    "430-450s",
+        "hook_dur":      18,
+        "tension_dur":   60,
+        "core_dur":      300,
+        "payoff_dur":    40,
+        "close_dur":     25,
+        "total_est":     443,
+    },
+}
+
 # ── Hook formula library ─────────────────────────────────────────────────────
 # Rotated per video to prevent hook fatigue. Each formula creates a different
 # psychological mechanism that captures attention in the first 1-2 seconds.
@@ -138,14 +187,14 @@ Content: real-world facts — science, history, nature, space, animals, geograph
 NARRATIVE STRUCTURE THIS VIDEO: {description}
 
 SEGMENT RULES:
-HOOK    (0-3s)  : {hook_rule}
+HOOK    ({hook_time})  : {hook_rule}
                   NEVER start with "Did you know", "Welcome back", "Today we discuss", "In today's video".
-TENSION (3-15s) : {tension_rule}
-CORE    (15-45s): {core_rule}
+TENSION ({tension_time}) : {tension_rule}
+CORE    ({core_time}): {core_rule}
                   DEPTH: {core_depth}
                   Mark the single most surprising sentence with [WOW].
-PAYOFF  (45-55s): {payoff_rule}
-CLOSE   (55-60s): {close_rule}
+PAYOFF  ({payoff_time}): {payoff_rule}
+CLOSE   ({close_time}): {close_rule}
                   NEVER say "Like and subscribe".
 
 TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
@@ -161,7 +210,7 @@ TITLE RULES (curiosity-gap psychology):
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON."""
 
-_USER_TMPL = """Write a YouTube Shorts "MindBlownFacts" script for this topic:
+_USER_TMPL = """Write a {video_label} "MindBlownFacts" script for this topic:
 
 TOPIC    : {title}
 DETAILS  : {description}
@@ -172,13 +221,13 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
   "narrative_template": "{template_name}",
   "segments": [
-    {{"id": 1, "label": "HOOK",    "text": "...", "estimated_duration_seconds": 3,  "emotion": "excited",    "complexity": "simple"}},
-    {{"id": 2, "label": "TENSION", "text": "...", "estimated_duration_seconds": 12, "emotion": "mysterious", "complexity": "moderate"}},
-    {{"id": 3, "label": "CORE",    "text": "...", "estimated_duration_seconds": 30, "emotion": "neutral",    "complexity": "complex"}},
-    {{"id": 4, "label": "PAYOFF",  "text": "...", "estimated_duration_seconds": 10, "emotion": "dramatic",   "complexity": "simple"}},
-    {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": 5,  "emotion": "neutral",    "complexity": "simple"}}
+    {{"id": 1, "label": "HOOK",    "text": "...", "estimated_duration_seconds": {hook_dur},    "emotion": "excited",    "complexity": "simple"}},
+    {{"id": 2, "label": "TENSION", "text": "...", "estimated_duration_seconds": {tension_dur}, "emotion": "mysterious", "complexity": "moderate"}},
+    {{"id": 3, "label": "CORE",    "text": "...", "estimated_duration_seconds": {core_dur},    "emotion": "neutral",    "complexity": "complex"}},
+    {{"id": 4, "label": "PAYOFF",  "text": "...", "estimated_duration_seconds": {payoff_dur},  "emotion": "dramatic",   "complexity": "simple"}},
+    {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": {close_dur},   "emotion": "neutral",    "complexity": "simple"}}
   ],
-  "total_estimated_seconds": 60,
+  "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
     "title": "Curiosity-gap title implying hidden knowledge (max 90 chars, no 'shocking'/'unbelievable'/'amazing')",
@@ -207,6 +256,8 @@ def generate_script(topic: dict) -> dict:
     # Inject hook formula into the hook rule
     augmented_hook_rule = f"{variant['hook_rule']} HOOK FORMULA TO USE: {hook_formula}"
 
+    fmt_timing = _FORMAT_TIMING.get(video_format, _FORMAT_TIMING["shorts"])
+
     system_prompt = _SYSTEM_TMPL.format(
         description   = variant["description"],
         hook_rule     = augmented_hook_rule,
@@ -217,13 +268,25 @@ def generate_script(topic: dict) -> dict:
         word_target   = fmt_profile["word_target"],
         duration_hint = fmt_profile["duration_hint"],
         core_depth    = fmt_profile["core_depth"],
+        hook_time     = fmt_timing["hook_time"],
+        tension_time  = fmt_timing["tension_time"],
+        core_time     = fmt_timing["core_time"],
+        payoff_time   = fmt_timing["payoff_time"],
+        close_time    = fmt_timing["close_time"],
     )
 
     prompt = _USER_TMPL.format(
+        video_label   = fmt_timing["video_label"],
         title         = topic["title"],
         description   = topic["description"][:400],
         intent        = topic["intent"],
         template_name = template_name,
+        hook_dur      = fmt_timing["hook_dur"],
+        tension_dur   = fmt_timing["tension_dur"],
+        core_dur      = fmt_timing["core_dur"],
+        payoff_dur    = fmt_timing["payoff_dur"],
+        close_dur     = fmt_timing["close_dur"],
+        total_est     = fmt_timing["total_est"],
     )
 
     log.info("Generating [%s] script, template=%s", video_format, template_name)

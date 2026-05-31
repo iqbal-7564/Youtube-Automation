@@ -17,6 +17,7 @@ Feedback signals used:
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -424,6 +425,174 @@ def _write_performance_history(results: list, perf_path: Path) -> None:
 
     perf_path.write_text(json.dumps(history, indent=2))
     log.info("Performance history updated for %d categories", len(history))
+
+
+# ── Publish Time Algorithm ────────────────────────────────────────────────────
+
+def fetch_peak_hours(logs_dir: Path) -> dict:
+    """
+    Fetches hourly view distribution from YouTube Analytics (last 28 days).
+    Identifies the top 3 peak hours (UTC) and writes peak_hours.json.
+    main.py reads this to align uploads to peak audience windows.
+    """
+    token = _token()
+    if not token:
+        return {}
+
+    try:
+        from datetime import timedelta
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        start = (datetime.utcnow() - timedelta(days=28)).strftime("%Y-%m-%d")
+
+        r = requests.get(
+            "https://youtubeanalytics.googleapis.com/v2/reports",
+            headers={"Authorization": f"Bearer {token}"},
+            params={
+                "ids":        "channel==MINE",
+                "dimensions": "hour",
+                "metrics":    "views",
+                "startDate":  start,
+                "endDate":    today,
+            },
+            timeout=15,
+        )
+        if not r.ok:
+            log.debug("Peak hours API: HTTP %d", r.status_code)
+            return {}
+
+        rows = r.json().get("rows", [])
+        if not rows:
+            return {}
+
+        hourly       = {int(row[0]): int(row[1]) for row in rows if len(row) >= 2}
+        sorted_hours = sorted(hourly.items(), key=lambda x: x[1], reverse=True)
+        peak_hours   = sorted([h for h, _ in sorted_hours[:3]])
+
+        data = {
+            "peak_hours":   peak_hours,
+            "hourly_views": hourly,
+            "updated_at":   datetime.utcnow().isoformat(),
+        }
+        (logs_dir / "peak_hours.json").write_text(json.dumps(data, indent=2))
+        log.info("Peak hours (UTC): %s", peak_hours)
+        return data
+
+    except Exception as exc:
+        log.debug("Peak hours fetch: %s", exc)
+        return {}
+
+
+# ── Topic Velocity Clustering ─────────────────────────────────────────────────
+
+def update_velocity_queue(logs_dir: Path) -> None:
+    """
+    Checks recent video 48h performance against channel average.
+    When a video exceeds 2x the average, generates 3-4 related topic seeds
+    and writes them to velocity_queue.json for the next pipeline run.
+    topic_selector.py reads this queue with highest priority.
+    """
+    results_path = logs_dir / "video_results.json"
+    queue_path   = logs_dir / "velocity_queue.json"
+
+    if not results_path.exists():
+        return
+
+    results    = json.loads(results_path.read_text())
+    views_list = [r.get("views_48h", 0) for r in results if r.get("views_48h", 0) > 0]
+
+    if len(views_list) < 3:
+        log.info("Velocity check: not enough analytics data yet (%d videos)", len(views_list))
+        return
+
+    avg_views = sum(views_list) / len(views_list)
+    threshold = avg_views * 2.0
+
+    from datetime import timedelta
+    cutoff = (datetime.utcnow() - timedelta(hours=72)).isoformat()
+
+    hot = [
+        r for r in results
+        if r.get("uploaded_at", "") >= cutoff
+        and r.get("views_48h", 0) >= threshold
+        and not r.get("velocity_queued")
+    ]
+
+    if not hot:
+        log.info("Velocity check: no hot videos (avg=%.0f, threshold=%.0f)", avg_views, threshold)
+        return
+
+    queue = json.loads(queue_path.read_text()) if queue_path.exists() else []
+
+    for video in hot:
+        cat   = video.get("intent", "SCIENCE")
+        title = video.get("title", "")
+        ratio = video["views_48h"] / avg_views
+        log.info("Velocity HIT [%s] '%.50s' — %.0f views (%.1fx avg)",
+                 cat, title, video["views_48h"], ratio)
+
+        related = _generate_related_seeds(cat, title)
+        for seed in related:
+            queue.append({
+                "category":     cat,
+                "seed":         seed,
+                "source_title": title[:80],
+                "source_views": int(video["views_48h"]),
+                "queued_at":    datetime.utcnow().isoformat(),
+                "priority":     "high",
+            })
+
+        video["velocity_queued"] = True
+
+    queue_path.write_text(json.dumps(queue[-50:], indent=2))
+    results_path.write_text(json.dumps(results[-200:], indent=2))
+    log.info("Velocity queue: %d hot videos → %d seeds queued", len(hot), len(queue))
+
+
+def _generate_related_seeds(category: str, source_title: str) -> list[str]:
+    """Uses Groq to generate 4 related topic seeds from a hot video's title."""
+    keys = [os.environ.get("GROQ_API_KEY_1", "").strip(),
+            os.environ.get("GROQ_API_KEY_2", "").strip()]
+    for key in keys:
+        if not key:
+            continue
+        try:
+            r = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{
+                        "role": "system",
+                        "content": (
+                            "You generate related YouTube topic seeds. "
+                            "Return ONLY a JSON array of 4 short topic phrases (5-10 words each). "
+                            "Each must be closely related but NOT identical to the source. "
+                            'Example: ["neutron stars collapse explained", "dark matter mystery revealed"]'
+                        ),
+                    }, {
+                        "role": "user",
+                        "content": (
+                            f"Category: {category}\n"
+                            f"Hot video: {source_title}\n"
+                            "Generate 4 related seeds that would appeal to the same audience."
+                        ),
+                    }],
+                    "temperature": 0.8,
+                    "max_tokens":  200,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                m   = re.search(r'\[.*\]', raw, re.DOTALL)
+                if m:
+                    seeds = json.loads(m.group())
+                    if isinstance(seeds, list):
+                        return [str(s) for s in seeds[:4] if s]
+        except Exception as exc:
+            log.debug("Related seeds: %s", exc)
+    return []
 
 
 def _token() -> str | None:

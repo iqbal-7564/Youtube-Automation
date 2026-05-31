@@ -59,7 +59,8 @@ def encode_video(
             "-movflags", "+faststart",
             str(output_path),
         ]
-        timeout = 300
+        # Scale timeout: base 120s + 60s per minute of video (long-form can be 8 min)
+        timeout = max(300, 120 + int(expected_duration_s * 1.5))
         log.info("  Encoding [%s] + ASS subtitles …", profile)
     else:
         cmd = [
@@ -76,7 +77,7 @@ def encode_video(
             "-movflags", "+faststart",
             str(output_path),
         ]
-        timeout = 120
+        timeout = max(120, 60 + int(expected_duration_s * 0.5))
         log.info("  Muxing [%s] …", profile)
 
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
