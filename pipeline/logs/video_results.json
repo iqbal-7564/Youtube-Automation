@@ -193,5 +193,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "ZgcXhrhGrPI",
+    "intent": "CULTURE",
+    "title": "Incredible Facts About The Most Spoken Language In 3000 Bc Was Sumerian",
+    "hook_text": "They never taught you this in school.",
+    "total_duration_seconds": 62.07,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-05-31T12:40:06.121390",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
