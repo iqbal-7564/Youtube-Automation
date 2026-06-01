@@ -42,9 +42,19 @@ def encode_video(
 
     burn_subs = ass_path and ass_path.exists()
 
-    # Hard-trim both streams to exactly locked_duration using atrim + asetpts
-    # on the audio filter chain. This eliminates any normalization padding that
-    # accumulated in audio_processor before the quality gate ever sees the file.
+    # Profile-aware quality settings:
+    #   Shorts   → CRF 16, medium preset, 192k audio  (fast, good quality)
+    #   Standard → CRF 14, slow preset,   320k audio  (cinema quality)
+    #   Long     → CRF 13, slow preset,   320k audio  (maximum quality)
+    is_shorts = profile == "shorts"
+    if is_shorts:
+        v_preset, v_crf, a_bitrate = "medium", "16", "192k"
+    elif profile == "long":
+        v_preset, v_crf, a_bitrate = "slow",   "13", "320k"
+    else:
+        v_preset, v_crf, a_bitrate = "slow",   "14", "320k"
+
+    # Hard-trim audio to exactly locked_duration — eliminates normalization padding
     locked_t = ["-t", str(expected_duration_s)] if expected_duration_s > 0 else []
     if expected_duration_s > 0:
         audio_trim_filter = f"atrim=0:{expected_duration_s},asetpts=PTS-STARTPTS"
@@ -54,7 +64,6 @@ def encode_video(
     if burn_subs:
         safe_ass = "'" + str(ass_path).replace("\\", "/") + "'"
         if audio_trim_filter:
-            # Combine ASS subtitle burn with audio trim in one pass
             filter_complex = (
                 f"[0:v]ass={safe_ass}[vout];"
                 f"[1:a]{audio_trim_filter}[aout]"
@@ -66,8 +75,9 @@ def encode_video(
                 "-filter_complex", filter_complex,
                 "-map", "[vout]",
                 "-map", "[aout]",
-                "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
-                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-c:v", "libx264", "-preset", v_preset, "-crf", v_crf,
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
             ] + locked_t + [
                 "-movflags", "+faststart",
                 str(output_path),
@@ -79,13 +89,17 @@ def encode_video(
                 "-i", str(audio_path),
                 "-map", "0:v", "-map", "1:a",
                 "-vf", f"ass={safe_ass}",
-                "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
-                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-c:v", "libx264", "-preset", v_preset, "-crf", v_crf,
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
                 "-movflags", "+faststart",
                 str(output_path),
             ]
-        timeout = max(300, 120 + int(expected_duration_s * 1.5))
-        log.info("  Encoding [%s] + ASS subtitles …", profile)
+        # slow preset needs more time — scale timeout by profile
+        t_mult = 2.0 if is_shorts else 4.0
+        timeout = max(600, 180 + int(expected_duration_s * t_mult))
+        log.info("  Encoding [%s] preset=%s crf=%s audio=%s …",
+                 profile, v_preset, v_crf, a_bitrate)
     else:
         if audio_trim_filter:
             cmd = [
@@ -96,7 +110,7 @@ def encode_video(
                 "-filter_complex", f"[1:a]{audio_trim_filter}[aout]",
                 "-map", "[aout]",
                 "-c:v", "copy",
-                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
             ] + locked_t + [
                 "-movflags", "+faststart",
                 str(output_path),
@@ -108,12 +122,12 @@ def encode_video(
                 "-i", str(audio_path),
                 "-map", "0:v", "-map", "1:a",
                 "-c:v", "copy",
-                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
                 "-movflags", "+faststart",
                 str(output_path),
             ]
-        timeout = max(120, 60 + int(expected_duration_s * 0.5))
-        log.info("  Muxing [%s] …", profile)
+        timeout = max(180, 60 + int(expected_duration_s * 0.8))
+        log.info("  Muxing [%s] audio=%s …", profile, a_bitrate)
 
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 

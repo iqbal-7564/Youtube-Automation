@@ -721,7 +721,7 @@ def _build_topic(category: str, seed: str, produced: list[dict],
 
     # Curiosity gap validation — reject generic titles
     curiosity = _curiosity_gap_score(title)
-    if curiosity < 30:
+    if curiosity < 40:
         log.debug("Curiosity gap reject (score=%d): %s", curiosity, title[:60])
         return None
 

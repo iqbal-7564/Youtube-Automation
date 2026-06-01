@@ -48,15 +48,31 @@ _INTENT_LABEL = {k: k for k in _INTENT_COLOR}
 _FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 _FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
-# Emotion-based color grade filters applied per scene for cinematic look
+# Cinematic color grade filters — movie-quality LUT-style grading per emotion
 _COLOR_GRADE: dict[str, str] = {
-    "excited":    "eq=saturation=1.18:brightness=0.02:contrast=1.05,"
-                  "curves=r='0/0 0.5/0.54 1/1':b='0/0 0.5/0.46 1/1'",   # warm, vibrant
-    "mysterious": "eq=saturation=0.82:brightness=-0.03:contrast=1.08,"
-                  "curves=r='0/0 0.5/0.46 1/1':b='0/0 0.5/0.54 1/1'",   # cool, desaturated
-    "dramatic":   "eq=saturation=1.12:brightness=-0.04:contrast=1.18,"
-                  "curves=all='0/0 0.25/0.2 0.75/0.8 1/1'",              # high contrast, punchy
-    "neutral":    "eq=saturation=1.0:brightness=0.0:contrast=1.0",        # no grade
+    # Warm golden blockbuster — boosted saturation, lifted shadows, warm highlights
+    "excited":    (
+        "eq=saturation=1.22:brightness=0.03:contrast=1.08,"
+        "curves=r='0/0 0.3/0.32 0.7/0.74 1/1':g='0/0 0.5/0.51 1/1':b='0/0 0.5/0.46 1/1',"
+        "unsharp=3:3:0.5:3:3:0"
+    ),
+    # Teal-orange split — cold crushed shadows, warm highlights, desaturated midtones
+    "mysterious": (
+        "eq=saturation=0.72:brightness=-0.04:contrast=1.15,"
+        "curves=r='0/0 0.3/0.26 0.7/0.65 1/0.94':b='0/0.02 0.3/0.33 0.7/0.72 1/1',"
+        "unsharp=3:3:0.4:3:3:0"
+    ),
+    # Deep crushed blacks, punchy highlights — cinematic high-contrast drama
+    "dramatic":   (
+        "eq=saturation=1.18:brightness=-0.06:contrast=1.25,"
+        "curves=all='0/0 0.12/0.06 0.5/0.48 0.88/0.90 1/1',"
+        "unsharp=3:3:0.7:3:3:0"
+    ),
+    # Reference clean — barely warm, documentary/educational quality
+    "neutral":    (
+        "eq=saturation=1.06:brightness=0.01:contrast=1.03,"
+        "curves=r='0/0 0.5/0.505 1/1':b='0/0 0.5/0.495 1/1'"
+    ),
 }
 
 
@@ -176,7 +192,7 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
@@ -188,7 +204,7 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         )
         cmd = base_cmd + [
             "-vf", ",".join(vf_parts),
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
 
@@ -268,7 +284,7 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
@@ -280,7 +296,7 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
         )
         cmd = base + [
             "-vf", full_vf,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
 
@@ -311,13 +327,13 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
         cmd = base + [
             "-vf", vf,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     subprocess.run(cmd, capture_output=True, timeout=30)
@@ -377,7 +393,7 @@ def _render_slideshow(
         "-filter_complex", ";".join(parts),
         "-map", prev,
         "-t", str(dur_s),
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "16",
         "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
     ])
     _run(cmd, f"slideshow→{out.name}", timeout=120)
@@ -486,7 +502,7 @@ def _xfade(a: Path, b: Path, dur: float, xf_type: str, out: Path) -> None:
          "-filter_complex",
          f"[0:v][1:v]xfade=transition={xf_type}:duration={dur:.3f}:offset={offset:.3f}[v]",
          "-map", "[v]",
-         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+         "-c:v", "libx264", "-preset", "medium", "-crf", "16",
          "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out)],
         f"xfade {a.name}+{b.name}",
     )
@@ -663,7 +679,7 @@ def _font_dir() -> str:
     return d if os.path.isdir(d) else ""
 
 
-def _run(cmd: list, label: str = "ffmpeg", timeout: int = 180) -> None:
+def _run(cmd: list, label: str = "ffmpeg", timeout: int = 300) -> None:
     log.debug("FFmpeg [%s] %s …", label, " ".join(str(c) for c in cmd[:5]))
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if res.returncode != 0:

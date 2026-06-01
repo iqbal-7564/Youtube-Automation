@@ -98,20 +98,25 @@ def generate_subtitles(timeline: dict, out_dir: Path) -> None:
 def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
     """Generate a single full-video ASS file with karaoke word-fill animation.
 
-    Each subtitle line is split into words; timing is distributed evenly so
-    each word highlights (\\kf fill) as the narrator speaks it.  The resulting
-    .ass file is passed to the encoder to be burned into the final MP4.
+    Subtitle timing is rebuilt from the actual locked voice window per scene
+    (sc["start_ms"] → sc["end_ms"] - pad_ms) rather than from rescaled
+    subtitle_lines timestamps, which eliminates accumulated rounding drift
+    and guarantees subtitles are perfectly in sync with the voice audio.
+
+    Words are chunked into groups of 4 and distributed evenly across the
+    speech window. Each word highlights (\\kf fill) as the narrator speaks it.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    profile  = timeline.get("profile", "standard")
-    W        = timeline.get("width",  1920)
-    H        = timeline.get("height", 1080)
+    profile   = timeline.get("profile", "standard")
+    W         = timeline.get("width",  1920)
+    H         = timeline.get("height", 1080)
     is_shorts = profile == "shorts"
 
     font_size = 52 if is_shorts else 42
-    margin_v  = 200 if is_shorts else 80
-    # ASS colours are &HAABBGGRR (AA=alpha 00=opaque FF=transparent)
-    secondary = "&H0000FFFF"   # yellow karaoke highlight
+    # Shorts: 350px from bottom clears YouTube UI (like/share/follow buttons)
+    # Standard: 80px from bottom is safe for landscape
+    margin_v  = 350 if is_shorts else 80
+    secondary = "&H0000FFFF"   # yellow karaoke highlight — &HAABBGGRR
 
     header = "\n".join([
         "[Script Info]",
@@ -125,7 +130,6 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
         "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
         "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding",
-        # Bold, BorderStyle=1 (outline+shadow), Outline=3, Alignment=2 (bottom-centre)
         f"Style: Default,Arial,{font_size},&H00FFFFFF,{secondary},"
         f"&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,1,2,20,20,{margin_v},1",
         "",
@@ -135,28 +139,45 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
 
     events: list[str] = []
     for sc in timeline["scenes"]:
-        if sc["segment_label"] == "CLOSE" or not sc.get("subtitle_lines"):
+        if sc["segment_label"] == "CLOSE":
             continue
-        for ln in sc.get("subtitle_lines", []):
-            text = ln["text"].strip()
-            if not text:
-                continue
-            start_ms = ln["start_ms"]
-            end_ms   = ln["end_ms"]
-            words    = text.split()
-            if not words:
-                continue
-            # Distribute duration evenly across words (in centiseconds)
-            total_cs = max(len(words), (end_ms - start_ms) // 10)
-            base_cs  = total_cs // len(words)
-            extra_cs = total_cs - base_cs * len(words)
-            karaoke  = ""
-            for i, word in enumerate(words):
-                wcs = base_cs + (1 if i < extra_cs else 0)
+
+        # Rebuild timing from the actual locked voice window — not from
+        # rescaled subtitle_lines which carry accumulated rounding errors.
+        pad_ms       = sc.get("_voice_pad_ms", 300)
+        speech_start = sc["start_ms"]
+        speech_end   = max(speech_start + 500, sc["end_ms"] - pad_ms)
+        speech_dur   = speech_end - speech_start
+
+        # Collect all words from this scene's script text
+        all_text = sc.get("script_text", "").strip()
+        if not all_text:
+            continue
+        words = all_text.split()
+        if not words:
+            continue
+
+        # Chunk into 4-word groups for readable subtitle lines
+        chunks = [words[i:i + 4] for i in range(0, len(words), 4)]
+        n      = len(chunks)
+        ms_per = speech_dur // n
+
+        for i, chunk in enumerate(chunks):
+            c_start = speech_start + i * ms_per
+            c_end   = (speech_start + (i + 1) * ms_per) if i < n - 1 else speech_end
+            c_end   = max(c_end, c_start + 300)
+
+            dur_cs  = max(len(chunk), (c_end - c_start) // 10)
+            base_cs = dur_cs // len(chunk)
+            extra   = dur_cs - base_cs * len(chunk)
+
+            karaoke = ""
+            for j, word in enumerate(chunk):
+                wcs = base_cs + (1 if j < extra else 0)
                 karaoke += f"{{\\kf{wcs}}}{word} "
-            s = _ms_to_ass(start_ms)
-            e = _ms_to_ass(end_ms)
-            # \an2 = bottom-centre anchor; \fad = fade in/out 150ms
+
+            s = _ms_to_ass(c_start)
+            e = _ms_to_ass(c_end)
             events.append(
                 f"Dialogue: 0,{s},{e},Default,,0,0,0,,{{\\an2\\fad(150,150)}}{karaoke.strip()}"
             )

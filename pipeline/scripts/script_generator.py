@@ -88,10 +88,10 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
 
 _FORMAT_PROFILES: dict[str, dict] = {
     "shorts": {
-        "word_target":   "130-180 words total",
-        "duration_hint": "~60 seconds",
-        "core_depth":    "4-6 short sentences. One fact per sentence.",
-        "max_tokens":    1500,
+        "word_target":   "95-115 words total",
+        "duration_hint": "~50 seconds",
+        "core_depth":    "3-4 short sentences. One fact per sentence. Every word counts.",
+        "max_tokens":    1200,
     },
     "standard": {
         "word_target":   "680-840 words total",
@@ -124,18 +124,18 @@ _FORMAT_PROFILES: dict[str, dict] = {
 
 _FORMAT_TIMING: dict[str, dict] = {
     "shorts": {
-        "video_label":   "YouTube Shorts",
+        "video_label":   "YouTube Shorts (MUST be under 60 seconds total)",
         "hook_time":     "0-3s",
-        "tension_time":  "3-15s",
-        "core_time":     "15-45s",
-        "payoff_time":   "45-55s",
-        "close_time":    "55-60s",
+        "tension_time":  "3-12s",
+        "core_time":     "12-34s",
+        "payoff_time":   "34-44s",
+        "close_time":    "44-50s",
         "hook_dur":      3,
-        "tension_dur":   12,
-        "core_dur":      30,
+        "tension_dur":   9,
+        "core_dur":      22,
         "payoff_dur":    10,
-        "close_dur":     5,
-        "total_est":     60,
+        "close_dur":     6,
+        "total_est":     50,
     },
     "standard": {
         "video_label":   "YouTube educational video (target 4-5 minutes)",
