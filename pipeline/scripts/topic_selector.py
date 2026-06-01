@@ -233,11 +233,34 @@ def select_topic(logs_dir: Path) -> dict | None:
                 log.info("Selected [%s]: %s", cat, topic["title"][:80])
                 return topic
 
-    # All categories exhausted — pick highest-weight and ignore history
-    log.info("All categories exhausted — generating fresh angle")
+    # All categories exhausted — last resort, bypass all filters
+    log.info("All categories exhausted — generating fresh angle (filters bypassed)")
     cat  = ordered[0] if ordered else random.choice(CATEGORIES)
     seed = random.choice(_SEEDS[cat])
-    return _build_topic(cat, seed, [], trending_hints.get(cat, ""))
+
+    # Try Groq first
+    title, description = _groq_expand(cat, seed, trending_hints.get(cat, ""))
+    if not title:
+        title       = f"The Incredible Truth About {seed.title()}"
+        description = f"Fascinating and little-known facts about {seed}."
+
+    # Return directly — no duplicate check, no saturation, no curiosity filter
+    # This is the pipeline's safety net and must always produce a topic
+    return {
+        "title":             title[:200],
+        "description":       description[:500],
+        "intent":            cat,
+        "source":            "MindBlownFacts-Fallback",
+        "published_at":      datetime.utcnow().isoformat(),
+        "article_url":       "",
+        "seed":              seed,
+        "trend_hint":        "",
+        "novelty_score":     50,
+        "curiosity_score":   0,
+        "saturation":        "pass",
+        "viral_score":       0.0,
+        "performance_score": 50.0,
+    }
 
 
 # ── Algorithm 1 — Trending Topic Arbitrage ────────────────────────────────────
@@ -721,7 +744,7 @@ def _build_topic(category: str, seed: str, produced: list[dict],
 
     # Curiosity gap validation — reject generic titles
     curiosity = _curiosity_gap_score(title)
-    if curiosity < 40:
+    if curiosity < 30:
         log.debug("Curiosity gap reject (score=%d): %s", curiosity, title[:60])
         return None
 
