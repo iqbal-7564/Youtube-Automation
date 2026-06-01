@@ -494,5 +494,45 @@
       "audio_gaps": "fail: audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
     },
     "fail_reason": "[audio_gaps] audio gap(s) > 1s detected at ['1.53s', '6.93s', '11.54s']"
+  },
+  {
+    "timestamp": "2026-06-01T03:13:20.055180",
+    "topic": "3i Atlas Secret",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 2s detected at ['94.57s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 2s detected at ['94.57s']"
+  },
+  {
+    "timestamp": "2026-06-01T03:24:36.000153",
+    "topic": "3i Atlas Secret",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "checks": {
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "fail: audio gap(s) > 2s detected at ['94.57s']"
+    },
+    "fail_reason": "[audio_gaps] audio gap(s) > 2s detected at ['94.57s']"
   }
 ]
