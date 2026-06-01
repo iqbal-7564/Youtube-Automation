@@ -1,3 +1,4 @@
 {
-  "consecutive_full_failures": 0
+  "consecutive_full_failures": 1,
+  "last_failure_ts": 1780354308.80875
 }
