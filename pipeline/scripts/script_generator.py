@@ -180,6 +180,24 @@ _HOOK_FORMULAS = [
     "FORBIDDEN KNOWLEDGE: Frame the fact as something suppressed. 'They never taught you this in school.'",
 ]
 
+# Director Brain — global story state injected into every Groq system prompt.
+# Zero extra API calls: context is appended to the existing system prompt.
+# Ensures scripts have a globally coherent suspense arc and emotional journey
+# rather than per-segment decisions made without full-video awareness.
+_DIRECTOR_CONTEXT = {
+    "story_role_sequence": ["hook", "rising_action", "peak", "reveal", "resolution"],
+    "suspense_curve":      [0.75, 0.85, 1.0, 0.50, 0.20],
+    "emotion_curve":       ["excited", "mysterious", "dramatic", "excited", "neutral"],
+    "director_notes": (
+        "Write each segment with awareness of its position in the full arc. "
+        "HOOK must feel incomplete — create an open loop the viewer MUST close. "
+        "TENSION escalates the urgency without answering the hook. "
+        "CORE delivers the densest information at peak suspense. "
+        "PAYOFF releases tension — the viewer feels satisfied and amazed. "
+        "CLOSE is calm and invites return — never high-energy at this stage."
+    ),
+}
+
 _SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "MindBlownFacts".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 Content: real-world facts — science, history, nature, space, animals, geography, ocean, culture.
@@ -208,7 +226,10 @@ TITLE RULES (curiosity-gap psychology):
   Rule: imply hidden/forbidden knowledge without using overused adjectives.
 
 Writing style: authoritative, fast-paced, conversational.
-Respond ONLY with valid JSON. No text outside the JSON."""
+Respond ONLY with valid JSON. No text outside the JSON.
+
+DIRECTOR BRIEF:
+{director_brief}"""
 
 _USER_TMPL = """Write a {video_label} "MindBlownFacts" script for this topic:
 
@@ -259,20 +280,21 @@ def generate_script(topic: dict) -> dict:
     fmt_timing = _FORMAT_TIMING.get(video_format, _FORMAT_TIMING["shorts"])
 
     system_prompt = _SYSTEM_TMPL.format(
-        description   = variant["description"],
-        hook_rule     = augmented_hook_rule,
-        tension_rule  = variant["tension_rule"],
-        core_rule     = variant["core_rule"],
-        payoff_rule   = variant["payoff_rule"],
-        close_rule    = variant["close_rule"],
-        word_target   = fmt_profile["word_target"],
-        duration_hint = fmt_profile["duration_hint"],
-        core_depth    = fmt_profile["core_depth"],
-        hook_time     = fmt_timing["hook_time"],
-        tension_time  = fmt_timing["tension_time"],
-        core_time     = fmt_timing["core_time"],
-        payoff_time   = fmt_timing["payoff_time"],
-        close_time    = fmt_timing["close_time"],
+        description    = variant["description"],
+        hook_rule      = augmented_hook_rule,
+        tension_rule   = variant["tension_rule"],
+        core_rule      = variant["core_rule"],
+        payoff_rule    = variant["payoff_rule"],
+        close_rule     = variant["close_rule"],
+        word_target    = fmt_profile["word_target"],
+        duration_hint  = fmt_profile["duration_hint"],
+        core_depth     = fmt_profile["core_depth"],
+        hook_time      = fmt_timing["hook_time"],
+        tension_time   = fmt_timing["tension_time"],
+        core_time      = fmt_timing["core_time"],
+        payoff_time    = fmt_timing["payoff_time"],
+        close_time     = fmt_timing["close_time"],
+        director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
     )
 
     prompt = _USER_TMPL.format(

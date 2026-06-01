@@ -29,11 +29,15 @@ Quality gate failure triggers up to 3 retry attempts:
 
 import json
 import logging
+import os
 import subprocess
 import sys
+import time
 import traceback
 from datetime import datetime
 from pathlib import Path
+
+import requests
 
 _PIPELINE_DIR = Path(__file__).parent
 sys.path.insert(0, str(_PIPELINE_DIR / "scripts"))
@@ -76,41 +80,121 @@ from uploader            import upload_video
 from news_analytics      import log_result, apply_adaptive_learning, predict_retention_risk, fetch_peak_hours, update_velocity_queue
 
 
-def _align_to_peak_window(logs_dir: Path) -> None:
+def _check_youtube_token() -> bool:
     """
-    Sleeps up to 25 minutes to align the upload to a peak audience hour.
-    Reads peak_hours.json written by the analytics-refresh job.
-    Never sleeps more than 25 min — keeps well within the 90-min action timeout.
-    If no peak data exists, uploads immediately (no delay).
+    Validate YouTube upload credentials and quota BEFORE any pipeline work begins.
+    Saves a full render cycle if the token is expired or quota is exhausted.
+    Returns False only on confirmed quota exhaustion or hard auth failure.
+    Network errors pass through so transient issues don't block the pipeline.
     """
-    import time as _time
+    client_id     = os.getenv("YOUTUBE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("YOUTUBE_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("YOUTUBE_REFRESH_TOKEN", "").strip()
+
+    if not all([client_id, client_secret, refresh_token]):
+        log.warning("PREFLIGHT: YouTube upload credentials not set — upload will fail")
+        return True  # warn but don't block; _preflight() already logged this
+
     try:
-        path = logs_dir / "peak_hours.json"
-        if not path.exists():
-            return
-        data       = json.loads(path.read_text())
-        peak_hours = data.get("peak_hours", [])
-        if not peak_hours:
-            return
+        r = requests.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id":     client_id,
+                "client_secret": client_secret,
+                "refresh_token": refresh_token,
+                "grant_type":    "refresh_token",
+            },
+            timeout=10,
+        )
+        d = r.json()
+        if "access_token" not in d:
+            err = d.get("error", "unknown")
+            log.error(
+                "PREFLIGHT: Token refresh failed (%s) — aborting pipeline to save API quota. "
+                "Fix YOUTUBE_CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN secrets.", err,
+            )
+            return False
 
-        now             = datetime.utcnow()
-        current_minutes = now.hour * 60 + now.minute
-        best_wait_min   = None
+        token = d["access_token"]
+        # 1-unit quota check: channels.list?part=id&mine=true
+        q = requests.get(
+            "https://www.googleapis.com/youtube/v3/channels",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"part": "id", "mine": "true"},
+            timeout=10,
+        )
+        if q.status_code == 403:
+            reason = (
+                q.json().get("error", {})
+                 .get("errors", [{}])[0]
+                 .get("reason", "unknown")
+            )
+            if reason == "quotaExceeded":
+                log.error(
+                    "PREFLIGHT: YouTube API quota exhausted — aborting pipeline. "
+                    "Quota resets at midnight Pacific time. "
+                    "Consider adding a third GCP project for research API calls."
+                )
+                return False
 
-        for peak_hour in peak_hours:
-            wait = peak_hour * 60 - current_minutes
-            if 0 < wait <= 25:
-                if best_wait_min is None or wait < best_wait_min:
-                    best_wait_min = wait
-
-        if best_wait_min:
-            log.info("  Publish time: %d min until peak window — sleeping", best_wait_min)
-            _time.sleep(best_wait_min * 60)
-        else:
-            log.info("  Publish time: already in or past peak window — uploading now")
+        log.info("PREFLIGHT: YouTube token valid, quota available")
+        return True
 
     except Exception as exc:
-        log.debug("Peak alignment: %s", exc)
+        log.warning("PREFLIGHT: Token check network error: %s — proceeding", exc)
+        return True  # network glitch — don't block, let upload handle it
+
+
+def check_circuit_breaker(threshold: int = 3) -> None:
+    """
+    Raise SystemExit if pipeline has failed N consecutive times within 24 hours.
+    Prevents runaway API spend and CI minute burn on cascading failures.
+    Reset by deleting logs/circuit_state.json or waiting 24 hours.
+    """
+    state_path = LOGS_DIR / "circuit_state.json"
+    if not state_path.exists():
+        return
+    try:
+        state = json.loads(state_path.read_text())
+        fails = state.get("consecutive_full_failures", 0)
+        if fails >= threshold:
+            last_fail = state.get("last_failure_ts", 0)
+            if time.time() - last_fail < 86400:
+                raise SystemExit(
+                    f"Circuit open: {fails} consecutive full failures. "
+                    "Wait 24h or delete pipeline/logs/circuit_state.json to reset."
+                )
+    except SystemExit:
+        raise
+    except Exception as exc:
+        log.debug("Circuit breaker check: %s", exc)
+
+
+def _record_full_failure() -> None:
+    """Increment consecutive failure counter. Called when a video fails all retries."""
+    state_path = LOGS_DIR / "circuit_state.json"
+    try:
+        state = json.loads(state_path.read_text()) if state_path.exists() else {}
+        state["consecutive_full_failures"] = state.get("consecutive_full_failures", 0) + 1
+        state["last_failure_ts"] = time.time()
+        tmp = state_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(state, indent=2))
+        tmp.replace(state_path)
+        log.warning("Circuit breaker: %d consecutive failure(s) recorded",
+                    state["consecutive_full_failures"])
+    except Exception as exc:
+        log.debug("Record failure: %s", exc)
+
+
+def _record_success() -> None:
+    """Reset failure counter after a successful upload."""
+    state_path = LOGS_DIR / "circuit_state.json"
+    try:
+        tmp = state_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"consecutive_full_failures": 0}, indent=2))
+        tmp.replace(state_path)
+    except Exception as exc:
+        log.debug("Record success: %s", exc)
 
 
 def _save(timeline: dict) -> None:
@@ -188,7 +272,16 @@ def run_pipeline() -> bool:
     log.info("=" * 65)
     log.info("NEWS VIDEO PIPELINE — START  %s", ts)
     log.info("=" * 65)
+
+    # Guard 1: circuit breaker — abort immediately if N consecutive failures
+    check_circuit_breaker()
+
     _preflight()
+
+    # Guard 2: validate YouTube token + quota before burning any API calls or CI minutes
+    if not _check_youtube_token():
+        _record_full_failure()
+        return False
 
     try:
         # ── 1: Topic Selection ───────────────────────────────────────────────
@@ -297,6 +390,7 @@ def run_pipeline() -> bool:
 
             if attempt == 3:
                 log.error("  All 3 gate attempts failed — skipping upload")
+                _record_full_failure()
                 return False
 
             if attempt == 1:
@@ -340,13 +434,13 @@ def run_pipeline() -> bool:
 
         # ── 13: Upload ────────────────────────────────────────────────────────
         log.info("[13/14] Upload")
-        _align_to_peak_window(LOGS_DIR)
         video_id = upload_video(
             output_path, thumb_path, script, topic, timeline, profile,
             subtitles_dir=TEMP_DIR / "subtitles",
         )
         if not video_id:
             log.error("  Upload failed — no video_id returned")
+            _record_full_failure()
             return False
         log.info("  https://youtu.be/%s", video_id)
 
@@ -361,10 +455,11 @@ def run_pipeline() -> bool:
         # Apply adaptive learning — evolve pipeline parameters from retention signal
         hints = gate.get("hints", {})
         if hints.get("retention_signal"):
-            adapted = apply_adaptive_learning(hints, LOGS_DIR)
+            apply_adaptive_learning(hints, LOGS_DIR)
             log.info("  Adaptive learning: signal=%s  params updated",
                      hints["retention_signal"])
 
+        _record_success()
         log.info("=" * 65)
         log.info("PIPELINE COMPLETE — SUCCESS  video_id=%s", video_id)
         log.info("=" * 65)
@@ -373,6 +468,7 @@ def run_pipeline() -> bool:
     except Exception as exc:
         log.error("PIPELINE FAILED: %s", exc)
         log.error(traceback.format_exc())
+        _record_full_failure()
         return False
 
 

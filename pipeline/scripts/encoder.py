@@ -6,11 +6,11 @@ When ass_path is provided, animated subtitles are burned into the video
 (requires re-encode).  Without ass_path the video stream is copied (faster).
 
 A/V sync contract:
-  audio is already trimmed to locked_timeline by audio_processor (step 9).
-  apad pads silence if audio < video.
-  -shortest stops encoding when the shorter stream (typically video, after
-  xfade transitions reduce it slightly) ends.
-  This yields drift = 0 regardless of transition-induced video shortening.
+  Step 9 guarantees exact audio duration == locked_timeline.
+  We use -t locked_duration to enforce the exact output length.
+  apad and -shortest are removed: apad on already-padded audio creates
+  drift-on-drift, and -shortest can silently truncate the audio tail.
+  Post-encode validation confirms output duration matches locked value.
 """
 
 import json
@@ -41,10 +41,13 @@ def encode_video(
              "locked=%.3fs", vdur, adur, drift, expected_duration_s)
 
     burn_subs = ass_path and ass_path.exists()
+    # Use locked duration as hard output cap — never trust -shortest
+    locked_t = ["-t", str(expected_duration_s)] if expected_duration_s > 0 else []
 
     if burn_subs:
-        # Re-encode to burn in animated subtitles
-        ass_filter = f"ass={str(ass_path).replace(chr(92), '/')}"
+        # ASS path: forward slashes, single-quoted to handle spaces and colons
+        safe_ass = "'" + str(ass_path).replace("\\", "/") + "'"
+        ass_filter = f"ass={safe_ass}"
         cmd = [
             "ffmpeg", "-y",
             "-i", str(video_path),
@@ -53,13 +56,11 @@ def encode_video(
             "-map",  "1:a",
             "-vf",   ass_filter,
             "-c:v",  "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
-            "-af",   "apad",
             "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
-            "-shortest",
+        ] + locked_t + [
             "-movflags", "+faststart",
             str(output_path),
         ]
-        # Scale timeout: base 120s + 60s per minute of video (long-form can be 8 min)
         timeout = max(300, 120 + int(expected_duration_s * 1.5))
         log.info("  Encoding [%s] + ASS subtitles …", profile)
     else:
@@ -70,10 +71,8 @@ def encode_video(
             "-map",  "0:v",
             "-map",  "1:a",
             "-c:v",  "copy",
-            # apad fills any silence gap; -shortest stops at video end
-            "-af",   "apad",
             "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
-            "-shortest",
+        ] + locked_t + [
             "-movflags", "+faststart",
             str(output_path),
         ]
@@ -89,6 +88,16 @@ def encode_video(
     out_dur = _probe_duration(output_path)
     size_mb = output_path.stat().st_size / 1_048_576
     log.info("  Encoded: %.3fs  %.1f MB → %s", out_dur, size_mb, output_path.name)
+
+    # Post-encode validation — confirms output matches locked duration
+    if expected_duration_s > 0 and out_dur > 0:
+        post_drift = abs(out_dur - expected_duration_s)
+        if post_drift > 0.5:
+            raise RuntimeError(
+                f"Post-encode duration mismatch: "
+                f"got {out_dur:.3f}s, expected {expected_duration_s:.3f}s "
+                f"(drift {post_drift:.3f}s > 0.5s tolerance)"
+            )
 
 
 def _probe_duration(path: Path) -> float:

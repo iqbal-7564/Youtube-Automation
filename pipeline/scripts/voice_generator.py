@@ -66,6 +66,9 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
             engine = _generate(sc["script_text"], path, emotion,
                                fallback_duration_s=sc["duration_ms"] / 1000)
             sc["tts_engine"] = engine
+            # Mark silence fallback scenes so Quality Gate can block upload
+            if engine == "silence":
+                sc["audio_failure"] = True
             # Silence padding appended ONLY to freshly generated files.
             # Cached files already have silence from their original generation.
             _append_silence(path, pad_s)
@@ -128,13 +131,14 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
 def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3.0) -> str:
+    # Each engine gets 2 attempts with 1s backoff before falling to the next.
+    # This prevents a single API glitch from permanently dropping to a lower quality.
     if _edge_tts(text, out, emotion):
         return "edge-tts"
     if _elevenlabs(text, out, emotion):
         return "elevenlabs"
     if _gtts(text, out):
         return "gtts"
-    # Use actual locked scene duration so silence matches the visual exactly
     _silence_file(out, max(1.0, fallback_duration_s))
     log.error("All TTS engines failed — silence for: %s", text[:50])
     return "silence"
@@ -142,16 +146,30 @@ def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3
 
 def _edge_tts(text: str, out: Path, emotion: str) -> bool:
     rate = _EDGE_RATE.get(emotion, "-5%")
-    try:
-        async def _run():
-            import edge_tts
-            comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate)
-            await comm.save(str(out))
-        asyncio.run(_run())
-        return out.exists() and out.stat().st_size > 500
-    except Exception as exc:
-        log.debug("edge-tts: %s", exc)
-        return False
+    for attempt in range(2):
+        try:
+            async def _run():
+                import edge_tts
+                comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate)
+                await comm.save(str(out))
+            # Use get_event_loop instead of asyncio.run() to avoid nested loop crash
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+                        ex.submit(asyncio.run, _run()).result(timeout=30)
+                else:
+                    loop.run_until_complete(_run())
+            except RuntimeError:
+                asyncio.run(_run())
+            if out.exists() and out.stat().st_size > 500:
+                return True
+        except Exception as exc:
+            log.debug("edge-tts attempt %d: %s", attempt + 1, exc)
+            if attempt == 0:
+                import time as _t; _t.sleep(1)
+    return False
 
 
 def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
@@ -159,20 +177,23 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
     if not key:
         return False
     settings = _EL_SETTINGS.get(emotion, _EL_SETTINGS["neutral"])
-    try:
-        r = requests.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
-            headers={"xi-api-key": key, "Content-Type": "application/json"},
-            json={"text": text, "model_id": "eleven_monolingual_v1",
-                  "voice_settings": settings},
-            timeout=30,
-        )
-        if r.ok:
-            out.write_bytes(r.content)
-            return True
-        log.debug("ElevenLabs HTTP %d", r.status_code)
-    except Exception as exc:
-        log.debug("ElevenLabs: %s", exc)
+    for attempt in range(2):
+        try:
+            r = requests.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
+                headers={"xi-api-key": key, "Content-Type": "application/json"},
+                json={"text": text, "model_id": "eleven_monolingual_v1",
+                      "voice_settings": settings},
+                timeout=30,
+            )
+            if r.ok:
+                out.write_bytes(r.content)
+                return True
+            log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
+        except Exception as exc:
+            log.debug("ElevenLabs attempt %d: %s", attempt + 1, exc)
+        if attempt == 0:
+            import time as _t; _t.sleep(1)
     return False
 
 
@@ -238,6 +259,9 @@ def _duration_s(path: Path) -> float:
     -count_packets forces ffprobe to scan the entire file and count
     packets rather than trusting potentially-wrong VBR headers.
     Without this, VBR MP3 durations are commonly underreported by 10-20%.
+
+    Falls back to ffmpeg -af astats sample counting if ffprobe returns 0.
+    A 0.0 return here causes silent timeline corruption, so we try hard.
     """
     if not path.exists():
         return 0.0
@@ -250,7 +274,6 @@ def _duration_s(path: Path) -> float:
             capture_output=True, text=True, timeout=15,
         )
         data = json.loads(r.stdout)
-        # Prefer stream nb_read_packets-derived duration when available
         for stream in data.get("streams", []):
             dur = stream.get("duration")
             if dur and float(dur) > 0:
@@ -260,6 +283,28 @@ def _duration_s(path: Path) -> float:
             return float(fmt_dur)
     except Exception:
         pass
+
+    # Third fallback: derive duration from sample count via ffmpeg astats
+    try:
+        r2 = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-print_format", "json",
+             "-show_streams", str(path)],
+            capture_output=True, text=True, timeout=15,
+        )
+        streams = json.loads(r2.stdout).get("streams", [])
+        for s in streams:
+            nb = s.get("nb_frames") or s.get("nb_read_frames")
+            sr = s.get("sample_rate")
+            if nb and sr:
+                estimated = int(nb) / int(sr)
+                if estimated > 0:
+                    log.debug("Duration fallback via nb_frames: %.3fs", estimated)
+                    return estimated
+    except Exception:
+        pass
+
+    log.warning("Could not determine duration for %s — returning 0.0 (timing will be corrupt)",
+                path.name)
     return 0.0
 
 

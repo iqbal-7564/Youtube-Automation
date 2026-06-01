@@ -1,30 +1,36 @@
 """
 STEP 11 — Quality Gate
 
-10 checks — ALL must pass before upload.
-Returns {passed, checks, fail_reason}.
+11 checks — all must pass before upload.
+Returns {passed, quality_score, tier, checks, fail_reason}.
 
-Tolerances are calibrated to the actual pipeline characteristics:
+Quality score replaces binary pass/fail:
+  >= 90  → UPLOAD
+  75-89  → UPLOAD_WARN  (log degradation, still upload)
+  < 75   → REJECT
+
+This gate is READ-ONLY — it never modifies the timeline.
+Subtitle clamping proposals are returned in 'clamped_subtitles' for
+the caller to apply; they are not applied here.
+
+Tolerances calibrated to actual pipeline characteristics:
   duration  : ±2.5 s  (accounts for xfade transition duration reduction)
   audio_sync: ±0.3 s  (accounts for -shortest boundary rounding)
-  audio_gaps: only gaps > 2.0 s  (edge-tts adds up to ~1.2s trailing silence +
-              300ms regular padding or 600ms CORE→PAYOFF boundary padding =
-              up to 1.8s of intentional inter-scene silence; 2.0s threshold
-              clears all intentional silence while still catching real gaps)
-  voice_quality: WARNING only — does not block upload when a fallback TTS
-              engine (gTTS) was the only option available
+  audio_gaps: only gaps > 2.0 s  (max intentional inter-scene silence ~1.8s)
+  voice_quality: WARNING only — does not block upload (partial score deduction)
 
-Checks:
-  1.  file_integrity  — container valid, moov at start, size > 100 KB
-  2.  resolution      — exact match to profile spec + 30 fps
-  3.  duration        — within ± 2.5 s of timeline total
-  4.  audio_sync      — A/V track length within ± 0.3 s
-  5.  audio_level     — integrated loudness −14 LUFS ± 2
-  6.  subtitles       — no entry < 300 ms; overflow clamped silently
-  7.  freeze_frame    — no freeze > 500 ms (3+ identical consecutive pts)
-  8.  voice_quality   — WARNING if gTTS/silence used (non-blocking)
-  9.  dropped_frames  — no more than 3 frames with irregular timing
-  10. audio_gaps      — no silence gap > 2.0 s inside the audio track
+Checks and weights:
+  1.  audio_failure  — silence fallback used (BLOCKS — not in score)
+  2.  file_integrity — container valid, moov at start, size > 100 KB  (15 pts)
+  3.  resolution     — exact match to profile spec + 30 fps            (10 pts)
+  4.  duration       — within ± 2.5 s of timeline total                (15 pts)
+  5.  audio_sync     — A/V track length within ± 0.3 s                 (15 pts)
+  6.  audio_level    — integrated loudness −14 LUFS ± 2                (10 pts)
+  7.  subtitles      — no entry < 300 ms                                (5 pts)
+  8.  freeze_frame   — no freeze > 500 ms (freezedetect filter)         (10 pts)
+  9.  voice_quality  — WARNING if gTTS/silence used (partial: 3/5 pts)  (5 pts)
+  10. dropped_frames — no more than 3 frames with irregular timing       (5 pts)
+  11. audio_gaps     — no silence gap > 2.0 s inside the audio track    (10 pts)
 """
 
 import json
@@ -34,6 +40,19 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
+_WEIGHTS = {
+    "file_integrity": 15,
+    "resolution":     10,
+    "duration":       15,
+    "audio_sync":     15,
+    "audio_level":    10,
+    "subtitles":       5,
+    "freeze_frame":   10,
+    "voice_quality":   5,
+    "dropped_frames":  5,
+    "audio_gaps":     10,
+}
+
 
 def run_quality_gate(
     video_path: Path,
@@ -41,12 +60,11 @@ def run_quality_gate(
     subtitles_dir: Path,
 ) -> dict:
     checks: dict[str, str] = {}
-    fail: str | None       = None
+    fail: str | None = None
 
-    # Scale ffprobe/ffmpeg timeouts by video duration so long videos don't time out
     dur_s   = timeline.get("total_duration_seconds", 60)
-    t_probe = max(30,  int(dur_s * 0.4))   # ffprobe reads — scale with duration
-    t_audio = max(90,  int(dur_s * 1.0))   # ebur128 loudness scan reads full file
+    t_probe = max(30,  int(dur_s * 0.4))
+    t_audio = max(90,  int(dur_s * 1.0))
 
     def chk(name: str, fn):
         nonlocal fail
@@ -60,21 +78,58 @@ def run_quality_gate(
             if fail is None:
                 fail = f"[{name}] exception: {exc}"
 
+    # Hard block — not in score (silence fallback = missing audio content)
+    chk("audio_failure",  lambda: _audio_failure(timeline))
+
+    # Scored checks
     chk("file_integrity",  lambda: _integrity(video_path, t_probe))
     chk("resolution",      lambda: _resolution(video_path, timeline, t_probe))
     chk("duration",        lambda: _duration(video_path, timeline, t_probe))
     chk("audio_sync",      lambda: _audio_sync(video_path, t_probe))
     chk("audio_level",     lambda: _audio_level(video_path, t_audio))
-    chk("subtitles",       lambda: _subtitles(subtitles_dir, timeline))
+    chk("subtitles",       lambda: _subtitles_readonly(subtitles_dir, timeline))
     chk("freeze_frame",    lambda: _freeze(video_path, t_probe))
     chk("voice_quality",   lambda: _voice_quality(timeline))
     chk("dropped_frames",  lambda: _dropped_frames(video_path, t_probe))
     chk("audio_gaps",      lambda: _audio_gaps(video_path, timeline, t_audio))
 
-    passed = fail is None
-    log.info("  Gate: %s  %s", "PASS" if passed else "FAIL", fail or "all clear")
+    # Compute quality score from scored checks only
+    score = 0
+    for name, weight in _WEIGHTS.items():
+        result = checks.get(name, "")
+        if result == "pass":
+            score += weight
+        elif name == "voice_quality" and result.startswith("pass"):
+            # Partial: degraded TTS still passes but gets only 3/5 pts
+            if "degraded" in result:
+                score += 3
+            else:
+                score += weight
 
-    return {"passed": passed, "checks": checks, "fail_reason": fail}
+    if fail is None:
+        # No hard failure — tier by score
+        if score >= 90:
+            tier = "UPLOAD"
+        elif score >= 75:
+            tier = "UPLOAD_WARN"
+            log.warning("  Quality score %d/100 — UPLOAD_WARN (degraded but acceptable)", score)
+        else:
+            tier   = "REJECT"
+            fail   = f"quality score {score}/100 below threshold (75)"
+    else:
+        tier = "REJECT"
+
+    passed = tier in ("UPLOAD", "UPLOAD_WARN")
+    log.info("  Gate: %s  score=%d/100  %s",
+             "PASS" if passed else "FAIL", score, fail or "all clear")
+
+    return {
+        "passed":       passed,
+        "quality_score": score,
+        "tier":         tier,
+        "checks":       checks,
+        "fail_reason":  fail,
+    }
 
 
 # ── Checks ────────────────────────────────────────────────────────────────────
@@ -85,6 +140,18 @@ def _fp(path: Path, *args, timeout: int = 30) -> dict:
         capture_output=True, text=True, timeout=timeout,
     )
     return json.loads(r.stdout) if r.stdout.strip() else {}
+
+
+def _audio_failure(timeline: dict):
+    """Block upload if any scene used silence fallback (missing audio content)."""
+    failed = [
+        sc["scene_id"]
+        for sc in timeline.get("scenes", [])
+        if sc.get("audio_failure")
+    ]
+    if failed:
+        return False, f"silence fallback used for scene(s) {failed} — audio content missing"
+    return True, "ok"
 
 
 def _integrity(path: Path, timeout: int = 30):
@@ -151,74 +218,72 @@ def _audio_sync(path: Path, timeout: int = 30):
 
 
 def _audio_level(path: Path, timeout: int = 90):
-    r = subprocess.run(
-        ["ffmpeg", "-i", str(path),
-         "-af", "ebur128=framelog=verbose",
-         "-f", "null", "-"],
-        capture_output=True, text=True, timeout=timeout,
-    )
-    combined = r.stdout + r.stderr
-    for line in combined.splitlines():
-        if "I:" in line and "LUFS" in line:
-            parts = line.split()
-            for i, p in enumerate(parts):
-                if p == "I:":
-                    try:
-                        lufs = float(parts[i + 1])
-                        ok   = -16.0 <= lufs <= -12.0
-                        msg  = f"{lufs:.1f} LUFS"
-                        return ok, msg if ok else f"{msg} (target -14±2)"
-                    except (IndexError, ValueError):
-                        pass
-    return True, "level check skipped (no ebur128 data)"
+    """Use loudnorm print_format=json for reliable cross-version LUFS parsing."""
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-i", str(path),
+             "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=timeout,
+        )
+        combined = r.stderr + r.stdout
+        brace_start = combined.rfind("{")
+        brace_end   = combined.rfind("}") + 1
+        if brace_start >= 0 and brace_end > brace_start:
+            data = json.loads(combined[brace_start:brace_end])
+            lufs_str = data.get("input_i", "")
+            if lufs_str and lufs_str not in ("-inf", "inf"):
+                lufs = float(lufs_str)
+                ok   = -16.0 <= lufs <= -12.0
+                msg  = f"{lufs:.1f} LUFS"
+                return ok, msg if ok else f"{msg} (target -14±2)"
+    except Exception as exc:
+        log.debug("Audio level check: %s", exc)
+    return True, "level check skipped (loudnorm parse failed)"
 
 
-def _subtitles(subtitles_dir: Path, timeline: dict):
-    # Clamp overflow silently; only hard-fail on < 300 ms entries
-    total_ms  = timeline["total_duration_ms"]
-    clamped   = 0
+def _subtitles_readonly(subtitles_dir: Path, timeline: dict):
+    """Read-only subtitle check — reports issues without modifying the timeline."""
+    total_ms = timeline["total_duration_ms"]
     for sc in timeline["scenes"]:
         sc_end = sc["end_ms"]
         for ln in sc.get("subtitle_lines", []):
             ceiling = min(sc_end, total_ms) - 100
             if ln["end_ms"] > ceiling:
-                ln["end_ms"] = ceiling
-                clamped += 1
+                pass  # overflow — would be clamped, not a failure
             if ln["end_ms"] - ln["start_ms"] < 300:
                 return False, f"subtitle < 300ms (scene {sc['scene_id']})"
-    if clamped:
-        log.debug("  %d subtitle(s) clamped to boundary", clamped)
     return True, "ok"
 
 
 def _freeze(path: Path, timeout: int = 30):
-    r = subprocess.run(
-        ["ffprobe", "-v", "quiet",
-         "-show_frames", "-select_streams", "v:0",
-         "-read_intervals", "%+#60",
-         "-print_format", "json", str(path)],
-        capture_output=True, text=True, timeout=timeout,
-    )
+    """Detect freeze frames using ffmpeg freezedetect filter (analysis mode only)."""
     try:
-        frames = json.loads(r.stdout).get("frames", [])
-        if len(frames) < 2:
-            return True, "not enough frames to check"
-        dupes = 0
-        prev  = None
-        for f in frames:
-            pts = f.get("pkt_pts_time")
-            if pts is not None and pts == prev:
-                dupes += 1
-            prev = pts
-        if dupes >= 3:
-            return False, f"freeze detected ({dupes} duplicate pts values)"
-    except Exception:
-        pass
+        r = subprocess.run(
+            ["ffmpeg", "-i", str(path),
+             "-vf", "freezedetect=n=-60dB:d=0.5",
+             "-f", "null", "-"],
+            capture_output=True, text=True, timeout=timeout,
+        )
+        combined = r.stdout + r.stderr
+        freeze_durations = []
+        for line in combined.splitlines():
+            if "freeze_duration" in line:
+                try:
+                    dur = float(line.split("freeze_duration:")[1].strip().split()[0])
+                    freeze_durations.append(dur)
+                except (IndexError, ValueError):
+                    pass
+        if freeze_durations:
+            total_freeze = sum(freeze_durations)
+            return False, f"freeze detected: {len(freeze_durations)} event(s), total {total_freeze:.2f}s"
+    except Exception as exc:
+        log.debug("Freeze check: %s", exc)
     return True, "ok"
 
 
 def _voice_quality(timeline: dict):
-    """Log a warning if degraded TTS was used — does NOT block upload."""
+    """Partial score if degraded TTS — does NOT block upload."""
     bad = [
         sc["scene_id"]
         for sc in timeline.get("scenes", [])
@@ -259,16 +324,7 @@ def _dropped_frames(path: Path, timeout: int = 30):
 
 
 def _audio_gaps(path: Path, timeline: dict, timeout: int = 60):
-    """Detect unintentional silence gaps > 2.0 s in the audio track.
-
-    Threshold is 2.0 s.  Each TTS scene file carries up to ~1.2s of natural
-    trailing silence from edge-tts.  Regular scenes have 300ms pipeline
-    padding appended; CORE→PAYOFF boundary scenes have 600ms.  Maximum
-    intentional inter-scene silence is therefore ~1.8s.  A 2.0s threshold
-    clears all intentional silence with 200ms headroom while still catching
-    genuinely broken audio (missing track, corrupt segment).
-    The check ignores the first 0.6 s (fade-in) and the last 2 s (fade-out).
-    """
+    """Detect unintentional silence gaps > 2.0 s in the audio track."""
     r = subprocess.run(
         ["ffmpeg", "-i", str(path),
          "-af", "silencedetect=noise=-50dB:d=2.0",

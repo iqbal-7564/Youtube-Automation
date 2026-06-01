@@ -111,8 +111,10 @@ _EMOTIONAL_ARC: dict[str, dict[str, str]] = {
 
 def build_timeline(script: dict, intent: str = "") -> dict:
     import os
-    intent_upper = intent.upper()
-    persona_ms   = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
+    intent_upper = (intent or "").strip().upper()
+    if intent_upper not in _PERSONA_BASE_MS:
+        intent_upper = "SCIENCE"
+    persona_ms = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
 
     # Read adaptive params (written by news_analytics after retention analysis)
     _adaptive: dict = {}
@@ -120,9 +122,21 @@ def build_timeline(script: dict, intent: str = "") -> dict:
         import json as _json
         _ap = Path(__file__).parent.parent / "logs" / "adaptive_params.json"
         if _ap.exists():
-            _adaptive = _json.loads(_ap.read_text())
-    except Exception:
-        pass
+            raw = _json.loads(_ap.read_text())
+            # Schema validation — corrupt/invalid values fall back to defaults
+            _SCHEMA = {
+                "hook_cap_ms":        (int,   500,  3000, 2500),
+                "tension_interval_s": (float, 1.0,  8.0,  4.5),
+                "core_interval_s":    (float, 1.0,  8.0,  3.5),
+            }
+            for key, (typ, lo, hi, default) in _SCHEMA.items():
+                val = raw.get(key)
+                if val is None or not isinstance(val, (int, float)) or not (lo <= float(val) <= hi):
+                    raw[key] = default
+            _adaptive = raw
+    except (ValueError, TypeError, Exception):
+        log.warning("adaptive_params.json unreadable — using defaults")
+        _adaptive = {}
 
     shorts_hook_cap = _adaptive.get("hook_cap_ms", _SHORTS_HOOK_CAP_MS)
 

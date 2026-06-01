@@ -113,31 +113,36 @@ def process_audio(
             f"merged={merged_dur:.3f}s → normalized={norm_dur:.3f}s"
         )
 
+    # ── Gap check on voice track BEFORE music mix ────────────────────────────
+    # Running silencedetect on the final mix (voice + music) produces false
+    # positives from quiet music passages. Check the clean voice track only.
+    gaps = detect_audio_gaps(normalized)
+    if gaps:
+        log.warning("  Audio gaps > 2s in voice track at %s — check scene boundaries", gaps)
+    else:
+        log.info("  Audio gap check passed — no gaps in voice track")
+
     # ── Optional: SFX mix (WOW impacts, hook tension, payoff reveal) ─────────
     assets_dir = Path(__file__).parent.parent / "assets"
     sfx_dir    = assets_dir / "sfx"
     if scenes:
-        sfxed = _mix_sfx(normalized, sfx_dir, scenes, norm_dur)
+        # Re-derive SFX timestamps from normalized duration to prevent drift
+        # after normalization shifts scene durations
+        actual_norm_dur = _probe(normalized)
+        sfxed = _mix_sfx(normalized, sfx_dir, scenes, actual_norm_dur)
         if sfxed:
             normalized = sfxed
 
     # ── Optional: background music mix ───────────────────────────────────────
-    # ── Optional: background music mix ───────────────────────────────────────
     music_dir = assets_dir / "music"
-    mixed     = _mix_background_music(normalized, music_dir, norm_dur)
+    # Always probe actual duration — never trust the passed parameter at this
+    # stage since normalization may have shifted it slightly
+    final_voice_dur = _probe(normalized)
+    mixed = _mix_background_music(normalized, music_dir, final_voice_dur)
     if mixed:
         log.info("  Background music mixed: %s", mixed.name)
 
-    final_output = mixed or normalized
-
-    # ── Gap check ─────────────────────────────────────────────────────────────
-    gaps = detect_audio_gaps(final_output)
-    if gaps:
-        log.warning("  Audio gaps > 2s detected at %s — check scene boundaries", gaps)
-    else:
-        log.info("  Audio gap check passed — no gaps detected")
-
-    return final_output
+    return mixed or normalized
  
 
 
@@ -276,33 +281,38 @@ def _standardize(src: Path, out: Path) -> None:
 
 
 def _merge(files: list[Path], output: Path) -> None:
-    """Concatenate standardized AAC files using filter_complex concat."""
+    """Concatenate standardized AAC files using concat demuxer (no resampling drift).
+
+    All input files are already normalised to the same sample rate and channel
+    count by _standardize(), so -c copy is safe and introduces zero drift.
+    The old filter_complex concat with aresample=async=1 accumulated
+    non-deterministic micro-drift across scenes that grew with scene count.
+    """
     if len(files) == 1:
         import shutil
         shutil.copy(files[0], output)
         return
 
-    inputs: list[str] = []
-    for f in files:
-        inputs += ["-i", str(f)]
-
-    n             = len(files)
-    parts = "".join(
-        f"[{i}:a]aresample=async=1[a{i}];" for i in range(n)
+    # Write concat list file next to output
+    concat_list = output.with_name("concat_list.txt")
+    concat_list.write_text(
+        "\n".join(f"file '{str(f).replace(chr(92), '/')}'" for f in files),
+        encoding="utf-8",
     )
-    concat_inputs = "".join(f"[a{i}]" for i in range(n))
-    concat_filter = parts+ f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
 
     _run(
-        ["ffmpeg", "-y"] + inputs + [
-            "-filter_complex", concat_filter,
-            "-map", "[outa]",
-            "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
-            "-c:a", "aac", "-b:a", "192k",
-            str(output),
-        ],
+        ["ffmpeg", "-y",
+         "-f", "concat", "-safe", "0",
+         "-i", str(concat_list),
+         "-c", "copy",
+         str(output)],
         "merge",
     )
+
+    try:
+        concat_list.unlink()
+    except Exception:
+        pass
 
 
 def _probe(path: Path) -> float:

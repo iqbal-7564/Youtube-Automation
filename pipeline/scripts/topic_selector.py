@@ -46,8 +46,14 @@ log = logging.getLogger(__name__)
 CATEGORIES = ["SPACE", "SCIENCE", "HISTORY", "ANIMALS", "NATURE", "GEOGRAPHY", "OCEAN", "CULTURE"]
 
 # ── Algorithm 4 config ────────────────────────────────────────────────────────
-# Topics with more than this many YouTube results are considered oversaturated.
-_SATURATION_MAX_RESULTS = 50_000
+# Saturation is measured by view velocity of top 10 results, NOT total result count.
+# totalResults is a corpus-size signal, not competition density.
+# Median views of top 10:
+#   < 100,000        → PASS (low competition)
+#   100k – 500k      → PASS with -10 score penalty
+#   > 500,000        → REJECT (market already dominated)
+_SATURATION_MEDIAN_PASS    = 100_000
+_SATURATION_MEDIAN_PENALTY = 500_000
 
 # ── Algorithm 1 config ────────────────────────────────────────────────────────
 # Trend data is cached to avoid hammering Google Trends on every pipeline run.
@@ -200,6 +206,11 @@ def select_topic(logs_dir: Path) -> dict | None:
             topic["source"] = "VelocityCluster"
             log.info("Velocity cluster [%s]: %s", cat, topic["title"][:80])
             return topic
+
+    # Priority 1b: Topic cluster sequences — follow-up to viral video chains
+    cluster_topic = _next_cluster_topic(logs_dir, used_categories)
+    if cluster_topic:
+        return cluster_topic
 
     # Priority 2: Google Trends (multi-market) + YouTube Autocomplete dynamic seeds
     trending_seeds     = _fetch_trending_seeds(logs_dir)
@@ -392,13 +403,71 @@ def _fetch_autocomplete_seeds() -> dict[str, list[tuple[str, float]]]:
 
 # ── Topic Velocity Clustering — queue helpers ─────────────────────────────────
 
+def _next_cluster_topic(logs_dir: Path, used_categories: set) -> dict | None:
+    """
+    Returns the next topic in an active cluster chain if one exists.
+    Updates current_idx in topic_clusters.json after consuming a topic.
+    """
+    try:
+        clusters_path = logs_dir / "topic_clusters.json"
+        if not clusters_path.exists():
+            return None
+        clusters = json.loads(clusters_path.read_text())
+        changed  = False
+
+        for cluster in clusters:
+            cat = cluster.get("category", "")
+            if cat in used_categories:
+                continue
+            idx   = cluster.get("current_idx", 0)
+            chain = cluster.get("chain", [])
+            if idx >= len(chain):
+                continue  # cluster exhausted
+
+            seed = chain[idx]
+            full_history = []  # cluster topics bypass deduplication for simplicity
+
+            topic = _build_topic(cat, seed, full_history, "")
+            if topic:
+                cluster["current_idx"] = idx + 1
+                changed = True
+                topic["source"] = "TopicCluster"
+                log.info("Topic cluster [%s] step %d/%d: %s",
+                         cat, idx + 1, len(chain), topic["title"][:60])
+                if changed:
+                    clusters_path.write_text(json.dumps(clusters, indent=2))
+                return topic
+
+    except Exception as exc:
+        log.debug("Cluster topic check: %s", exc)
+    return None
+
+
+_VELOCITY_TTL_HOURS = 72
+
 def _load_velocity_queue(logs_dir: Path) -> list[dict]:
-    """Returns pending high-priority seeds from velocity_queue.json."""
+    """Returns pending high-priority seeds younger than 72 hours from velocity_queue.json."""
     try:
         path = logs_dir / "velocity_queue.json"
         if not path.exists():
             return []
-        return json.loads(path.read_text())
+        entries = json.loads(path.read_text())
+        cutoff  = (datetime.utcnow().timestamp()) - (_VELOCITY_TTL_HOURS * 3600)
+        fresh   = []
+        for e in entries:
+            # Support both Unix ts field (new) and ISO queued_at field (legacy)
+            ts = e.get("ts")
+            if ts is None:
+                try:
+                    ts = datetime.fromisoformat(e["queued_at"]).timestamp()
+                except Exception:
+                    ts = cutoff + 1  # unknown age — treat as fresh
+            if ts >= cutoff:
+                fresh.append(e)
+        if len(fresh) < len(entries):
+            log.info("Velocity queue: evicted %d stale entries (>72h old)",
+                     len(entries) - len(fresh))
+        return fresh
     except Exception:
         return []
 
@@ -475,6 +544,164 @@ def _fetch_trending_hints() -> dict[str, str]:
     return {}
 
 
+def _wikipedia_novelty_score(topic: str) -> int:
+    """
+    Two-signal novelty score (0-100):
+      30% — lexical signal: presence of discovery/novelty keywords in Wikipedia extract
+      70% — recency signal: days since last Wikipedia page edit (100=today, 0=90+ days)
+    Free, no API key required.
+    Returns 50 (neutral) on any error so it never blocks the pipeline.
+    """
+    try:
+        # Recency signal: check last edit date via recentchanges API
+        rc = requests.get(
+            "https://en.wikipedia.org/w/api.php",
+            params={"action": "query", "list": "recentchanges",
+                    "rctitle": topic, "rclimit": "1", "format": "json"},
+            timeout=8,
+        )
+        recency_score = 0
+        if rc.ok:
+            changes = rc.json().get("query", {}).get("recentchanges", [])
+            if changes:
+                from datetime import datetime, timezone
+                ts = changes[0].get("timestamp", "")
+                if ts:
+                    edited = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                    days_ago = (datetime.now(timezone.utc) - edited).days
+                    recency_score = max(0, int(100 - (days_ago / 90) * 100))
+
+        # Lexical signal: check extract for discovery keywords
+        ex = requests.get(
+            "https://en.wikipedia.org/w/api.php",
+            params={"action": "query", "titles": topic,
+                    "prop": "extracts", "exintro": True,
+                    "explaintext": True, "format": "json"},
+            timeout=8,
+        )
+        lexical_score = 0
+        if ex.ok:
+            pages = ex.json().get("query", {}).get("pages", {})
+            extract = " ".join(
+                p.get("extract", "") for p in pages.values()
+            ).lower()
+            novelty_words = [
+                "discovered", "revealed", "hidden", "secret", "ancient",
+                "impossible", "mystery", "unknown", "lost", "forbidden",
+                "breakthrough", "first", "new", "recent", "confirmed",
+            ]
+            hits = sum(1 for w in novelty_words if w in extract)
+            lexical_score = min(100, hits * 15)
+
+        score = int(lexical_score * 0.30 + recency_score * 0.70)
+        log.debug("Novelty score for '%s': %d (lexical=%d recency=%d)",
+                  topic[:40], score, lexical_score, recency_score)
+        return score
+
+    except Exception as exc:
+        log.debug("Wikipedia novelty check: %s", exc)
+        return 50  # neutral fallback
+
+
+_CURIOSITY_GAP_PATTERNS = [
+    # Curiosity gap: implies hidden/forbidden knowledge
+    (r"scientists? found|discovered|revealed|hidden|secret|nobody told|"
+     r"never taught|forbidden|they don.?t want|suppressed|covered up", 30),
+    # Surprise: violates expectation
+    (r"impossible|defies|shouldn.?t|can.?t exist|shouldn.?t be possible|"
+     r"breaks (the )?rules|shouldn.?t work|against (all )?odds", 25),
+    # Contradiction: attacks widely-held belief
+    (r"everything.*(wrong|false|lie)|wrong about|myth|actually|"
+     r"contrary to|opposite of|turns out|in fact", 20),
+    # Mystery: open question
+    (r"why|how (is it possible|does|could)|what (really |actually )?happen|"
+     r"mystery|no.?one knows|still unknown|unexplained|unsolved", 15),
+    # Specificity: exact numbers / real places / real science
+    (r"\d[\d,]*(\.\d+)?\s*(km|miles?|ton|year|second|billion|million|"
+     r"percent|degree|meter|kg|lb)", 10),
+]
+
+
+def _curiosity_gap_score(title: str) -> int:
+    """
+    Score a title 0-100 on curiosity-gap psychology.
+    Titles below 30 are likely generic ("Amazing Facts") and should be rejected.
+    Titles above 70 are strong candidates.
+    """
+    title_lower = title.lower()
+    score = 0
+    for pattern, pts in _CURIOSITY_GAP_PATTERNS:
+        if re.search(pattern, title_lower):
+            score += pts
+    return min(100, score)
+
+
+def _check_saturation(title: str) -> str:
+    """
+    Returns 'pass', 'penalty', or 'reject' based on view velocity of top 10 results.
+    Uses YOUTUBE_API_KEY (research project) — does NOT count against upload quota.
+    Falls back to 'pass' when API key is missing.
+    """
+    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
+    if not api_key:
+        return "pass"
+    try:
+        # Step 1: search top 10 results for this title
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "key": api_key, "q": title,
+                "type": "video", "order": "relevance",
+                "maxResults": "10", "part": "id",
+            },
+            timeout=10,
+        )
+        if not r.ok:
+            return "pass"
+        items = r.json().get("items", [])
+        if not items:
+            return "pass"
+
+        video_ids = ",".join(i["id"]["videoId"] for i in items if "videoId" in i.get("id", {}))
+        if not video_ids:
+            return "pass"
+
+        # Step 2: fetch view counts (videos.list = 1 unit — very cheap)
+        s = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={"key": api_key, "id": video_ids,
+                    "part": "statistics", "maxResults": "10"},
+            timeout=10,
+        )
+        if not s.ok:
+            return "pass"
+
+        view_counts = []
+        for item in s.json().get("items", []):
+            vc = item.get("statistics", {}).get("viewCount")
+            if vc:
+                view_counts.append(int(vc))
+
+        if not view_counts:
+            return "pass"
+
+        view_counts.sort()
+        median = view_counts[len(view_counts) // 2]
+
+        if median > _SATURATION_MEDIAN_PENALTY:
+            log.debug("Saturation: median views=%d — REJECT (>500k)", median)
+            return "reject"
+        if median > _SATURATION_MEDIAN_PASS:
+            log.debug("Saturation: median views=%d — penalty (100k-500k)", median)
+            return "penalty"
+        log.debug("Saturation: median views=%d — pass (<100k)", median)
+        return "pass"
+
+    except Exception as exc:
+        log.debug("Saturation check error: %s", exc)
+        return "pass"
+
+
 def _build_topic(category: str, seed: str, produced: list[dict],
                  trend_hint: str = "") -> dict | None:
     title, description = _groq_expand(category, seed, trend_hint)
@@ -487,18 +714,54 @@ def _build_topic(category: str, seed: str, produced: list[dict],
         log.debug("Duplicate — skipping: %s", title[:60])
         return None
 
+    saturation = _check_saturation(title)
+    if saturation == "reject":
+        log.debug("Saturation reject (high competition): %s", title[:60])
+        return None
 
-   
+    # Curiosity gap validation — reject generic titles
+    curiosity = _curiosity_gap_score(title)
+    if curiosity < 30:
+        log.debug("Curiosity gap reject (score=%d): %s", curiosity, title[:60])
+        return None
+
+    # Wikipedia novelty score — warn if stale but don't hard-block
+    novelty = _wikipedia_novelty_score(category + " " + seed)
+    if novelty < 20:
+        log.debug("Low novelty score (%d) for: %s — proceeding with warning", novelty, title[:60])
+
+    # Sub-topic performance signal (from analytics history)
+    performance_score = _subtopic_performance_score(seed, category)
+
+    # Combined viral opportunity score (0-100)
+    # Weights: trend 30%, search 20%, novelty 15%, curiosity 15%, performance 10%, saturation 10%
+    saturation_bonus = 10 if saturation == "pass" else (5 if saturation == "penalty" else 0)
+    trend_score      = min(100, float(trend_hint[:3].strip()) if trend_hint and trend_hint[:3].isdigit() else 50)
+    viral_score      = (
+        0.30 * trend_score
+      + 0.20 * 50             # search score placeholder (autocomplete already used for ranking)
+      + 0.15 * novelty
+      + 0.15 * curiosity
+      + 0.10 * performance_score
+      + 0.10 * saturation_bonus * 10
+    )
+    log.debug("Viral score for '%s': %.1f (novelty=%d curiosity=%d perf=%.0f)",
+              title[:50], viral_score, novelty, curiosity, performance_score)
 
     return {
-        "title":        title[:200],
-        "description":  description[:500],
-        "intent":       category,
-        "source":       "MindBlownFacts",
-        "published_at": datetime.utcnow().isoformat(),
-        "article_url":  "",
-        "seed":         seed,
-        "trend_hint":   trend_hint[:100] if trend_hint else "",
+        "title":            title[:200],
+        "description":      description[:500],
+        "intent":           category,
+        "source":           "MindBlownFacts",
+        "published_at":     datetime.utcnow().isoformat(),
+        "article_url":      "",
+        "seed":             seed,
+        "trend_hint":       trend_hint[:100] if trend_hint else "",
+        "novelty_score":    novelty,
+        "curiosity_score":  curiosity,
+        "saturation":       saturation,
+        "viral_score":      round(viral_score, 1),
+        "performance_score": performance_score,
     }
 
 
@@ -596,7 +859,46 @@ def _load_performance_weights(logs_dir: Path) -> dict[str, float]:
         if not path.exists():
             return {}
         data = json.loads(path.read_text())
-        return {cat: info.get("avg_retention_pct", 50.0)
-                for cat, info in data.items()}
+        # Support both flat {cat: pct} and nested {cat: {avg_retention_pct: pct}}
+        weights = {}
+        for cat, info in data.items():
+            if isinstance(info, dict):
+                weights[cat] = info.get("avg_retention_pct", 50.0)
+            elif isinstance(info, (int, float)):
+                weights[cat] = float(info)
+        return weights
     except Exception:
         return {}
+
+
+def _subtopic_performance_score(seed: str, category: str) -> float:
+    """
+    Return sub-topic level performance score (0-100) from analytics history.
+    Normalizes the seed to a key and looks it up in subtopic_history.json.
+    Falls back to category average, then 50 (neutral) if no data.
+    """
+    try:
+        logs_dir = Path(__file__).parent.parent / "logs"
+        path     = logs_dir / "subtopic_history.json"
+        if path.exists():
+            data = json.loads(path.read_text())
+            # Normalize seed to a simple key
+            key = re.sub(r"[^a-z0-9]", "_", seed.lower().strip())[:40]
+            if key in data:
+                return float(data[key].get("avg_retention_pct", 50.0))
+            # Try partial match
+            for k, v in data.items():
+                if k in key or key in k:
+                    return float(v.get("avg_retention_pct", 50.0))
+        # Fall back to category average
+        perf_path = logs_dir / "performance_history.json"
+        if perf_path.exists():
+            perf = json.loads(perf_path.read_text())
+            cat_data = perf.get(category, {})
+            if isinstance(cat_data, dict):
+                return float(cat_data.get("avg_retention_pct", 50.0))
+            elif isinstance(cat_data, (int, float)):
+                return float(cat_data)
+    except Exception:
+        pass
+    return 50.0

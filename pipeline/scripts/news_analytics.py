@@ -265,6 +265,45 @@ def _feedback_hints(results: list) -> dict:
     return hints
 
 
+# Schema: (type, min, max, default)
+_ADAPTIVE_SCHEMA: dict[str, tuple] = {
+    "hook_cap_ms":        (int,   500,  3000, 2500),
+    "tension_interval_s": (float, 1.0,  8.0,  4.5),
+    "core_interval_s":    (float, 1.0,  8.0,  3.5),
+}
+
+
+def _validate_adaptive_params(params: dict) -> dict:
+    """Return params with invalid/missing keys replaced by defaults."""
+    for key, (typ, lo, hi, default) in _ADAPTIVE_SCHEMA.items():
+        val = params.get(key)
+        if val is None or not isinstance(val, (int, float)) or not (lo <= val <= hi):
+            if val is not None:
+                log.warning("adaptive_params[%s]=%r invalid — using default %s",
+                            key, val, default)
+            params[key] = default
+    return params
+
+
+def _save_adaptive_params(params: dict, path) -> None:
+    """Atomic write: write to .tmp then rename to prevent partial-write corruption."""
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(params, indent=2))
+    tmp.replace(path)
+
+
+def _load_adaptive_params(path) -> dict:
+    defaults = {k: v[3] for k, v in _ADAPTIVE_SCHEMA.items()}
+    if not path.exists():
+        return defaults
+    try:
+        raw = json.loads(path.read_text())
+        return _validate_adaptive_params(raw)
+    except json.JSONDecodeError:
+        log.error("adaptive_params.json is corrupt — using defaults")
+        return defaults
+
+
 def apply_adaptive_learning(hints: dict, logs_dir: Path) -> dict:
     """
     Translate retention signals into concrete parameter adjustments.
@@ -275,7 +314,7 @@ def apply_adaptive_learning(hints: dict, logs_dir: Path) -> dict:
     doesn't over-correct on a single bad video.
     """
     params_path = logs_dir / "adaptive_params.json"
-    params: dict = json.loads(params_path.read_text()) if params_path.exists() else {}
+    params: dict = _load_adaptive_params(params_path)
 
     signal = hints.get("retention_signal")
     avg_ret = hints.get("avg_retention_pct", 50.0)
@@ -314,7 +353,7 @@ def apply_adaptive_learning(hints: dict, logs_dir: Path) -> dict:
     params["last_signal"] = signal or "none"
     params["last_avg_retention"] = avg_ret
 
-    params_path.write_text(json.dumps(params, indent=2))
+    _save_adaptive_params(params, params_path)
     log.info("Adaptive params written to %s", params_path.name)
     return params
 
@@ -401,18 +440,25 @@ def predict_retention_risk(timeline: dict) -> dict:
 
 
 def _write_performance_history(results: list, perf_path: Path) -> None:
-    """Aggregate avg_view_pct by category and write performance_history.json."""
-    by_cat: dict[str, list[float]] = {}
+    """Aggregate avg_view_pct by category AND sub-topic seed, write both history files."""
+    by_cat:     dict[str, list[float]] = {}
+    by_subtopic: dict[str, list[float]] = {}
+
     for r in results:
-        cat = r.get("intent", "")
-        pct = r.get("avg_view_pct")
+        cat  = r.get("intent", "")
+        pct  = r.get("avg_view_pct")
+        seed = r.get("seed", "")
         if cat and pct is not None:
             by_cat.setdefault(cat, []).append(float(pct))
+        if seed and pct is not None:
+            import re as _re
+            key = _re.sub(r"[^a-z0-9]", "_", seed.lower().strip())[:40]
+            by_subtopic.setdefault(key, []).append(float(pct))
 
+    # Category-level history
     history: dict[str, dict] = {}
     existing = json.loads(perf_path.read_text()) if perf_path.exists() else {}
     history.update(existing)
-
     for cat, vals in by_cat.items():
         if not vals:
             continue
@@ -422,9 +468,28 @@ def _write_performance_history(results: list, perf_path: Path) -> None:
             "sample_count":      len(vals),
             "updated_at":        datetime.utcnow().isoformat(),
         }
-
     perf_path.write_text(json.dumps(history, indent=2))
     log.info("Performance history updated for %d categories", len(history))
+
+    # Sub-topic level history
+    subtopic_path = perf_path.parent / "subtopic_history.json"
+    sub_existing: dict[str, dict] = {}
+    if subtopic_path.exists():
+        try:
+            sub_existing = json.loads(subtopic_path.read_text())
+        except Exception:
+            pass
+    for key, vals in by_subtopic.items():
+        if not vals:
+            continue
+        avg = round(sum(vals) / len(vals), 2)
+        sub_existing[key] = {
+            "avg_retention_pct": avg,
+            "sample_count":      len(vals),
+            "updated_at":        datetime.utcnow().isoformat(),
+        }
+    subtopic_path.write_text(json.dumps(sub_existing, indent=2))
+    log.info("Sub-topic history updated for %d seeds", len(by_subtopic))
 
 
 # ── Publish Time Algorithm ────────────────────────────────────────────────────
@@ -521,7 +586,15 @@ def update_velocity_queue(logs_dir: Path) -> None:
         log.info("Velocity check: no hot videos (avg=%.0f, threshold=%.0f)", avg_views, threshold)
         return
 
-    queue = json.loads(queue_path.read_text()) if queue_path.exists() else []
+    now    = datetime.utcnow()
+    cutoff = now.timestamp() - 72 * 3600
+
+    existing = json.loads(queue_path.read_text()) if queue_path.exists() else []
+    # Evict stale entries (72h TTL) before appending new seeds
+    queue = [
+        e for e in existing
+        if e.get("ts", cutoff + 1) >= cutoff
+    ]
 
     for video in hot:
         cat   = video.get("intent", "SCIENCE")
@@ -537,15 +610,81 @@ def update_velocity_queue(logs_dir: Path) -> None:
                 "seed":         seed,
                 "source_title": title[:80],
                 "source_views": int(video["views_48h"]),
-                "queued_at":    datetime.utcnow().isoformat(),
+                "queued_at":    now.isoformat(),
+                "ts":           now.timestamp(),
                 "priority":     "high",
             })
 
+        # Build topic cluster chain from viral video for returning viewers
+        _build_topic_cluster(cat, title, logs_dir)
         video["velocity_queued"] = True
 
     queue_path.write_text(json.dumps(queue[-50:], indent=2))
     results_path.write_text(json.dumps(results[-200:], indent=2))
     log.info("Velocity queue: %d hot videos → %d seeds queued", len(hot), len(queue))
+
+
+def _build_topic_cluster(category: str, source_title: str, logs_dir: Path) -> None:
+    """
+    When a video hits 2x average views, generate a 4-video cluster chain
+    and store it in topic_clusters.json.
+    Chain example: Ancient Egypt → Pyramids → Lost Technology → Hidden Chambers
+    """
+    keys = [os.environ.get("GROQ_API_KEY_1", "").strip(),
+            os.environ.get("GROQ_API_KEY_2", "").strip()]
+    for key in keys:
+        if not key:
+            continue
+        try:
+            r = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{
+                        "role": "system",
+                        "content": (
+                            "You generate topic cluster chains for YouTube content. "
+                            "Return ONLY a JSON array of 4 topic strings in sequence order. "
+                            "Each topic should naturally follow from the previous, building "
+                            "viewer curiosity across a series."
+                        ),
+                    }, {
+                        "role": "user",
+                        "content": (
+                            f"Category: {category}\n"
+                            f"Viral video: {source_title}\n"
+                            "Generate a 4-topic cluster chain. Start from the viral topic "
+                            "and create 3 follow-up topics that deepen the story naturally."
+                        ),
+                    }],
+                    "temperature": 0.7,
+                    "max_tokens": 200,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                m   = re.search(r'\[.*\]', raw, re.DOTALL)
+                if m:
+                    chain = json.loads(m.group())
+                    if isinstance(chain, list) and len(chain) >= 2:
+                        clusters_path = logs_dir / "topic_clusters.json"
+                        existing = json.loads(clusters_path.read_text()) if clusters_path.exists() else []
+                        existing.append({
+                            "category":     category,
+                            "source_title": source_title[:80],
+                            "chain":        [str(t) for t in chain[:4]],
+                            "current_idx":  0,
+                            "created_at":   datetime.utcnow().isoformat(),
+                        })
+                        clusters_path.write_text(json.dumps(existing[-20:], indent=2))
+                        log.info("Topic cluster created for '%s': %s",
+                                 source_title[:40], chain[:4])
+                        return
+        except Exception as exc:
+            log.debug("Topic cluster generation: %s", exc)
 
 
 def _generate_related_seeds(category: str, source_title: str) -> list[str]:

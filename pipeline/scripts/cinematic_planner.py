@@ -23,9 +23,14 @@ Shot type → video_assembler motion preset affinity:
   EXTREME_CLOSE  → impact_zoom (maximum drama)
 """
 
+import json
 import logging
+import random
+from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+_LOGS_DIR = Path(__file__).parent.parent / "logs"
 
 # ── Shot sequence pools per segment label ─────────────────────────────────────
 # Lists are cycled round-robin across scenes within that segment.
@@ -67,19 +72,63 @@ _SHOT_MOTION_OVERRIDE: dict[str, str] = {
 }
 
 
+def _load_retention_signal() -> str | None:
+    """Read last retention signal from adaptive_params for shot adaptation."""
+    try:
+        p = _LOGS_DIR / "adaptive_params.json"
+        if p.exists():
+            return json.loads(p.read_text()).get("last_signal")
+    except Exception:
+        pass
+    return None
+
+
+def _weighted_shot(pool: list[str], label: str, retention_signal: str | None) -> str:
+    """
+    Weighted random selection within pool — same input no longer always produces
+    same output. Weights shifted by retention signal from analytics.
+    """
+    if len(pool) == 1:
+        return pool[0]
+
+    # Base weights: first item 50%, second 30%, rest split evenly
+    n = len(pool)
+    weights = [0.5] + [0.3] + [(0.2 / max(n - 2, 1))] * max(n - 2, 0)
+    weights = weights[:n]
+
+    # Shift weights based on retention signal
+    if retention_signal == "early_drop":
+        # Early drop → more FAST_CUT pacing → prefer CLOSE/MEDIUM shots
+        for i, shot in enumerate(pool):
+            if shot in ("CLOSE", "MEDIUM"):
+                weights[i] = min(weights[i] * 1.5, 0.9)
+    elif retention_signal == "high_retention":
+        # High retention → allow more AERIAL slow scenes
+        for i, shot in enumerate(pool):
+            if shot in ("AERIAL", "WIDE"):
+                weights[i] = min(weights[i] * 1.4, 0.9)
+
+    total = sum(weights)
+    weights = [w / total for w in weights]
+    return random.choices(pool, weights=weights, k=1)[0]
+
+
 def plan_cinematics(timeline: dict) -> dict:
     """
     Add shot_type, pacing, suspense_level, and contrast_shot to each scene.
     Also overrides motion_emotion based on shot type for consistent preset selection.
     """
     scenes = timeline.get("scenes", [])
+    retention_signal = _load_retention_signal()
     pool_idx: dict[str, int] = {}
     prev_shot = None
     prev_prev_shot = None
 
     for sc in scenes:
-        label   = sc.get("segment_label", "CORE")
-        has_wow = sc.get("has_wow", False)
+        label    = sc.get("segment_label", "CORE")
+        has_wow  = sc.get("has_wow", False)
+        emotion  = sc.get("emotion", "neutral")
+        dur_ms   = sc.get("duration_ms", 3000)
 
         if label == "CLOSE":
             sc["shot_type"]      = "MEDIUM"
@@ -91,19 +140,23 @@ def plan_cinematics(timeline: dict) -> dict:
             prev_shot = "MEDIUM"
             continue
 
-        # Cycle through pool
         pool   = _SHOT_POOL.get(label, ["MEDIUM"])
         p_pool = _PACING_POOL.get(label, ["HOLD"])
         idx    = pool_idx.get(label, 0)
 
-        shot   = pool[idx % len(pool)]
+        # Weighted random selection (not pure round-robin)
+        shot   = _weighted_shot(pool, label, retention_signal)
         pacing = p_pool[idx % len(p_pool)]
         pool_idx[label] = idx + 1
 
-        # EXTREME_CLOSE only allowed on WOW-marked scenes
+        # EXTREME_CLOSE: allowed on WOW scenes OR dramatic emotion + high suspense
+        base_suspense = _SUSPENSE_BASE.get(label, 0.60)
         if shot == "EXTREME_CLOSE" and not has_wow:
-            shot   = "CLOSE"
-            pacing = "FAST_CUT"
+            if emotion == "dramatic" and base_suspense > 0.7:
+                pass  # allow emotional override
+            else:
+                shot   = "CLOSE"
+                pacing = "FAST_CUT"
 
         # Shot variety rule: avoid 3 consecutive identical shot types
         if shot == prev_shot == prev_prev_shot:
@@ -111,16 +164,24 @@ def plan_cinematics(timeline: dict) -> dict:
             if alts:
                 shot = alts[0]
 
-        # WOW marker: spike to EXTREME_CLOSE + IMPACT + max suspense
+        # WOW marker: always spike to EXTREME_CLOSE + IMPACT + max suspense
         if has_wow:
             shot   = "EXTREME_CLOSE"
             pacing = "IMPACT"
 
-        suspense = _SUSPENSE_BASE.get(label, 0.60)
-        if has_wow:
-            suspense = 1.0
+        suspense = 1.0 if has_wow else base_suspense
+        # Micro-oscillation: adds small jitter per scene for realistic retention curves
+        suspense = round(
+            min(1.0, max(0.0, suspense + random.uniform(-0.1, 0.1))), 2
+        )
 
-        # Contrast flag: True when this scene differs significantly from previous
+        # Duration-aware motion selection
+        if dur_ms < 2000 and pacing == "FAST_CUT":
+            sc["motion_preset_hint"] = "impact_zoom"
+        elif dur_ms > 4000 and pacing == "HOLD":
+            sc["motion_preset_hint"] = "slow_drift"
+
+        # Contrast flag
         contrast = (
             shot in ("WIDE", "AERIAL") and prev_shot in ("CLOSE", "EXTREME_CLOSE")
         ) or (
@@ -129,7 +190,7 @@ def plan_cinematics(timeline: dict) -> dict:
 
         sc["shot_type"]      = shot
         sc["pacing"]         = pacing
-        sc["suspense_level"] = round(suspense, 2)
+        sc["suspense_level"] = suspense
         sc["contrast_shot"]  = contrast
         sc["motion_emotion"] = _SHOT_MOTION_OVERRIDE.get(shot, sc.get("motion_emotion", "neutral"))
 

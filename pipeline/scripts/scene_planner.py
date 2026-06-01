@@ -15,10 +15,41 @@ Also sets focus_region and motion_emotion per scene to guide Ken Burns
 motion presets in video_assembler.
 """
 
+import json
 import logging
 import re
+from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+_LOGS_DIR = Path(__file__).parent.parent / "logs"
+_USED_KEYWORDS_PATH = _LOGS_DIR / "used_visual_keywords.json"
+_KEYWORD_WINDOW = 10  # penalize keywords used in last 10 videos
+
+
+def _load_used_keywords() -> set[str]:
+    """Load the rolling 10-video keyword history."""
+    try:
+        if _USED_KEYWORDS_PATH.exists():
+            data = json.loads(_USED_KEYWORDS_PATH.read_text())
+            return set(data.get("keywords", []))
+    except Exception:
+        pass
+    return set()
+
+
+def _save_used_keywords(keywords: list[str]) -> None:
+    """Append new keywords to the rolling window (cap at 10 videos * 15 keywords = 150)."""
+    try:
+        existing: list[str] = []
+        if _USED_KEYWORDS_PATH.exists():
+            existing = json.loads(_USED_KEYWORDS_PATH.read_text()).get("keywords", [])
+        combined = (existing + keywords)[-150:]  # rolling 150 entries
+        tmp = _USED_KEYWORDS_PATH.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"keywords": combined}, indent=2))
+        tmp.replace(_USED_KEYWORDS_PATH)
+    except Exception:
+        pass
 
 # ── Layer 1: Semantic narrative → emotional visual keywords ───────────────────
 # Pattern strings are pipe-separated regex alternatives.
@@ -27,90 +58,118 @@ log = logging.getLogger(__name__)
 _NARRATIVE_TRIGGERS: list[tuple[str, list[str], str]] = [
     # (regex_pattern, visual_keywords, motion_emotion)
 
-    # Destruction / extinction / catastrophe
-    (r"died|extinct|destroyed|collapse|impact|crash|doom|apocalypse|devastat",
+    # Destruction / extinction / catastrophe (expanded synonyms)
+    (r"died|extinct|destroyed|collapse|impact|crash|doom|apocalypse|devastat"
+     r"|vanish|wiped.?out|obliterat|annihilat|eradicat|perish|ruin",
      ["cinematic explosion destruction aftermath dark",
       "apocalyptic dramatic ruins devastation wide",
       "impact shock debris dramatic cinematic"],
      "dramatic"),
 
-    # Discovery / secret / hidden
-    (r"discover|found|reveal|uncover|secret|hidden|unknown|first time|never seen",
+    # Discovery / secret / hidden (expanded)
+    (r"discover|found|reveal|uncover|secret|hidden|unknown|first time|never seen"
+     r"|uncov|exposed|unearthed|breakthrough|identified|confirmed|detected",
      ["discovery light emergence dramatic reveal",
       "scientist breakthrough discovery laboratory",
       "hidden reveal light dark contrast dramatic"],
      "mysterious"),
 
-    # Scale / size comparison
-    (r"bigger|larger|massive|enormous|vast|huge|scale|trillion|billion|million times",
+    # Scale / size comparison (expanded)
+    (r"bigger|larger|massive|enormous|vast|huge|scale|trillion|billion|million times"
+     r"|colossal|immense|gigantic|incomprehensible|dwarfs|overshadow",
      ["aerial vast scale comparison dramatic wide",
       "cosmic scale size comparison universe",
       "size contrast comparison dramatic aerial"],
      "dramatic"),
 
-    # Speed / instant
-    (r"faster|speed|instant|second|millisecond|rapidly|lightning|immediate",
+    # Speed / instant (expanded)
+    (r"faster|speed|instant|second|millisecond|rapidly|lightning|immediate"
+     r"|velocity|acceleration|simultaneous|nanosecond|blinding",
      ["speed blur motion fast dynamic",
       "lightning fast impact velocity dramatic",
       "fast motion dynamic energy speed"],
      "excited"),
 
-    # Fear / danger / threat
-    (r"terrif|deadly|danger|threat|killer|fatal|lethal|predator|attack|horror",
+    # Fear / danger / threat (expanded)
+    (r"terrif|deadly|danger|threat|killer|fatal|lethal|predator|attack|horror"
+     r"|catastroph|hazard|peril|venom|toxic|radiation|lethal",
      ["dark ominous threat dramatic cinematic",
       "danger predator dark atmospheric",
       "ominous cinematic thriller dark shadow"],
      "dramatic"),
 
-    # Ancient / history / time
-    (r"ancient|prehistoric|million year|thousand year|oldest|century|civilisation|empire",
+    # Ancient / history / time (expanded)
+    (r"ancient|prehistoric|million year|thousand year|oldest|century|civilisation|empire"
+     r"|millennia|archaic|primordial|antiquity|paleolithic|neolithic|medieval",
      ["ancient ruins archaeological stone dramatic",
       "prehistoric landscape dramatic wide historical",
       "ancient civilisation monument stone aerial"],
      "mysterious"),
 
-    # Underground / deep / hidden beneath
-    (r"underground|beneath|buried|ocean floor|deep sea|cave|trench|abyss",
+    # Underground / deep / hidden beneath (expanded)
+    (r"underground|beneath|buried|ocean floor|deep sea|cave|trench|abyss"
+     r"|subterranean|subsurface|below ground|hidden beneath|depths",
      ["cave underground dark depth mysterious",
       "deep ocean dark bioluminescence dramatic",
       "underground tunnel depth atmospheric dark"],
      "mysterious"),
 
-    # Wonder / beauty / breathtaking
-    (r"beautiful|stunning|breathtaking|extraordinary|incredible|magnificent|wonder",
+    # Wonder / beauty / breathtaking (expanded)
+    (r"beautiful|stunning|breathtaking|extraordinary|incredible|magnificent|wonder"
+     r"|spectacular|awe.?inspiring|mesmerising|sublime|remarkable",
      ["stunning aerial beautiful cinematic wide",
       "breathtaking landscape golden dramatic light",
       "cinematic beautiful nature vast wide"],
      "excited"),
 
-    # Impossible / mind-blowing / paradox
-    (r"impossible|paradox|bizarre|unbelievable|mind.?blow|defy|strange",
+    # Impossible / mind-blowing / paradox (expanded)
+    (r"impossible|paradox|bizarre|unbelievable|mind.?blow|defy|strange"
+     r"|counterintuitive|defies|violates|contradicts|inexplicable|absurd",
      ["impossible surreal dramatic mind-blowing",
       "paradox strange dramatic contrast cinematic",
       "bizarre impossible dramatic wide surreal"],
      "mysterious"),
 
-    # Life / survival / evolution
-    (r"evolv|survival|adapt|life form|organism|creature|species|born|alive",
+    # Life / survival / evolution (expanded)
+    (r"evolv|survival|adapt|life form|organism|creature|species|born|alive"
+     r"|mutate|reproduce|extinct|thrive|predator|prey|ecosystem",
      ["wildlife survival dramatic nature wide",
       "creature close detail dramatic nature",
       "life evolution dramatic nature wide"],
      "excited"),
 
-    # Universe / cosmos / space
-    (r"universe|cosmos|galaxy|nebula|star|planet|black hole|solar|light year",
+    # Universe / cosmos / space (expanded)
+    (r"universe|cosmos|galaxy|nebula|star|planet|black hole|solar|light year"
+     r"|quasar|pulsar|supernova|dark matter|event horizon|interstellar",
      ["cosmos galaxy nebula dramatic wide",
       "deep space universe dramatic cinematic",
       "planet surface space dramatic atmospheric"],
      "mysterious"),
 
-    # Water / ocean / flood
-    (r"ocean|sea|water|flood|wave|tsunami|underwater|marine|current",
+    # Water / ocean / flood (expanded)
+    (r"ocean|sea|water|flood|wave|tsunami|underwater|marine|current"
+     r"|aquatic|submerged|tidal|hydrothermal|bioluminescent|abyss",
      ["ocean dramatic wave cinematic wide",
       "underwater dramatic cinematic bioluminescent",
       "ocean surface dramatic aerial wide"],
      "dramatic"),
 ]
+
+# Emotion-matched CLOSE scene visuals (replaces placeholder "CLOSE" string)
+_CLOSE_VISUALS: dict[str, list[str]] = {
+    "excited":    ["sunset cinematic fade wide aerial",
+                   "golden hour horizon beautiful calm",
+                   "nature wide shot peaceful golden"],
+    "mysterious": ["dark fog atmospheric cinematic wide",
+                   "night sky stars calm mysterious",
+                   "silhouette horizon mysterious wide"],
+    "dramatic":   ["dramatic sky clouds wide aerial",
+                   "epic landscape cinematic wide aerial",
+                   "sunset dramatic wide horizon"],
+    "neutral":    ["calm aerial zoom out landscape",
+                   "peaceful nature wide sunset",
+                   "logo reveal soft glow dark blue"],
+}
 
 # ── Layer 2: Category + segment static keyword banks ─────────────────────────
 
@@ -265,6 +324,49 @@ def _text_visual_hints(text: str) -> tuple[list[str], str | None]:
     return [], None
 
 
+_EMOTION_KEYWORDS: dict[str, list[str]] = {
+    "dramatic":   ["dramatic", "cinematic", "dark", "impact", "destruction", "ruins"],
+    "mysterious": ["mysterious", "dark", "hidden", "deep", "unknown", "atmospheric"],
+    "excited":    ["stunning", "beautiful", "dynamic", "aerial", "wide", "golden"],
+    "neutral":    ["wide", "landscape", "aerial", "calm", "nature"],
+}
+
+
+def _score_keywords(candidates: list[str], emotion: str,
+                    semantic_hints: list[str],
+                    used_keywords: set[str] | None = None) -> list[str]:
+    """
+    Score candidate keywords and return sorted list (highest score first).
+    Scoring:
+      +20 if keyword came from semantic text analysis (Layer 1)
+      +15 if keyword contains an emotion-aligned word
+      +20 if keyword NOT in recent 10-video history (novelty bonus)
+      -10 if keyword IS in recent history (freshness penalty)
+    """
+    emotion_words   = _EMOTION_KEYWORDS.get(emotion, [])
+    recently_used   = used_keywords or set()
+    scores: list[tuple[int, str]] = []
+    seen: set[str] = set()
+    for kw in candidates:
+        if kw in seen:
+            continue
+        seen.add(kw)
+        score = 0
+        if kw in semantic_hints:
+            score += 20
+        kw_lower = kw.lower()
+        if any(ew in kw_lower for ew in emotion_words):
+            score += 15
+        if recently_used:
+            if kw not in recently_used:
+                score += 20  # novelty bonus
+            else:
+                score -= 10  # freshness penalty
+        scores.append((score, kw))
+    scores.sort(key=lambda x: x[0], reverse=True)
+    return [kw for _, kw in scores]
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def plan_scenes(timeline: dict, intent: str) -> dict:
@@ -275,6 +377,9 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
     t_pool = [kws[:] for kws in _TENSION[intent]]
     c_pool = [kws[:] for kws in _CORE[intent]]
     t_idx = c_idx = 0
+
+    used_keywords = _load_used_keywords()
+    new_keywords:  list[str] = []
 
     for sc in timeline["scenes"]:
         label   = sc["segment_label"]
@@ -295,8 +400,11 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
             kws = _PAYOFF[intent]
 
         elif label == "CLOSE":
-            sc["visual_keyword"]  = "CLOSE"
-            sc["visual_keywords"] = ["CLOSE"]
+            # Use emotion-matched visual keywords instead of the placeholder "CLOSE"
+            close_emotion = sc.get("emotion", "neutral")
+            close_kws = _CLOSE_VISUALS.get(close_emotion, _CLOSE_VISUALS["neutral"])
+            sc["visual_keyword"]  = close_kws[0]
+            sc["visual_keywords"] = close_kws[:3]
             sc["clip_type"]       = "close"
             sc["focus_region"]    = "center"
             sc["motion_emotion"]  = "neutral"
@@ -307,12 +415,21 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
 
         # Layer 1: semantic text analysis — prepend emotional visual hints
         text_hints, motion_override = _text_visual_hints(sc.get("script_text", ""))
-        combined = (text_hints + list(kws[:3]))[:3]
+        candidate_pool = text_hints + list(kws)
 
-        sc["visual_keyword"]  = combined[0]
+        # Score: semantic hint +20, emotion alignment +15, novelty +20, penalty -10
+        scored   = _score_keywords(candidate_pool, emotion, text_hints, used_keywords)
+        combined = scored[:3] if scored else candidate_pool[:3]
+
+        sc["visual_keyword"]  = combined[0] if combined else "cinematic dramatic wide"
         sc["visual_keywords"] = combined
         sc["focus_region"]    = _FOCUS.get(label, "center")
         sc["motion_emotion"]  = motion_override or _EMOTION_MOTION.get(emotion, "neutral")
+        new_keywords.extend(combined)
+
+    # Persist used keywords for novelty rotation across next 10 videos
+    if new_keywords:
+        _save_used_keywords(new_keywords)
 
     log.info("Scene keywords assigned (%d scenes, category=%s)",
              len(timeline["scenes"]), intent)
