@@ -534,5 +534,51 @@
       "audio_gaps": "fail: audio gap(s) > 2s detected at ['94.57s']"
     },
     "fail_reason": "[audio_gaps] audio gap(s) > 2s detected at ['94.57s']"
+  },
+  {
+    "timestamp": "2026-06-01T21:18:38.836994",
+    "topic": "Nature's Dark Secret",
+    "intent": "NATURE",
+    "attempt": 1,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.07s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.07s"
+  },
+  {
+    "timestamp": "2026-06-01T21:27:27.572855",
+    "topic": "Nature's Dark Secret",
+    "intent": "NATURE",
+    "attempt": 2,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.07s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.07s"
   }
 ]

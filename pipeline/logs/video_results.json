@@ -238,5 +238,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "tJ5TLmauAsg",
+    "intent": "NATURE",
+    "title": "Nature's Dark Secret",
+    "hook_text": "10% of trees are zombies",
+    "total_duration_seconds": 71.92,
+    "scene_count": 12,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-01T21:28:18.774996",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
