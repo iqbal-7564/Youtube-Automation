@@ -121,10 +121,13 @@ jobs:
           import sys
           from pathlib import Path
           sys.path.insert(0, 'pipeline/scripts')
-          from news_analytics import fetch_analytics_feedback, fetch_peak_hours, update_velocity_queue
+          from news_analytics import fetch_analytics_feedback, fetch_peak_hours, update_velocity_queue, apply_adaptive_learning
           logs = Path('pipeline/logs')
           hints = fetch_analytics_feedback(logs)
           print('Feedback hints:', hints)
+          if hints.get('retention_signal'):
+              apply_adaptive_learning(hints, logs)
+              print('Adaptive learning applied:', hints.get('retention_signal'))
           fetch_peak_hours(logs)
           update_velocity_queue(logs)
           "

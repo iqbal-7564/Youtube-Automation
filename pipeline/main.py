@@ -77,7 +77,7 @@ from quality_gate        import run_quality_gate
 from thumbnail_generator import generate_thumbnail
 from ctr_optimizer       import optimize_ctr
 from uploader            import upload_video
-from news_analytics      import log_result, apply_adaptive_learning, predict_retention_risk, fetch_peak_hours, update_velocity_queue
+from news_analytics      import log_result, predict_retention_risk, update_velocity_queue
 
 
 def _check_youtube_token() -> bool:
@@ -451,13 +451,6 @@ def run_pipeline() -> bool:
         # Velocity clustering: check if any recent video is performing above average
         # and queue related topics for the next pipeline run
         update_velocity_queue(LOGS_DIR)
-
-        # Apply adaptive learning — evolve pipeline parameters from retention signal
-        hints = gate.get("hints", {})
-        if hints.get("retention_signal"):
-            apply_adaptive_learning(hints, LOGS_DIR)
-            log.info("  Adaptive learning: signal=%s  params updated",
-                     hints["retention_signal"])
 
         _record_success()
         log.info("=" * 65)

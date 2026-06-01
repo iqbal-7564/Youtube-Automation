@@ -10,20 +10,20 @@ The pipeline runs **14 sequential steps** driven by a single `master_timeline.js
 
 | Step | Module | What it does |
 |------|--------|--------------|
-| 1 | `topic_selector` | Trend-aware topic selection: Google Trends rising queries + YouTube Autocomplete keyword mining + Groq viral angle hints; **velocity cluster queue** promotes follow-up seeds from viral videos; deduplicates against 12 months of history; selects category by performance weight; YouTube saturation filter rejects over-competed titles |
+| 1 | `topic_selector` | Trend-aware topic selection: Google Trends rising queries + YouTube Autocomplete keyword mining + Groq viral angle hints; **velocity cluster queue** promotes follow-up seeds from viral videos; deduplicates against 12 months of history; selects category by performance weight; YouTube saturation filter rejects titles where top-10 results have median views > 500k |
 | 2 | `script_generator` | 5-segment script in one of **4 rotating narrative structures** + one of **6 rotating hook formulas**; word count scales with `VIDEO_FORMAT` (130–180 / 680–840 / 900–1344 words); marks `[WOW]` moments; generates CTR-psychology title |
 | 3 | `timeline_builder` | Per-scene timeline with **global emotional arc** per narrative template; Shorts psychology (hook cap, tight CORE intervals); per-category audience persona dwell times; reads `adaptive_params.json` from previous retention signals |
 | 4 | `voice_generator` | Per-scene MP3s with emotion-tuned TTS (edge-tts → ElevenLabs → gTTS → silence); 300 ms inter-scene silence (600 ms at CORE→PAYOFF); **locks timeline durations** |
 | 5 | `scene_planner` | Semantic text analysis — 12 narrative trigger patterns map script text to emotional visual keywords; assigns `motion_emotion` tag per scene |
 | 5b | `cinematic_planner` | Director-level shot sequencing (WIDE / AERIAL / MEDIUM / CLOSE / EXTREME\_CLOSE); pacing rhythm per scene; suspense arc peaks at WOW; shot variety rule prevents 3+ consecutive identical types |
-| 6 | `visual_fetcher` | Tries all 3 ranked keywords before category fallbacks; portrait orientation enforced for Shorts |
-| 7 | `video_assembler` | Renders each scene with brand overlays (logo top-left, channel name bottom-left, category pill top-right); **8 emotion+shot-driven motion presets**; animated close scene with logo fade-in + text glow |
+| 6 | `visual_fetcher` | Groq-optimised search query per scene; Pexels (primary) → Pixabay (fallback); content-level MD5 deduplication across videos; portrait orientation enforced for Shorts; extra slideshow image fetched for scenes ≥ 4 s |
+| 7 | `video_assembler` | Renders each scene with brand overlays (logo top-left, category pill top-right); **16 emotion+shot-driven motion presets**; multi-image Ken-Burns slideshow for long scenes; animated close scene with logo fade-in + text glow |
 | 8 | `subtitle_generator` | Per-scene SRT + ASS files; Shorts captions at 75% frame height (clear of YouTube UI); ASS subtitles burned into final video |
-| 9 | `audio_processor` | **3-stage pipeline:** decode PCM → two-pass loudnorm −14 LUFS + afftdn → fades + alimiter + M4A; optional SFX mix (WOW impacts, hook tension, payoff reveal); optional background music at −20 dB |
-| 10 | `encoder` | Re-encodes with ASS subtitle burn-in (libx264 CRF 18) or stream-copies video when no subtitles; `apad` + `-shortest` for drift-free A/V sync |
-| 11 | `quality_gate` | **10 hard checks** — all must pass before upload; up to 3 retry attempts on failure |
+| 9 | `audio_processor` | **3-stage pipeline:** decode PCM → two-pass loudnorm −14 LUFS + afftdn → fades + alimiter → M4A; optional SFX mix (WOW impacts, hook tension, payoff reveal); optional background music at −20 dB |
+| 10 | `encoder` | Re-encodes with ASS subtitle burn-in (libx264 CRF 18) or stream-copies video when no subtitles; hard `-t locked_duration` cap enforces exact output length; post-encode duration validation (< 0.5 s tolerance) |
+| 11 | `quality_gate` | **1 hard block + 10 scored checks** — all must pass before upload; quality score ≥ 75/100 required; up to 3 retry attempts on failure |
 | 12 | `thumbnail_generator` + `ctr_optimizer` | Pillow-based 1280×720 thumbnail; CTR optimizer scores 9 title/headline combinations on curiosity gap, tension, specificity, novelty, and synergy — best pair used for upload |
-| 13 | `uploader` | YouTube resumable upload; thumbnail; merged SRT captions; engagement comment; category playlist; **peak-hour alignment** sleeps up to 25 min to hit the best audience window |
+| 13 | `uploader` | YouTube resumable upload (5 retries + token refresh on retry); thumbnail; merged SRT captions; engagement comment; category playlist creation + caching; token re-fetched before each post-upload API call |
 | 14 | `news_analytics` | Logs result; fetches retention curve; scores scene-level drop-off; updates `performance_history.json`; **velocity clustering** queues related seeds from viral videos; applies **adaptive learning** — evolves pipeline parameters automatically |
 
 ---
@@ -115,26 +115,33 @@ Shot variety rule: never 3+ consecutive identical shot types. PAYOFF always gets
 | universe / cosmos / galaxy / black hole | Deep space nebula, cosmic dramatic |
 | ocean / sea / wave / tsunami | Ocean wave cinematic, underwater dramatic |
 
-### Motion presets — 8 emotion-driven presets
+### Motion presets — 16 emotion-driven presets
 
-Rotated by shot type + scene index. No two consecutive scenes use the same motion.
+Rotated by emotion + scene index. 5 options per emotion means up to 5 consecutive same-emotion scenes each use a different animation before any repeat.
 
-| Preset | Shot affinity | Use case |
-|--------|--------------|---------|
-| `slow_drift` | WIDE, AERIAL | Calm, beauty, payoff |
-| `push_in` | MEDIUM | Standard hook and tension |
-| `impact_zoom` | EXTREME\_CLOSE | WOW moments, maximum drama |
-| `reveal_pull` | CLOSE | Mystery, reverse narrative |
-| `pan_right` / `pan_left` | MEDIUM | Geography, exploration, scale |
-| `rise_up` | MEDIUM | Discovery, emergence |
-| `descend` | CLOSE | Underground, deep ocean, threat |
+| Preset | Emotion affinity | Use case |
+|--------|-----------------|---------|
+| `slow_drift` | neutral, mysterious | Calm, beauty, payoff |
+| `push_in` | excited | Standard hook and tension |
+| `impact_zoom` | dramatic | WOW moments, maximum drama |
+| `reveal_pull` | dramatic, mysterious | Mystery, reverse narrative |
+| `pan_right` / `pan_left` | excited | Geography, exploration, scale |
+| `rise_up` | neutral | Discovery, emergence, wonder |
+| `descend` | mysterious | Underground, deep ocean, threat |
+| `zoom_corner_tl` | mysterious | Subject anchored top-left (space corner) |
+| `zoom_corner_br` | dramatic | Subject anchored bottom-right |
+| `diagonal_drift` | neutral | Zoom + simultaneous X+Y pan |
+| `tilt_reveal` | neutral | Camera tilt upward (reveal shot) |
+| `fast_push` | dramatic, excited | Aggressive tension — more intense than push\_in |
+| `orbit_left` / `orbit_right` | excited | Zoom + arc pan sweep |
+| `breathe` | mysterious | Slow sinusoidal zoom pulse — almost static but alive |
 
 ---
 
 ## Topic intelligence — 4 algorithms
 
 ### Algorithm 1 — Google Trends arbitrage
-Fetches rising related queries per category via `pytrends`. Cross-market scoring: topics trending in 2+ English-speaking markets (US, India, UK, Australia) get a momentum bonus. Results cached for 6 hours.
+Fetches rising related queries per category via `pytrends`. Cross-market scoring: topics trending in 2+ English-speaking markets (US, India, UK, Australia) get a momentum bonus (95 pts × number of markets). Results cached for 6 hours.
 
 ### Algorithm 2 — YouTube Autocomplete keyword mining
 Queries YouTube's public autocomplete API for each category — no API key needed. Position-ranked scoring (position 0 = 90 pts, position 8 = 10 pts). Reflects what users are actively searching right now.
@@ -143,10 +150,10 @@ Queries YouTube's public autocomplete API for each category — no API key neede
 One Groq LLM call at pipeline start generates one fresh viral angle hint per category — injected into every topic expansion prompt to bias the LLM toward what's currently discussed.
 
 ### Algorithm 4 — YouTube saturation filter
-After a title is generated, checks YouTube Data API v3 for existing video count. Skips topics with > 50,000 existing results. Passes automatically when `YOUTUBE_API_KEY` is not set.
+After a title is generated, fetches top-10 search results and checks their **median view count**. Rejects topics with median > 500k views (market dominated). Applies a −10 score penalty at 100k–500k (elevated competition). Passes automatically when `YOUTUBE_API_KEY` is not set.
 
 ### Velocity cluster queue
-When a video exceeds 2× the channel's average 48h views, `update_velocity_queue` uses Groq to generate 3–4 related seed topics and writes them to `logs/velocity_queue.json`. The next pipeline run picks these up at highest priority.
+When a video exceeds 2× the channel's average 48h views, `update_velocity_queue` uses Groq to generate 3–4 related seed topics and writes them to `logs/velocity_queue.json`. The next pipeline run picks these up at highest priority. Seeds expire after 72 hours.
 
 ---
 
@@ -183,8 +190,8 @@ After each upload, `apply_adaptive_learning` translates retention signals into a
 
 | Signal | Automatic adjustment |
 |--------|---------------------|
-| `early_drop` (viewers leave before 25%) | Hook cap reduced by 150 ms; tension interval tightened |
-| `mid_drop` (viewers leave in CORE) | CORE scene interval reduced |
+| `early_drop` (viewers leave before 25%) | Hook cap reduced by 150 ms; tension interval tightened by 0.3 s |
+| `mid_drop` (viewers leave in CORE) | CORE scene interval reduced by 0.25 s |
 | `late_drop` (viewers leave after PAYOFF) | PAYOFF/CLOSE flagged for script review |
 | Retention > 70% | All parameters locked — system is working |
 | Retention drops below 70% | Lock released — system re-adapts |
@@ -231,25 +238,26 @@ Drop SFX files in `pipeline/assets/sfx/`. Mixed at −28 dB (felt, not heard). G
 
 ---
 
-## Quality gate — 10 checks
+## Quality gate — 11 checks
 
-All 10 must pass before upload. Failures trigger up to **3 retry attempts**:
+1 hard block + 10 scored checks. Scored checks must reach **75/100** before upload. Failures trigger up to **3 retry attempts**:
 - Attempt 2 — re-assemble without xfade transitions
 - Attempt 3 — minimal title-card fallback video
 - After 3 failures — slot skipped, logged to `quality_failures.json`
 
-| Check | Threshold |
-|-------|----------|
-| `file_integrity` | Container valid, moov at start, size > 100 KB |
-| `resolution` | Exact match to profile spec (1080×1920 or 1920×1080) + 30 fps |
-| `duration` | Within ± 2.5 s of locked timeline total |
-| `audio_sync` | A/V stream length diff within ± 0.3 s |
-| `audio_level` | Integrated loudness −14 LUFS ± 2 |
-| `subtitles` | No entry < 300 ms; overflow clamped silently |
-| `freeze_frame` | No freeze > 500 ms (3+ identical consecutive pts values) |
-| `voice_quality` | WARNING only — does not block upload |
-| `dropped_frames` | No more than 3 frames with irregular timing (> 20% deviation from 30 fps) |
-| `audio_gaps` | No silence gap > 2.0 s (inter-scene silence ~1.1–1.8 s by design) |
+| Check | Weight | Threshold |
+|-------|--------|----------|
+| `audio_failure` *(hard block)* | — | Silence fallback scenes block upload entirely |
+| `file_integrity` | 15 pts | Container valid, moov at start, size > 100 KB |
+| `resolution` | 10 pts | Exact match to profile spec (1080×1920 or 1920×1080) + 30 fps |
+| `duration` | 15 pts | Within ± 2.5 s of locked timeline total |
+| `audio_sync` | 15 pts | A/V stream length diff within ± 0.3 s |
+| `audio_level` | 10 pts | Integrated loudness −14 LUFS ± 2 |
+| `subtitles` | 5 pts | No entry < 300 ms |
+| `freeze_frame` | 10 pts | No freeze > 500 ms (freezedetect filter) |
+| `voice_quality` | 5 pts | Degraded TTS (gTTS/silence) scores 3/5 — warning only, does not block |
+| `dropped_frames` | 5 pts | No more than 3 frames with irregular timing (> 20% deviation from 30 fps) |
+| `audio_gaps` | 10 pts | No silence gap > 2.0 s inside the audio track |
 
 ---
 
@@ -302,8 +310,8 @@ The 12:00 UTC job also triggers an **analytics refresh** that pulls YouTube rete
 |--------|---------|
 | `GROQ_API_KEY_1` / `GROQ_API_KEY_2` | Script + topic generation (Groq LLM). Key 2 is tried automatically when key 1 is rate-limited or fails. |
 | `ELEVENLABS_API_KEY` | Premium TTS voice (optional — falls back to edge-tts) |
-| `PEXELS_API_KEY` | Stock footage / photos |
-| `PIXABAY_API_KEY` | Stock footage / photos (fallback) |
+| `PEXELS_API_KEY` | Primary stock photo source |
+| `PIXABAY_API_KEY` | Fallback stock photo source |
 | `YOUTUBE_API_KEY` | YouTube Data API — saturation filter (optional — filter passes if not set) |
 | `YOUTUBE_CLIENT_ID` | YouTube Data API OAuth |
 | `YOUTUBE_CLIENT_SECRET` | YouTube Data API OAuth |
@@ -360,15 +368,15 @@ pipeline/
     voice_generator.py         # Step 4  — emotion-tuned TTS + inter-scene silence
     scene_planner.py           # Step 5  — semantic text → emotional visual keywords
     cinematic_planner.py       # Step 5b — shot sequencing + pacing + suspense arc
-    visual_fetcher.py          # Step 6  — multi-keyword Pexels/Pixabay fetch
-    video_assembler.py         # Step 7  — 8 motion presets + animated close scene
+    visual_fetcher.py          # Step 6  — Groq query + Pexels/Pixabay + MD5 dedup
+    video_assembler.py         # Step 7  — 16 motion presets + slideshow + animated close
     subtitle_generator.py      # Step 8  — per-scene SRT + ASS with Shorts positioning
     audio_processor.py         # Step 9  — 3-stage normalize + SFX + background music
-    encoder.py                 # Step 10 — ASS subtitle burn-in + apad A/V sync
-    quality_gate.py            # Step 11 — 10 hard checks, 3-attempt retry
+    encoder.py                 # Step 10 — ASS subtitle burn-in + hard duration cap
+    quality_gate.py            # Step 11 — 1 hard block + 10 scored checks, 3-attempt retry
     thumbnail_generator.py     # Step 12 — Pillow thumbnail + logo
     ctr_optimizer.py           # Step 12b — title + headline CTR scoring and synergy
-    uploader.py                # Step 13 — upload + captions + comment + playlist + peak-hour align
+    uploader.py                # Step 13 — upload + captions + comment + playlist + token refresh
     news_analytics.py          # Step 14 — retention curve + velocity clustering + adaptive learning
   temp/                        # Runtime scratch (voice, visuals, scenes, subtitles)
   output/                      # Final MP4s + thumbnails
@@ -376,11 +384,15 @@ pipeline/
     quality_failures.json      # Gate failures with attempt number and checks detail
     video_results.json         # Per-video upload log (last 200)
     performance_history.json   # Per-category avg retention — drives topic selection
+    subtopic_history.json      # Per-seed avg retention — sub-topic performance signal
     analytics_data.json        # Raw YouTube Analytics + retention curve data
     adaptive_params.json       # Auto-evolved pipeline parameters from retention signals
     trend_cache.json           # Google Trends cache (6-hour TTL)
     peak_hours.json            # Top 3 UTC peak hours for upload timing
-    velocity_queue.json        # High-priority follow-up seeds from viral videos
+    velocity_queue.json        # High-priority follow-up seeds from viral videos (72h TTL)
+    topic_clusters.json        # Multi-video cluster chains from viral topics
+    circuit_state.json         # Consecutive failure counter (circuit breaker)
+    playlist_ids.json          # Cached YouTube playlist IDs (prevents duplicate creation)
 .github/workflows/
   news_video.yml               # Scheduled + manual dispatch (shorts/standard/long)
 requirements.txt
@@ -388,13 +400,20 @@ requirements.txt
 
 ---
 
-## Bug fixes applied (2026-05-31 audit)
+## Bug fixes
 
-Four bugs were found and fixed across the modified files:
-
-| File | Bug | Severity |
-|------|-----|----------|
-| `news_analytics.py` | Spurious `break` in `_generate_related_seeds` — `GROQ_API_KEY_2` was never tried when key 1 failed; velocity queue seed generation silently returned empty | Medium |
-| `topic_selector.py` | Spurious `break` in `_fetch_trending_hints` — `GROQ_API_KEY_2` was never reached; trending angle hints always used key 1 only | Medium |
-| `news_video.yml` | `pytrends` missing from workflow `pip install` — Google Trends always fell back to empty data in CI; replaced stale `feedparser` (no longer imported anywhere) with `pytrends` | Low |
-| `requirements.txt` | `requirements.txt` already correct (`pytrends` present, no `feedparser`) — confirmed consistent with workflow after fix | Low |
+| Date | File | Bug | Severity |
+|------|------|-----|----------|
+| 2026-06-02 | `uploader.py` | `_upload()` caught `requests.exceptions.Timeout` in the bare `except Exception` block which returned `None` immediately with **zero retries** — a single 30-second network spike on the init POST would silently fail the entire scheduled upload | Critical |
+| 2026-06-02 | `uploader.py` | `_upload()` reused the original token across all 5 retry attempts — if the first attempt failed due to a 401 or token expiry, every retry would fail with the same stale token | High |
+| 2026-06-02 | `uploader.py` | `_upload()` did not handle HTTP 401 from the init POST — it fell into the generic "non-200 retryable" path but never refreshed the token, so all 5 retries would fail identically | High |
+| 2026-06-02 | `uploader.py` | `ConnectionError` retry branch had no "Retrying in Xs" log line — silent retry made diagnosing upload failures from CI logs nearly impossible | Low |
+| 2026-06-02 | `news_video.yml` | Analytics-refresh job called `fetch_analytics_feedback()` but never passed the returned hints to `apply_adaptive_learning()` — adaptive learning was permanently broken; `adaptive_params.json` was never updated so `timeline_builder` always ran with default parameters | Critical |
+| 2026-06-02 | `main.py` | Step 14 read `gate.get("hints", {})` to trigger adaptive learning — but `quality_gate.py` never returns a "hints" key, so the block was dead code and `apply_adaptive_learning` was never called from the pipeline either | Critical |
+| 2026-06-02 | `main.py` | `apply_adaptive_learning` and `fetch_peak_hours` imported but never actually used in the pipeline (calls were either dead code or absent) — removed from import | Low |
+| 2026-06-02 | `audio_processor.py` | `total_ms` computed in `_mix_sfx` but never read — unused variable removed | Low |
+| 2026-06-02 | `visual_fetcher.py` | `_pixabay_fetch` used `GROQ_API_KEY` instead of `PIXABAY_API_KEY` — every Pixabay request was rejected, making Pexels the only visual source | Critical |
+| 2026-06-02 | `visual_fetcher.py` | `_groq_to_search_query` had a duplicate `ConnectionError` handler — second block was unreachable dead code | Low |
+| 2026-05-31 | `news_analytics.py` | Spurious `break` in `_generate_related_seeds` — `GROQ_API_KEY_2` was never tried when key 1 failed; velocity queue seed generation silently returned empty | Medium |
+| 2026-05-31 | `topic_selector.py` | Spurious `break` in `_fetch_trending_hints` — `GROQ_API_KEY_2` was never reached; trending angle hints always used key 1 only | Medium |
+| 2026-05-31 | `news_video.yml` | `pytrends` missing from workflow `pip install` — Google Trends always fell back to empty data in CI | Low |

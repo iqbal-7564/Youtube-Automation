@@ -296,20 +296,32 @@ def _upload(
 
     Variants:
         - 403 → hard stop, no retry (quotaExceeded or insufficientPermissions)
-        - 5xx / connection error → exponential backoff, up to 5 attempts
+        - 401 → token refreshed on next retry attempt
+        - 5xx / connection error / timeout → exponential backoff, up to 5 attempts
         - 200 on init but bad Location header → RuntimeError → retry
     """
-    size   = video_path.stat().st_size
-    cat_id = "22" if is_short else "27"   # 22 = People & Blogs, 27 = Education
+    size          = video_path.stat().st_size
+    cat_id        = "22" if is_short else "27"   # 22 = People & Blogs, 27 = Education
+    current_token = token
 
     for attempt in range(5):
+        # Refresh token on every retry — a previous attempt may have taken long
+        # enough that the original token is stale, or a 401 told us auth failed.
+        if attempt > 0:
+            try:
+                current_token = _token()
+                log.info("  Token refreshed before retry %d/5", attempt + 1)
+            except Exception as exc:
+                log.warning("  Token refresh failed on retry %d: %s — using previous token",
+                            attempt + 1, exc)
+
         try:
             # ── Step 1: Resumable upload init ─────────────────────────────────
             r = requests.post(
                 "https://www.googleapis.com/upload/youtube/v3/videos"
                 "?uploadType=resumable&part=snippet,status",
                 headers={
-                    "Authorization":           f"Bearer {token}",
+                    "Authorization":           f"Bearer {current_token}",
                     "Content-Type":            "application/json",
                     "X-Upload-Content-Type":   "video/mp4",
                     "X-Upload-Content-Length": str(size),
@@ -331,7 +343,7 @@ def _upload(
 
             # ── 403: non-retryable — quota exhausted or wrong OAuth scope ─────
             if r.status_code == 403:
-                body   = {}
+                body = {}
                 try:
                     body = r.json()
                 except Exception:
@@ -349,6 +361,10 @@ def _upload(
                     reason,
                 )
                 return None  # hard exit — no retry
+
+            # ── 401: token invalid — next retry will refresh it ───────────────
+            if r.status_code == 401:
+                raise RuntimeError("Init 401 Unauthorized — token will be refreshed on retry")
 
             # ── Any other non-200: retryable ──────────────────────────────────
             if r.status_code != 200:
@@ -378,23 +394,26 @@ def _upload(
             raise RuntimeError(f"Upload PUT {up.status_code}: {up.text[:150]}")
 
         except RuntimeError as exc:
-            log.warning("Upload attempt %d: %s", attempt + 1, exc)
+            log.warning("Upload attempt %d/5: %s", attempt + 1, exc)
             if attempt == 4:
                 return None
             wait = (2 ** attempt) + random.uniform(0.5, 2.0)
             log.info("  Retrying in %.1fs …", wait)
             time.sleep(wait)
 
-        except requests.exceptions.ConnectionError as exc:
-            log.warning("Upload attempt %d connection error: %s", attempt + 1, str(exc)[:120])
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as exc:
+            log.warning("Upload attempt %d/5 network error: %s",
+                        attempt + 1, str(exc)[:120])
             if attempt == 4:
                 return None
             wait = (2 ** attempt) + random.uniform(0.5, 2.0)
+            log.info("  Retrying in %.1fs …", wait)
             time.sleep(wait)
 
         except Exception as exc:
             log.error("Upload unexpected error: %s", exc)
-            return None  # unknown errors — do not retry
+            return None  # truly unknown — do not retry
 
     return None
 

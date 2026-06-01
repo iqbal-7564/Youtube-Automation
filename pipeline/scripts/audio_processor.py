@@ -346,7 +346,6 @@ def _mix_sfx(voice: Path, sfx_dir: Path, scenes: list, duration_s: float) -> Pat
 
     # Build list of (time_s, sfx_file) events
     events: list[tuple[float, Path]] = []
-    total_ms = sum(sc.get("duration_ms", 0) for sc in scenes)
 
     for sc in scenes:
         label     = sc.get("segment_label", "")
