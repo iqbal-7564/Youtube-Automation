@@ -333,6 +333,14 @@ def _groq_to_search_query(
             log.warning("Groq connection error (attempt %d/%d) — waiting %ds: %s",
                         attempt, MAX_RETRIES, wait, str(exc)[:120])
             time.sleep(wait)
+        except requests.exceptions.InvalidHeader as exc:
+            log.error("GROQ_API_KEY contains illegal characters — fix the env var: %s", exc)
+            break
+        except requests.exceptions.ConnectionError as exc:
+            wait = RETRY_BASE_S * attempt
+            log.warning("Groq connection error (attempt %d/%d) — waiting %ds: %s",
+                        attempt, MAX_RETRIES, wait, str(exc)[:120])
+            time.sleep(wait)
         except Exception as exc:
             log.warning("Groq query call failed: %s", exc)
             break
@@ -452,7 +460,7 @@ def _pixabay_fetch(query: str, out_path: Path,
     resolution) → largeImageURL (1280 px) → webformatURL (640 px).
     Iterates until finding a photo whose MD5 is not in avoid_hashes.
     """
-    api_key = os.getenv("PIXABAY_API_KEY", "")
+    api_key = (os.getenv("GROQ_API_KEY_1", "") or os.getenv("GROQ_API_KEY_2", "")).strip()
     if not api_key:
         return False
 
