@@ -223,5 +223,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "ij-92EiuIZ0",
+    "intent": "SPACE",
+    "title": "NASA's Dark Secret Found",
+    "hook_text": "A massive galaxy is hidden behind a black hole.",
+    "total_duration_seconds": 53.66,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-01T10:28:28.092270",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
