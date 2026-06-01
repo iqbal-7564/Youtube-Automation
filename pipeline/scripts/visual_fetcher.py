@@ -100,6 +100,10 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         out_path  = visuals_dir / f"scene_{scene_id}_visual.png"
 
         # Step 1 — Build search query via Groq (falls back to keyword join)
+        # 1s delay between scenes — key 2 rotates in on 429 so we stay
+        # under the 30 RPM limit without long waits.
+        if scene_id > 1:
+            time.sleep(1.0)
         raw_query = _groq_to_search_query(
             keywords  = kw_list,
             emotion   = emotion,
@@ -283,9 +287,14 @@ def _groq_to_search_query(
     shot_type: str,
     intent:    str,
 ) -> str:
-    api_key = os.getenv("GROQ_API_KEY_1") or os.getenv("GROQ_API_KEY_2", "")
-    if not api_key:
+    api_keys = [
+        os.getenv("GROQ_API_KEY_1", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+    ]
+    api_keys = [k for k in api_keys if k]
+    if not api_keys:
         return _fallback_query(keywords)
+    api_key = api_keys[0]
 
     system_prompt = (
         "You convert scene metadata into short stock-photo search queries.\n"
@@ -325,6 +334,15 @@ def _groq_to_search_query(
             if r.ok:
                 query = r.json()["choices"][0]["message"]["content"].strip()
                 return " ".join(query.split()[:6])
+            elif r.status_code == 429:
+                # Rate limited — rotate to next key immediately
+                if len(api_keys) > 1:
+                    api_key = api_keys[1]
+                    log.info("Groq 429 — rotated to key 2")
+                else:
+                    wait = RETRY_BASE_S * attempt
+                    log.warning("Groq 429 rate limit — waiting %ds", wait)
+                    time.sleep(wait)
             else:
                 log.warning("Groq query API %d: %s", r.status_code, r.text[:200])
                 break

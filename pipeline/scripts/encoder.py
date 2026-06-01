@@ -48,11 +48,11 @@ def encode_video(
     #   Long     → CRF 13, slow preset,   320k audio  (maximum quality)
     is_shorts = profile == "shorts"
     if is_shorts:
-        v_preset, v_crf, a_bitrate = "medium", "16", "192k"
+        v_preset, v_crf, a_bitrate = "fast",   "16", "192k"
     elif profile == "long":
-        v_preset, v_crf, a_bitrate = "slow",   "13", "320k"
+        v_preset, v_crf, a_bitrate = "medium", "14", "320k"
     else:
-        v_preset, v_crf, a_bitrate = "slow",   "14", "320k"
+        v_preset, v_crf, a_bitrate = "medium", "15", "320k"
 
     # Hard-trim audio to exactly locked_duration — eliminates normalization padding
     locked_t = ["-t", str(expected_duration_s)] if expected_duration_s > 0 else []

@@ -268,11 +268,19 @@ def _loudnorm_measure(path: Path) -> dict | None:
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
 def _standardize(src: Path, out: Path) -> None:
-    """Convert any TTS MP3 to consistent AAC 44.1 kHz stereo."""
+    """Convert any TTS MP3 to consistent AAC 44.1 kHz stereo.
+
+    apad=whole_dur preserves the exact source duration after AAC encoding.
+    Without it, AAC frame boundary rounding drops up to ~50ms per file —
+    across 58 scenes that accumulates to 2-3s of missing audio which fails
+    the integrity check in main.py after 50 minutes of render work.
+    """
     if out.exists() and out.stat().st_size > 1_000:
         return
+    src_dur = _probe(src)
     _run(
         ["ffmpeg", "-y", "-i", str(src),
+         "-af", f"apad=whole_dur={src_dur:.6f}",
          "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
          "-c:a", "aac", "-b:a", "192k",
          str(out)],

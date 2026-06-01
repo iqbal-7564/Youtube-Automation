@@ -173,27 +173,39 @@ def _edge_tts(text: str, out: Path, emotion: str) -> bool:
 
 
 def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
-    key = os.getenv("ELEVENLABS_API_KEY", "")
-    if not key:
-        return False
+    # Try account 1 first, fall back to account 2 on quota/rate limit (429/401)
+    keys = [
+        os.getenv("ELEVENLABS_API_KEY",   "").strip(),
+        os.getenv("ELEVENLABS_API_KEY_2", "").strip(),
+    ]
     settings = _EL_SETTINGS.get(emotion, _EL_SETTINGS["neutral"])
-    for attempt in range(2):
-        try:
-            r = requests.post(
-                f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
-                headers={"xi-api-key": key, "Content-Type": "application/json"},
-                json={"text": text, "model_id": "eleven_monolingual_v1",
-                      "voice_settings": settings},
-                timeout=30,
-            )
-            if r.ok:
-                out.write_bytes(r.content)
-                return True
-            log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
-        except Exception as exc:
-            log.debug("ElevenLabs attempt %d: %s", attempt + 1, exc)
-        if attempt == 0:
-            import time as _t; _t.sleep(1)
+
+    for key in keys:
+        if not key:
+            continue
+        for attempt in range(2):
+            try:
+                r = requests.post(
+                    f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
+                    headers={"xi-api-key": key, "Content-Type": "application/json"},
+                    json={"text": text, "model_id": "eleven_monolingual_v1",
+                          "voice_settings": settings},
+                    timeout=30,
+                )
+                if r.ok:
+                    out.write_bytes(r.content)
+                    return True
+                if r.status_code in (401, 429):
+                    # Quota exhausted or rate limited — switch to next key
+                    log.warning("ElevenLabs key …%s HTTP %d — trying next key",
+                                key[-4:], r.status_code)
+                    break
+                log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
+            except Exception as exc:
+                log.debug("ElevenLabs attempt %d: %s", attempt + 1, exc)
+            if attempt == 0:
+                import time as _t; _t.sleep(1)
+
     return False
 
 

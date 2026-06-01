@@ -219,8 +219,9 @@ def _assert_audio_integrity(audio_path: Path, locked_s: float) -> None:
 
     Note: normalized audio MAY be slightly longer than locked_s (because
     accurate VBR scanning reveals more content than the original VBR header
-    reported).  That is acceptable — the encoder's -shortest will align at
+    reported).  That is acceptable — the encoder's atrim will align at
     the video end.  Only fail if audio is shorter (content was dropped).
+    _standardize() uses apad=whole_dur so AAC frame loss never accumulates.
     """
     try:
         r = subprocess.run(

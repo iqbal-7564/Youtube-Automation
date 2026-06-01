@@ -192,7 +192,7 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
@@ -204,7 +204,7 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         )
         cmd = base_cmd + [
             "-vf", ",".join(vf_parts),
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
 
@@ -284,7 +284,7 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
@@ -296,7 +296,7 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
         )
         cmd = base + [
             "-vf", full_vf,
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
 
@@ -327,13 +327,13 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
             "-loop", "1", "-i", str(logo),
             "-filter_complex", filter_cx,
             "-map", "[out]",
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
         cmd = base + [
             "-vf", vf,
-            "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     subprocess.run(cmd, capture_output=True, timeout=30)
@@ -393,7 +393,7 @@ def _render_slideshow(
         "-filter_complex", ";".join(parts),
         "-map", prev,
         "-t", str(dur_s),
-        "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
         "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
     ])
     _run(cmd, f"slideshow→{out.name}", timeout=120)
@@ -502,7 +502,7 @@ def _xfade(a: Path, b: Path, dur: float, xf_type: str, out: Path) -> None:
          "-filter_complex",
          f"[0:v][1:v]xfade=transition={xf_type}:duration={dur:.3f}:offset={offset:.3f}[v]",
          "-map", "[v]",
-         "-c:v", "libx264", "-preset", "medium", "-crf", "16",
+         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
          "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out)],
         f"xfade {a.name}+{b.name}",
     )
