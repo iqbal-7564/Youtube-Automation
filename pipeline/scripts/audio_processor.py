@@ -38,7 +38,22 @@ log = logging.getLogger(__name__)
 _STD_RATE = 44100
 _STD_CH   = 2
 
+def detect_audio_gaps(path: Path, max_gap_s: float = 2.0) -> list[float]:
+    r = subprocess.run([
+        "ffmpeg", "-i", str(path),
+        "-af", f"silencedetect=noise=-40dB:d={max_gap_s}",
+        "-f", "null", "-"
+    ], capture_output=True, text=True)
 
+    gaps = []
+    for line in r.stderr.splitlines():
+        if "silence_end" in line:
+            try:
+                end_s = float(line.split("silence_end:")[1].split("|")[0].strip())
+                gaps.append(round(end_s, 2))
+            except (IndexError, ValueError):
+                continue
+    return gaps
 def process_audio(
     voice_dir: Path,
     temp_dir: Path,
@@ -107,13 +122,23 @@ def process_audio(
             normalized = sfxed
 
     # ── Optional: background music mix ───────────────────────────────────────
+    # ── Optional: background music mix ───────────────────────────────────────
     music_dir = assets_dir / "music"
     mixed     = _mix_background_music(normalized, music_dir, norm_dur)
     if mixed:
         log.info("  Background music mixed: %s", mixed.name)
-        return mixed
 
-    return normalized
+    final_output = mixed or normalized
+
+    # ── Gap check ─────────────────────────────────────────────────────────────
+    gaps = detect_audio_gaps(final_output)
+    if gaps:
+        log.warning("  Audio gaps > 2s detected at %s — check scene boundaries", gaps)
+    else:
+        log.info("  Audio gap check passed — no gaps detected")
+
+    return final_output
+ 
 
 
 # ── 3-stage normalization ─────────────────────────────────────────────────────
@@ -191,18 +216,18 @@ def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
     )
 
     _run(
-        ["ffmpeg", "-y", "-i", str(norm_wav),
-         "-af", (
-             f"afade=t=in:st=0.000:d=0.500,"
-             f"afade=t=out:st={fade_out_start:.3f}:d=1.000,"
-             "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50,"
-             f"apad=whole_dur={real_dur:.6f}"
-         ),
-         "-c:a", "aac", "-b:a", "192k",
-         "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
-         str(out)],
-        "s3-fades",
-    )
+    ["ffmpeg", "-y", "-i", str(norm_wav),
+     "-af", (
+         f"afade=t=in:st=0.000:d=0.500,"
+         f"afade=t=out:st={fade_out_start:.3f}:d=1.000,"
+         "alimiter=level_in=1:level_out=1:limit=0.891:attack=5:release=50"
+         # apad removed — stage 2 already padded to exact duration
+     ),
+     "-c:a", "aac", "-b:a", "192k",
+     "-ar", str(_STD_RATE), "-ac", str(_STD_CH),
+     str(out)],
+    "s3-fades",
+)
 
 
 def _loudnorm_measure(path: Path) -> dict | None:
@@ -262,8 +287,11 @@ def _merge(files: list[Path], output: Path) -> None:
         inputs += ["-i", str(f)]
 
     n             = len(files)
-    concat_inputs = "".join(f"[{i}:a]" for i in range(n))
-    concat_filter = f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
+    parts = "".join(
+        f"[{i}:a]aresample=async=1[a{i}];" for i in range(n)
+    )
+    concat_inputs = "".join(f"[a{i}]" for i in range(n))
+    concat_filter = parts+ f"{concat_inputs}concat=n={n}:v=0:a=1[outa]"
 
     _run(
         ["ffmpeg", "-y"] + inputs + [
@@ -351,7 +379,7 @@ def _mix_sfx(voice: Path, sfx_dir: Path, scenes: list, duration_s: float) -> Pat
     n_inputs = len(mix_labels)
     mix_filter = (
         "".join(mix_labels) +
-        f"amix=inputs={n_inputs}:duration=first:dropout_transition=0.5[out]"
+        f"amix=inputs={n_inputs}:duration=longest:dropout_transition=0[out]"
     )
     filter_parts.append(mix_filter)
 
