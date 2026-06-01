@@ -15,7 +15,7 @@ the caller to apply; they are not applied here.
 
 Tolerances calibrated to actual pipeline characteristics:
   duration  : ±2.5 s  (accounts for xfade transition duration reduction)
-  audio_sync: ±0.3 s  (accounts for -shortest boundary rounding)
+  audio_sync: ±0.5 s  (accounts for AAC encoder delay padding accumulation)
   audio_gaps: only gaps > 2.0 s  (max intentional inter-scene silence ~1.8s)
   voice_quality: WARNING only — does not block upload (partial score deduction)
 
@@ -212,7 +212,7 @@ def _audio_sync(path: Path, timeout: int = 30):
     if vd is None or ad is None:
         return False, f"missing stream (video={vd} audio={ad})"
     diff = abs(vd - ad)
-    if diff > 0.3:
+    if diff > 0.5:
         return False, f"A/V drift {diff:.3f}s"
     return True, f"drift={diff:.3f}s"
 

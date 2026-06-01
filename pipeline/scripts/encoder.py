@@ -6,10 +6,10 @@ When ass_path is provided, animated subtitles are burned into the video
 (requires re-encode).  Without ass_path the video stream is copied (faster).
 
 A/V sync contract:
-  Step 9 guarantees exact audio duration == locked_timeline.
-  We use -t locked_duration to enforce the exact output length.
-  apad and -shortest are removed: apad on already-padded audio creates
-  drift-on-drift, and -shortest can silently truncate the audio tail.
+  Audio is hard-trimmed to exactly locked_duration via atrim+asetpts
+  before muxing — eliminates any normalization padding accumulated in
+  audio_processor so both streams are frame-accurate at the quality gate.
+  -t locked_duration caps the container as a second safety net.
   Post-encode validation confirms output duration matches locked value.
 """
 
@@ -41,41 +41,77 @@ def encode_video(
              "locked=%.3fs", vdur, adur, drift, expected_duration_s)
 
     burn_subs = ass_path and ass_path.exists()
-    # Use locked duration as hard output cap — never trust -shortest
+
+    # Hard-trim both streams to exactly locked_duration using atrim + asetpts
+    # on the audio filter chain. This eliminates any normalization padding that
+    # accumulated in audio_processor before the quality gate ever sees the file.
     locked_t = ["-t", str(expected_duration_s)] if expected_duration_s > 0 else []
+    if expected_duration_s > 0:
+        audio_trim_filter = f"atrim=0:{expected_duration_s},asetpts=PTS-STARTPTS"
+    else:
+        audio_trim_filter = None
 
     if burn_subs:
-        # ASS path: forward slashes, single-quoted to handle spaces and colons
         safe_ass = "'" + str(ass_path).replace("\\", "/") + "'"
-        ass_filter = f"ass={safe_ass}"
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", str(video_path),
-            "-i", str(audio_path),
-            "-map",  "0:v",
-            "-map",  "1:a",
-            "-vf",   ass_filter,
-            "-c:v",  "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
-            "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
-        ] + locked_t + [
-            "-movflags", "+faststart",
-            str(output_path),
-        ]
+        if audio_trim_filter:
+            # Combine ASS subtitle burn with audio trim in one pass
+            filter_complex = (
+                f"[0:v]ass={safe_ass}[vout];"
+                f"[1:a]{audio_trim_filter}[aout]"
+            )
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", str(video_path),
+                "-i", str(audio_path),
+                "-filter_complex", filter_complex,
+                "-map", "[vout]",
+                "-map", "[aout]",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+            ] + locked_t + [
+                "-movflags", "+faststart",
+                str(output_path),
+            ]
+        else:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", str(video_path),
+                "-i", str(audio_path),
+                "-map", "0:v", "-map", "1:a",
+                "-vf", f"ass={safe_ass}",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-movflags", "+faststart",
+                str(output_path),
+            ]
         timeout = max(300, 120 + int(expected_duration_s * 1.5))
         log.info("  Encoding [%s] + ASS subtitles …", profile)
     else:
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", str(video_path),
-            "-i", str(audio_path),
-            "-map",  "0:v",
-            "-map",  "1:a",
-            "-c:v",  "copy",
-            "-c:a",  "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
-        ] + locked_t + [
-            "-movflags", "+faststart",
-            str(output_path),
-        ]
+        if audio_trim_filter:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", str(video_path),
+                "-i", str(audio_path),
+                "-map", "0:v",
+                "-filter_complex", f"[1:a]{audio_trim_filter}[aout]",
+                "-map", "[aout]",
+                "-c:v", "copy",
+                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+            ] + locked_t + [
+                "-movflags", "+faststart",
+                str(output_path),
+            ]
+        else:
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", str(video_path),
+                "-i", str(audio_path),
+                "-map", "0:v", "-map", "1:a",
+                "-c:v", "copy",
+                "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
+                "-movflags", "+faststart",
+                str(output_path),
+            ]
         timeout = max(120, 60 + int(expected_duration_s * 0.5))
         log.info("  Muxing [%s] …", profile)
 
