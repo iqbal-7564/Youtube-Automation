@@ -253,5 +253,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "ryYFJbxi3-w",
+    "intent": "SCIENCE",
+    "title": " Scientists Found Music in Brain",
+    "hook_text": "90% of brain activity is music-like patterns.",
+    "total_duration_seconds": 163.04,
+    "scene_count": 23,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-01T23:41:10.544459",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
