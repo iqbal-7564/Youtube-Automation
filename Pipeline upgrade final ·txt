@@ -1,0 +1,989 @@
+================================================================================
+MINDBLOWNFACTS PIPELINE — FULL UPGRADE SPECIFICATION
+Final document: original analysis + corrections + missing gap solutions
+================================================================================
+================================================================================
+STEP 1 — TOPIC INTELLIGENCE
+================================================================================
+
+CURRENT SYSTEM COMPONENTS
+--------------------------
+- Google Trends (demand signal)
+- YouTube Autocomplete (search demand signal)
+- Groq topic expansion (angle generation)
+- Duplicate filtering
+- Saturation filtering
+- Velocity clustering
+
+PROBLEM 1 — Google Trends is not a YouTube viral signal
+--------------------------------------------------------
+Many Google searches never become viral Shorts.
+Examples: tax filing deadline, election polling, weather alerts.
+These trend hugely on Google but perform terribly as Shorts topics.
+
+CORRECT SOLUTION — Revised viral score formula:
+
+    viral_score =
+        0.6* youtube_trend
+      + 0.30 * google_trend
+      + 0.10 * novelty_score
+
+
+
+PROBLEM 2 — Seed bank is too generic
+--------------------------------------
+Current seeds like "black holes", "roman empire", "volcanoes" have millions
+of existing videos. Need discovery-level specificity.
+
+CORRECT SOLUTION — Discovery database with novelty scoring:
+
+Store each candidate as:
+{
+  "title": "...",
+  "year": 2025,
+  "source": "...",
+  "novelty_score": 0-100
+}
+
+TWO-SIGNAL NOVELTY SCORE (replaces keyword-only approach):
+- 30% lexical signal: match words like discovered/revealed/hidden/secret/ancient/
+  impossible/mystery/unknown/lost/forbidden
+- 70% recency signal: check Wikipedia API for recent page edits on the topic
+  Endpoint: /w/api.php?action=query&list=recentchanges&rctitle={topic}
+  Score: 100 if edited today, linear decay to 0 at 90+ days with no edits
+
+NOTE: Pure keyword matching for novelty (originally proposed) is fragile.
+"Secret Celebrity Diets" scores high but has zero factual novelty.
+"Neutron star merger confirmed" scores low but is genuinely novel.
+Recency signal from Wikipedia corrects this.
+
+PROBLEM 3 — Saturation filter is wrong
+----------------------------------------
+Current: totalResults > 50000 -> reject
+Problem: YouTube search count is a corpus size signal, not a competitive
+density signal. "Black holes" has millions of results but is still viral.
+
+CORRECT SOLUTION — View velocity of top results:
+
+Fetch top 10 results:
+  search.list?q={title}&type=video&order=relevance&maxResults=10
+
+Retrieve statistics.viewCount per video. Compute median.
+
+Decision thresholds:
+  Median views < 100,000     -> PASS (low competition)
+  Median views 100k-500k     -> PASS with -10 viral_score penalty
+  Median views > 500,000     -> REJECT
+
+PROBLEM 4 — Missing novelty score
+-----------------------------------
+See Problem 2 solution above (two-signal novelty score).
+Topics scoring below 60/100 on novelty should be rejected.
+
+PROBLEM 5 — Missing curiosity gap validation
+---------------------------------------------
+Groq may generate titles like "Amazing Ocean Facts" — not clickable.
+
+CORRECT SOLUTION — title_score() function checking:
+- Curiosity gap: does title imply hidden or forbidden knowledge?
+- Surprise: does it violate expectation?
+- Contradiction: does it attack a widely-held belief?
+- Mystery: does it leave an open question?
+
+Example scores:
+  "Scientists Found Something Alive Under Antarctica"  -> 95/100  (publish)
+  "Interesting Antarctica Facts"                       -> 15/100  (reject)
+
+Reject titles scoring below 70/100.
+
+PROBLEM 6 — No fact verification
+----------------------------------
+Groq can hallucinate. Example: "The Sun Loses 10 Billion Tons Per Second"
+is factually incorrect but plausible-sounding.
+
+CORRECT SOLUTION — Verify against:
+- Wikipedia API: /w/api.php?action=query&titles={topic}&prop=extracts
+- NASA API: api.nasa.gov (for space category)
+- Encyclopedia Britannica API (for general facts)
+
+Flag topics where key claims cannot be verified. Do not publish unverified
+factual claims.
+
+PROBLEM 7 — Historical performance learning is too coarse
+----------------------------------------------------------
+Current system stores only category-level performance:
+  SPACE = 70%, HISTORY = 55%
+
+This is too broad to be useful for topic selection.
+
+CORRECT SOLUTION — Sub-topic level performance history:
+
+{
+  "black_holes": 92,
+  "mars": 88,
+  "roman_empire": 34,
+  "vikings": 41
+}
+
+Rank future seeds by sub-topic performance score.
+Seeds matching high-scoring sub-topics get priority weight boost.
+
+PROBLEM 8 — Missing competitor mining
+---------------------------------------
+Analyzing top facts channels is one of the highest-ROI upgrades available.
+
+CORRECT SOLUTION — Use YouTube Data API v3:
+  videos.list?chart=mostPopular&videoCategoryId={id}&maxResults=50
+
+For each result compute view velocity:
+  velocity = views / hours_since_upload
+
+High velocity = what is working RIGHT NOW.
+Generate adjacent topics from high-velocity videos using Groq.
+
+This does NOT require scraping. It uses the official API.
+
+PROBLEM 9 — Missing topic cluster engine
+-----------------------------------------
+Current pipeline generates independent videos with no continuity.
+
+CORRECT SOLUTION — Topic cluster sequences:
+
+Example chain:
+  Ancient Egypt -> Pyramids -> Lost Technology -> Hidden Chambers
+
+Benefits:
+- Returning viewers
+- Watch time increase
+- Subscription growth
+
+Store active clusters in logs/topic_clusters.json.
+When a video in a cluster performs above 2x average, promote next cluster
+topic to velocity queue.
+
+PROBLEM 10 — Missing viral opportunity score
+---------------------------------------------
+CORRECT SOLUTION — Combined viral score formula:
+
+    viral_score =
+        0.30 * trend_score
+      + 0.20 * youtube_search_score
+      + 0.15 * novelty_score
+      + 0.15 * curiosity_score
+      + 0.10 * performance_score
+      + 0.10 * competitor_score
+
+Reject topics with viral_score < 75.
+
+================================================================================
+STEP 2 — SCRIPT GENERATION
+================================================================================
+
+WHAT THIS STEP DOES
+--------------------
+Input:  { "title": "...", "description": "...", "intent": "SCIENCE" }
+Output: Full YouTube script + metadata in structured JSON
+
+Handles:
+- Video length selection (shorts/standard/long)
+- Narrative template selection (4 rotating)
+- Hook formula selection (6 rotating)
+- Full structured prompt construction
+- Groq LLM call (llama-3.3-70b-versatile)
+- Fallback system if AI fails
+
+Output structure:
+{
+  "narrative_template": "classic",
+  "segments": [
+    { "HOOK": "..." },
+    { "TENSION": "..." },
+    { "CORE": "..." },
+    { "PAYOFF": "..." },
+    { "CLOSE": "..." }
+  ],
+  "full_script": "...",
+  "metadata": { "title": "...", "description": "...", "tags": [...] }
+}
+
+DOES NOT DO: research facts, verify information, fetch images/videos,
+generate voice, edit video, upload content.
+
+UPGRADE — Inject Director Brain context into Step 2 prompt
+-----------------------------------------------------------
+NOTE: The original analysis proposed a separate "Scene Rewriter" module
+as Step 8 with per-scene LLM calls. This is REMOVED. Reasons:
+- 10 extra Groq API calls per 10-scene video
+- 30 extra calls/day at 3 runs/day
+- Breaks timeline lock established at Step 4
+- Step ordering in original diagram was inconsistent with actual main.py
+
+CORRECT APPROACH — Pass Director Brain narrative plan as context
+directly into the Step 2 Groq system prompt. Zero extra API calls.
+
+Implementation:
+    director_context = {
+        "story_role_sequence": [
+            "hook", "rising_action", "peak", "reveal", "resolution"
+        ],
+        "suspense_curve":  [0.75, 0.85, 1.0, 0.50, 0.20],
+        "emotion_curve":   [
+            "excited", "mysterious", "dramatic", "excited", "neutral"
+        ],
+    }
+    system_prompt += f"\n\nDIRECTOR BRIEF:\n{json.dumps(director_context)}"
+
+================================================================================
+STEP 3 — TIMELINE BUILDER
+================================================================================
+
+WHAT THIS STEP DOES (CORRECTLY)
+---------------------------------
+- Scene segmentation engine (HOOK/TENSION/CORE/PAYOFF/CLOSE)
+- Time estimation: _WPS = 2.8 words/sec
+- Persona-based pacing per category
+- Shorts optimization (hook cap, ultra-fast tension intervals)
+- Emotional arc override (forces consistent emotion flow)
+- WOW system integration (detect [WOW], boost scene, auto-WOW fallback)
+- Subtitle word-chunk timing
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Emotional arc override prevents LLM inconsistency
+- Shorts hook cap at 2500ms is correct retention engineering
+- Per-category dwell times match real editor behavior
+- WOW fallback auto-injection prevents empty retention spikes
+
+MINOR ISSUES TO FIX
+--------------------
+1. Intent normalization is fragile:
+   intent_upper = intent.upper()
+   Fix: strip and upper before any lookup, add default fallback
+
+2. Shorts detection is inconsistent — is_shorts_est = est_total_s <= 65
+   conflicts with VIDEO_FORMAT override in edge cases.
+   Fix: VIDEO_FORMAT environment variable takes strict priority.
+   Duration-based detection only applies when VIDEO_FORMAT is unset.
+
+3. _SHORTS_PERSONA_SCALE = 0.45 is hardcoded.
+   This is acceptable now. Flag for Step 14 adaptive learning to evolve.
+
+================================================================================
+STEP 4 — VOICE GENERATOR
+================================================================================
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Engine fallback chain: edge-tts -> ElevenLabs -> gTTS -> silence
+- Emotion-aware TTS tuning per engine
+- 300ms inter-scene silence (600ms at CORE->PAYOFF)
+- Silence applied only to fresh files (prevents stacking)
+- Drift correction: actual_ms from ffprobe drives timeline correction
+- Audio as source of truth (not script timing)
+- Subtitle safety: voice_end_ms = sc["end_ms"] - pad_ms
+- Profile safety: prevents Shorts becoming Standard due to padding drift
+
+ISSUES TO FIX
+--------------
+1. ffprobe fallback returns 0.0 on failure — causes silent timing corruption.
+   Fix: add third fallback using ffmpeg -af astats for sample-based duration.
+
+2. _append_silence() uses concat filter — CPU heavy for large batch runs.
+   CORRECT FIX: Use concat demuxer instead (see Step 9 for full explanation).
+
+3. asyncio.run(_run()) inside loop — breaks with nested event loop in parallel.
+   Fix: reuse event loop or batch all async calls together.
+
+4. No retry inside edge-tts / ElevenLabs — single API glitch drops to lower
+   quality engine immediately.
+   Fix: add 2-attempt retry with 1s backoff before falling to next engine.
+
+5. Silence fallback hides failure signal — video uploads with missing audio.
+   Fix: mark scene as AUDIO_FAILURE flag in timeline. Quality gate (Step 11)
+   must check for this flag and block upload.
+
+================================================================================
+STEP 5 — SCENE PLANNER
+================================================================================
+
+WHAT THIS STEP DOES
+--------------------
+Converts: text + category + segment + emotion
+Into:     ranked visual keywords + motion intent + focus rules
+
+Acts as the first real visual intelligence layer between script and media.
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Two-layer visual system (narrative trigger override + category banks)
+- _NARRATIVE_TRIGGERS: 12 patterns mapping script text to visual keywords
+- Segment-aware visuals (HOOK/TENSION/CORE/PAYOFF each have different intent)
+- motion_emotion tagging controls zoom speed and camera behavior downstream
+- Text-to-visual override: even wrong category gets corrected by script text
+
+ISSUES TO FIX
+--------------
+1. Regex trigger system is fragile:
+   Current: re.search(r"died|extinct|destroyed|collapse", text_lower)
+   Misses: "vanished", "wiped out", "obliterated" (synonyms)
+   Near-term fix: expand regex patterns with synonym groups per trigger.
+   Long-term fix: replace with embedding-based semantic detection.
+
+2. Keyword quality is static strings — becomes repetitive across videos.
+   Fix: add novelty rotation — penalize keywords used in last 10 videos.
+   Store used keywords in logs/used_visual_keywords.json (rolling 10-video window).
+
+3. No keyword scoring system — currently picks first 3 without ranking.
+   Fix: score by novelty (not in recent 10 videos = +20), trend match (+10),
+   emotion alignment (+15). Pick top 3 by score.
+
+4. CLOSE scene visual is a placeholder string "CLOSE" — not a visual direction.
+   Fix: replace with emotion-matched keywords:
+     "sunset cinematic fade wide aerial"   (for calm/payoff close)
+     "logo reveal soft glow dark blue"     (for branded close)
+     "calm aerial zoom out landscape"      (for neutral close)
+
+================================================================================
+STEP 5b — CINEMATIC PLANNER
+================================================================================
+
+WHAT THIS STEP DOES
+--------------------
+Converts: scene text + emotion + segment
+Into:     shot_type + pacing + suspense_level + contrast_shot metadata
+
+Acts as the director layer between scene planner and visual fetch.
+
+Shot types: WIDE / AERIAL / MEDIUM / CLOSE / EXTREME_CLOSE
+Pacing:     FAST_CUT / HOLD / SLOW_BUILD / IMPACT
+Suspense:   0.0 to 1.0 (peaks at 1.0 on WOW scenes)
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Shot pools per segment (HOOK=["WIDE","CLOSE"], CORE=["MEDIUM","CLOSE",...])
+- WOW override: shot=EXTREME_CLOSE, pacing=IMPACT, suspense=1.0
+- Anti-repetition: no 3+ consecutive identical shot types
+- Contrast logic: WIDE after CLOSE for visual breathing room
+- PAYOFF always gets AERIAL/WIDE (visual release)
+- Suspense arc model matches real YouTube watch curves
+
+ISSUES TO FIX
+--------------
+1. No dynamic adaptation from analytics.
+   cinematic_planner.py does NOT read adaptive_params.json.
+   Fix: add signal-to-shot mapping:
+     early_drop     -> increase FAST_CUT frequency in HOOK/TENSION
+     mid_drop       -> increase CLOSE shots in CORE
+     high_retention -> allow more AERIAL slow scenes in PAYOFF
+
+2. Shot pools are deterministic — same input produces same output every time.
+   Fix: add weighted random selection within pool:
+     weights = [0.5, 0.3, 0.2] for pool of 3 shots
+   Rotate weights based on last video's shot distribution.
+
+3. Suspense is linear between segments, not micro-oscillating.
+   Real retention curves have micro-peaks every 2-4 seconds.
+   Fix: add scene-level suspense jitter within each segment:
+     scene_suspense = base_suspense + random.uniform(-0.1, 0.1)
+   Clamp to [0.0, 1.0].
+
+4. EXTREME_CLOSE is restricted to WOW scenes only.
+   Fix: allow emotional override trigger — if scene emotion is "dramatic"
+   and suspense_level > 0.7, permit EXTREME_CLOSE even without [WOW].
+
+5. Motion preset selection is indirect — maps shot -> motion_emotion only.
+   Motion should also consider pacing and scene duration.
+   Fix: add duration-aware motion selection:
+     duration < 2000ms + FAST_CUT -> impact_zoom or push_in only
+     duration > 4000ms + HOLD     -> slow_drift or reveal_pull only
+
+================================================================================
+STEP 6 — VISUAL FETCHER
+================================================================================
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Tries all 3 ranked keywords before category fallbacks
+- Portrait orientation enforced for Shorts
+- Query-level deduplication (used_prompts.json)
+- Image-level deduplication (used_images.json MD5)
+- Dual source: Pexels -> Pixabay fallback -> black clip
+- _UNIQUE_MODIFIERS for retry with mutated intent
+- Groq query optimizer: scene metadata -> stock search query
+
+ISSUE TO FIX
+------------
+Pixabay API key is using GROQ_API_KEY in the code.
+These are different services with different keys.
+Fix: add PIXABAY_API_KEY as separate secret (already listed in README secrets).
+Verify the key is being read from the correct environment variable.
+
+================================================================================
+STEP 7 — GLOBAL DIRECTOR BRAIN
+================================================================================
+
+PROBLEM BEING SOLVED
+---------------------
+Each module currently makes local decisions with no awareness of full story flow.
+Result: locally optimal scenes, potentially incoherent global pacing rhythm.
+
+CORRECT SOLUTION — Global story state above all steps
+
+story_state = {
+    "emotion_curve":    [],
+    "suspense_curve":   [],
+    "visual_density":   [],
+    "pacing_map":       [],
+}
+
+Assign story role per scene:
+    scene.story_role = one of:
+        "setup", "hook", "rising_action", "peak", "reveal", "resolution"
+
+Director Brain gives constraints to existing modules:
+    scene_directive = {
+        "emotion_target":   "fear -> curiosity",
+        "visual_density":   "high",
+        "shot_intensity":   0.8,
+        "pacing":           "FAST_CUT",
+    }
+
+Global suspense curve (enforced per scene):
+    HOOK     = 0.75
+    TENSION  = 0.85
+    CORE     = 0.60
+    PAYOFF   = 0.40
+    CLOSE    = 0.20
+
+Visual theme consistency (all scenes follow same film identity):
+    visual_theme = {
+        "color_tone":  "dark / warm / cinematic blue",
+        "lighting":    "low-key / high contrast",
+        "lens_style":  "cinematic 35mm",
+    }
+
+INTEGRATION — Director Brain context injected into Step 2 prompt (not Step 8):
+See Step 2 upgrade section above for implementation code.
+
+================================================================================
+STEP 8 — SCENE REWRITER (REMOVED AS SEPARATE STEP)
+================================================================================
+
+ORIGINAL PROPOSAL: Insert new module between Director Brain and Cinematic Planner
+that rewrites each scene via per-scene LLM calls.
+
+THIS IS REMOVED. Reasons:
+- 10 extra Groq API calls per 10-scene video
+- 30 extra calls/day at 3 runs/day = new rate-limit surface
+- Breaks Step 4 timeline lock (rewritten text diverges from locked durations)
+- Integration diagram in original analysis was inconsistent with main.py step order
+
+CORRECT REPLACEMENT: Director context injected into Step 2 system prompt.
+One LLM call. Globally aware. No downstream lock violations.
+See Step 2 upgrade section for implementation.
+
+================================================================================
+STEP 9 — AUDIO PROCESSING
+================================================================================
+
+WHAT THIS STEP REALLY IS
+--------------------------
+Audio Truth and Stability Engine.
+Ensures: voice consistency, loudness standardization, timing integrity,
+production-safe mixing (SFX + music).
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Two-pass loudnorm (Pass 1: analysis, Pass 2: deterministic apply)
+  Single-pass loudnorm = unstable loudness. Your approach is broadcast-level.
+- Audio as source of truth: real_dur = _probe(norm_wav) drives all timing
+- apad safety: apad=whole_dur=<clean_dur> prevents silent sample trimming
+- Fail fast: raise RuntimeError on drift rather than log-and-continue
+- Multi-layer fallback audio system (TTS -> silence -> QA flag)
+
+ISSUES TO FIX
+--------------
+1. concat filter uses aresample=async=1 — introduces non-deterministic micro-drift
+   that accumulates across scenes. CPU heavy for large scene counts.
+
+   ORIGINAL PROPOSED FIX (WRONG): Use afade + apad instead.
+   afade controls volume envelope only. It cannot concatenate audio streams.
+   apad pads a single stream. Neither replaces concat. This was a factual error.
+
+   CORRECT FIX — Replace concat filter with concat demuxer:
+
+       # Build list file — one line per normalised scene WAV
+       for f in scene_*.wav:
+           echo "file 'f'" >> concat_list.txt
+
+       # Concat demuxer: no resampling, no filter graph, no drift accumulation
+       ffmpeg -f concat -safe 0 -i concat_list.txt -c copy merged.wav
+
+   Requirement: all scene WAVs must share same sample rate and channel count.
+   Your existing normalisation step already enforces this.
+
+2. detect_audio_gaps uses ffmpeg silencedetect — noisy signal, false positives
+   in background music, cannot distinguish intentional silence vs error.
+   Fix: use gap detection only on voice track before music mix, not on final mix.
+
+3. SFX start_ms values can drift after normalisation shifts scene durations.
+   Fix: re-derive SFX timestamps from final audio timeline after normalisation
+   completes, not from the pre-normalisation scene start_ms values.
+
+4. music mixing uses passed duration_s parameter.
+   Fix: derive duration from final audio file (ffprobe) after normalisation.
+   Audio is source of truth — do not trust parameters at this stage.
+
+ARCHITECTURE NOTE
+-----------------
+Step 9 is doing 3 jobs: normalisation, timing correction, pre-QA.
+Recommended conceptual split (no code change required immediately):
+  9A — Audio Processor: standardise, merge, normalise, mix SFX/music
+  9B — Audio Sync Validator: detect drift, detect gaps, validate duration rules
+  9C — Audio QA: loudness checks, clipping detection, silence analysis
+
+================================================================================
+STEP 10 — ENCODING
+================================================================================
+
+WHAT THIS STEP REALLY IS
+--------------------------
+Final media consistency engine.
+Ensures: video timeline + audio timeline + subtitles = one deterministic MP4.
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- Dual-mode: subtitle mode (full re-encode, CRF 18) / fast mux (-c:v copy)
+- Audio as reference timeline (not video)
+- Dynamic timeout scaling: 120 + expected_duration_s * factor
+- Stream mapping: -map 0:v -map 1:a (explicit, not implicit)
+- Faststart optimization for web delivery
+
+ISSUES TO FIX
+--------------
+1. -shortest flag is risky.
+   If video stream ends fractionally early (xfade rounding), -shortest silently
+   truncates audio tail.
+
+   ORIGINAL PROPOSED FIX: Keep apad but use -c:a aac.
+   THIS IS WRONG. Step 9 already guarantees exact duration. Adding apad in the
+   encoder pads already-padded audio, creating drift on top of drift.
+
+   CORRECT FIX — Remove apad from encoder. Use -t locked_duration instead:
+
+       cmd = [
+           "ffmpeg", "-y",
+           "-i", str(video_path),
+           "-i", str(audio_path),
+           "-map", "0:v", "-map", "1:a",
+           "-c:v", "copy", "-c:a", "aac",
+           "-t", str(locked_duration),       # enforce exact duration
+           "-movflags", "+faststart",
+           str(output_path),
+       ]
+
+2. No post-encode duration validation.
+   Pre-encode drift check exists. Post-encode check on final output is missing.
+
+   Fix — Add after encoding completes:
+
+       out_dur = _probe(output_path)
+       if abs(out_dur - locked_duration) > 0.5:
+           raise RuntimeError(
+               f"Post-encode duration mismatch: "
+               f"got {out_dur:.3f}s, expected {locked_duration:.3f}s"
+           )
+
+3. ASS path escaping is fragile on paths with spaces or colons.
+   Current: ass_filter = f"ass={path}"
+   Fix:
+       ass_filter = "ass='" + str(ass_path).replace("\\", "/") + "'"
+
+4. expected_duration_s is computed but only used for timeout and logging.
+   It is NOT used to enforce final video length.
+   Fix: use it in post-encode validation (see item 2 above).
+
+================================================================================
+STEP 11 — QUALITY GATE
+================================================================================
+
+WHAT THIS STEP REALLY IS
+--------------------------
+Final release authority layer. Decides: upload or reject.
+Upload decision should be: UPLOAD / UPLOAD_WARN / REJECT (not binary pass/fail).
+
+CONFIRMED CORRECT DESIGN DECISIONS
+------------------------------------
+- 10-check structured QA suite (file integrity, resolution, duration, audio sync,
+  loudness, subtitles, freeze, voice quality, dropped frames, audio gaps)
+- Tolerance values are system-aware (duration +-2.5s, sync +-0.3s, gaps >2.0s)
+- WARNING vs FAIL separation (voice_quality = WARNING only, does not block upload)
+- Dynamic ffprobe timeout scaling (t_probe = dur_s * 0.4)
+- Freeze detection + dropped frame detection
+
+ISSUES TO FIX
+--------------
+1. QA mutates pipeline state — modifies ln["end_ms"] directly.
+   A quality gate must be READ-ONLY.
+
+   Fix: return a report dict instead of modifying timeline:
+       return {
+           "ok": True,
+           "clamped_subtitles": [...],   # proposed corrections only
+           "checks": {...},
+       }
+   Let the caller decide whether to apply corrections.
+
+2. LUFS parsing via text grep is fragile across ffmpeg versions.
+   Current: if "I:" in line and "LUFS" in line
+
+   ORIGINAL PROPOSED FIX: Use mpdecimate.
+   THIS IS WRONG. mpdecimate is an encoder filter that drops frames during
+   encoding. It modifies output. Using it in QA would corrupt the validated video.
+
+   CORRECT FIX — Use print_format=json for loudnorm:
+
+       cmd = [
+           "ffmpeg", "-i", str(audio_path),
+           "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+           "-f", "null", "-"
+       ]
+       result = subprocess.run(cmd, capture_output=True, text=True)
+       data = json.loads(result.stderr.split("\n{")[1].split("}")[0] + "}")
+       integrated_lufs = float(data["input_i"])
+
+3. Freeze detection uses repeated PTS comparison — misses visual freezes with
+   same frame but different PTS, encoding duplicates, and scene holds.
+
+   ORIGINAL PROPOSED FIX: Use mpdecimate. THIS IS WRONG (see item 2 above).
+
+   CORRECT FIX — Use ffmpeg freezedetect filter in analysis mode (no re-encode):
+
+       ffmpeg -i output.mp4 -vf freezedetect=n=-60dB:d=0.5 -f null - 2>&1 \
+         | grep freeze_duration
+
+   Threshold d=0.5 flags any freeze >= 500ms, matching existing QA threshold.
+
+4. Binary pass/fail should become a quality score.
+
+   Fix — Score each check (example weights):
+       scores = {
+           "file_integrity": 15,
+           "resolution":     10,
+           "duration":       15,
+           "audio_sync":     15,
+           "audio_level":    10,
+           "subtitles":       5,
+           "freeze_frame":   10,
+           "dropped_frames":  5,
+           "audio_gaps":     10,
+           "voice_quality":   5,   # warning only — partial score deduction
+       }
+       quality_score = sum(scores[k] for k in passed_checks)
+
+   Upload decision tiers:
+       quality_score >= 90  ->  UPLOAD
+       quality_score 75-89  ->  UPLOAD_WARN (log degradation)
+       quality_score < 75   ->  REJECT
+
+5. No cross-check between Step 10 output and Step 11 input.
+   Step 11 validates video_path but does not verify it is the final encoded file.
+   Fix: pass explicit encoded_output_path from Step 10 into Step 11.
+   Validate that file modification time is after encoding started.
+
+================================================================================
+MISSING GAP 1 — NO CIRCUIT BREAKER (RETRY BUDGET)
+================================================================================
+
+PROBLEM
+--------
+Pipeline retries each video up to 3 times on quality failure.
+No global retry budget exists.
+3 consecutive videos failing all 3 attempts = 9 full render cycles.
+This silently exhausts GitHub Actions runner minutes and API quota.
+
+SOLUTION — Circuit breaker in main.py
+
+Write logs/circuit_state.json. Track consecutive full failures.
+Suspend pipeline after N=3 consecutive full failures.
+Auto-reset after 24-hour cooldown.
+
+Implementation:
+
+    def check_circuit_breaker(threshold=3):
+        state_path = LOG_DIR / "circuit_state.json"
+        if state_path.exists():
+            state = json.loads(state_path.read_text())
+            fails = state.get("consecutive_full_failures", 0)
+            if fails >= threshold:
+                last_fail = state.get("last_failure_ts", 0)
+                if time.time() - last_fail < 86400:  # 24hr cooldown
+                    raise SystemExit(
+                        f"Circuit open: {fails} consecutive failures. "
+                        "Wait 24h or reset logs/circuit_state.json manually."
+                    )
+
+    def record_full_failure():
+        state_path = LOG_DIR / "circuit_state.json"
+        state = (json.loads(state_path.read_text())
+                 if state_path.exists() else {})
+        state["consecutive_full_failures"] = (
+            state.get("consecutive_full_failures", 0) + 1
+        )
+        state["last_failure_ts"] = time.time()
+        state_path.write_text(json.dumps(state, indent=2))
+
+    def record_success():
+        state_path = LOG_DIR / "circuit_state.json"
+        state_path.write_text(
+            json.dumps({"consecutive_full_failures": 0}, indent=2)
+        )
+
+Call check_circuit_breaker() at the start of main.py before Step 1.
+Call record_full_failure() when all 3 retry attempts fail.
+Call record_success() after successful upload in Step 13.
+
+================================================================================
+MISSING GAP 2 — adaptive_params.json HAS NO SCHEMA VALIDATION
+================================================================================
+
+PROBLEM
+--------
+adaptive_params.json is written by Step 14 and read by Step 3 with zero
+schema validation. A corrupted write (disk full, network interrupt, partial
+JSON flush) produces silent data corruption. timeline_builder.py reads the
+malformed file and produces wrong scene timings for every subsequent video
+until manually fixed. No error is raised.
+
+SOLUTION — Schema validation + atomic write
+
+    ADAPTIVE_SCHEMA = {
+        "hook_cap_ms":      (int,   500,  3000),
+        "tension_interval": (int,   1000, 5000),
+        "core_interval":    (int,   2000, 8000),
+        "shorts_scale":     (float, 0.30, 0.70),
+    }
+
+    def validate_adaptive_params(params: dict) -> dict:
+        """Returns validated params. Falls back to defaults on any violation."""
+        defaults = {k: v[1] for k, v in ADAPTIVE_SCHEMA.items()}
+        for key, (typ, lo, hi) in ADAPTIVE_SCHEMA.items():
+            val = params.get(key)
+            if not isinstance(val, (int, float)) or not (lo <= val <= hi):
+                logging.warning(
+                    "adaptive_params[%s]=%r invalid -- using default %s",
+                    key, val, defaults[key]
+                )
+                params[key] = defaults[key]
+        return params
+
+    def save_adaptive_params(params: dict, path):
+        """Atomic write: temp file + rename prevents partial-write corruption."""
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(params, indent=2))
+        tmp.replace(path)   # atomic on POSIX, near-atomic on Windows
+
+    def load_adaptive_params(path) -> dict:
+        if not path.exists():
+            return {k: v[1] for k, v in ADAPTIVE_SCHEMA.items()}
+        try:
+            raw = json.loads(path.read_text())
+            return validate_adaptive_params(raw)
+        except json.JSONDecodeError:
+            logging.error("adaptive_params.json is corrupt -- using defaults")
+            return {k: v[1] for k, v in ADAPTIVE_SCHEMA.items()}
+
+================================================================================
+MISSING GAP 3 — VELOCITY QUEUE HAS NO TTL
+================================================================================
+
+PROBLEM
+--------
+Seeds written to logs/velocity_queue.json after a viral video are consumed
+at "highest priority" on the next pipeline run. There is no expiry (TTL).
+A topic trending 3 weeks ago is not a high-priority seed today.
+Stale seeds displace genuinely trending current content indefinitely.
+
+SOLUTION — 72-hour TTL on all velocity queue entries
+
+In Step 14 (update_velocity_queue):
+
+    def write_velocity_seeds(seeds: list):
+        now = time.time()
+        queue_path = LOG_DIR / "velocity_queue.json"
+        existing = (json.loads(queue_path.read_text())
+                    if queue_path.exists() else [])
+        # Evict expired entries (TTL = 72 hours)
+        fresh = [e for e in existing if now - e["ts"] < 72 * 3600]
+        fresh += [{"seed": s, "ts": now} for s in seeds]
+        queue_path.write_text(json.dumps(fresh, indent=2))
+
+In Step 1 (topic_selector):
+
+    def read_velocity_seeds() -> list:
+        now = time.time()
+        queue_path = LOG_DIR / "velocity_queue.json"
+        if not queue_path.exists():
+            return []
+        entries = json.loads(queue_path.read_text())
+        # Only return seeds younger than 72 hours
+        return [e["seed"] for e in entries if now - e["ts"] < 72 * 3600]
+
+================================================================================
+MISSING GAP 4 — PEAK-HOUR SLEEP BURNS RUNNER MINUTES
+================================================================================
+
+PROBLEM
+--------
+Step 13 (uploader.py) sleeps up to 25 minutes to align upload with peak
+audience hours. GitHub Actions bills runner minutes during sleep.
+
+At 3 runs/day: up to 75 wasted minutes/day = ~2,250 minutes/month.
+GitHub Actions free tier = 2,000 minutes/month.
+This single sleep alone can exhaust the entire free quota.
+
+SOLUTION — Move sleep outside the runner
+
+Option A (simplest — static peak hours):
+Remove the in-process sleep entirely.
+Schedule upload as a separate GitHub Actions workflow triggered by the render
+job's completion via workflow_run, using a cron offset targeting peak hour.
+
+    # .github/workflows/upload_trigger.yml
+    on:
+      workflow_run:
+        workflows: ["MindBlownFacts Video Pipeline"]
+        types: [completed]
+
+    jobs:
+      upload:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        steps:
+          - uses: actions/checkout@v4
+          - name: Upload to YouTube
+            run: python pipeline/scripts/uploader.py --skip-sleep
+
+Option B (dynamic peak hours):
+Remove in-process sleep. At end of render, write completed video path and
+target upload timestamp to logs/pending_upload.json.
+Add a lightweight cron job (every 5 min) that checks pending_upload.json
+and triggers upload only when target time is reached.
+Runner minutes consumed per check: under 1 minute.
+
+    # End of render pipeline — write pending upload record
+    pending = {
+        "video_path": str(output_path),
+        "target_ts":  peak_hour_timestamp,   # from existing peak_hours.json
+        "created_ts": time.time(),
+    }
+    (LOG_DIR / "pending_upload.json").write_text(json.dumps(pending, indent=2))
+
+    # Separate lightweight uploader job (runs every 5 min via cron)
+    pending_path = LOG_DIR / "pending_upload.json"
+    if pending_path.exists():
+        record = json.loads(pending_path.read_text())
+        if time.time() >= record["target_ts"]:
+            upload(record["video_path"])
+            pending_path.unlink()   # clear after upload
+
+================================================================================
+IMPLEMENTATION SEQUENCE — ORDERED BY ROI / EFFORT RATIO
+================================================================================
+
+Each item is independent and can be shipped without blocking others.
+
+DAY 1 (all low effort, high impact)
+-------------------------------------
+1. GAP 4 — Remove in-process sleep (uploader.py + new workflow_run yml)
+   Zero risk. Immediately recovers runner minute budget.
+   Required before anything else consumes more CI capacity.
+
+2. GAP 2 — adaptive_params schema validation + atomic write
+   10-20 lines. Prevents silent pipeline corruption that invalidates all
+   subsequent analytics.
+
+3. GAP 3 — Velocity queue TTL (72 hours)
+   ~10 lines. Prevents stale seeds displacing live trends.
+
+DAY 2
+------
+4. GAP 1 — Circuit breaker (3 failures = 24hr cooldown)
+   Prevents runaway API spend and runner exhaustion on cascading failures.
+
+5. STEP 10 — Remove apad from encoder + add -t locked_duration
+   + add post-encode duration validation
+   Fixes over-reliance on -shortest and adds missing output QA check.
+
+DAY 3
+------
+6. STEP 1 — Saturation filter replacement
+   Replace totalResults check with view-velocity check (top 10 results,
+   median views, three-tier decision). One extra videos.list API call
+   per candidate topic.
+
+7. STEP 9 — Replace concat filter with concat demuxer
+   Eliminates async resampling drift. All WAVs already normalised to
+   same sample rate by existing pipeline step.
+
+DAY 4
+------
+8. STEP 11 — Non-mutating QA refactor
+   + quality score 0-100 with UPLOAD/UPLOAD_WARN/REJECT tiers
+   + replace text LUFS grep with print_format=json
+   + replace freeze detection with freezedetect filter
+
+DAY 5
+------
+9. STEP 1 — Competitor mining via YouTube Data API v3
+   Query videos.list for top facts channels.
+   Compute view velocity per video.
+   Inject as 10% signal into viral_score formula.
+
+WEEK 2
+-------
+10. STEPS 7 + 2 — Global director brain folded into Step 2 prompt
+    Design story_state schema.
+    Inject as context into Groq call in script_generator.py.
+    No new pipeline steps. No new API calls.
+
+DEFERRED (high effort, medium impact)
+---------------------------------------
+11. Replace regex in scene_planner.py with embedding-based semantic detection
+    Only after items 1-10 are shipped and stable.
+
+12. Parallel scene rendering (asyncio + multiprocessing)
+    Only if GitHub Actions minutes are not the bottleneck.
+
+================================================================================
+DELETED CLAIMS REFERENCE — WHAT WAS REMOVED AND WHY
+================================================================================
+
+CLAIM: TikTok trend scraping at 10% of viral_score
+REASON REMOVED: No public API. Scraping blocked at network layer.
+REPLACED WITH: Reddit Rising JSON feeds (no API key, stable, relevant)
+
+CLAIM: Use afade + apad instead of concat filter (Step 9)
+REASON REMOVED: afade controls volume envelope only, cannot concatenate streams.
+apad pads a single stream. Neither replaces concat. Factual error.
+REPLACED WITH: concat demuxer (-f concat -safe 0 -c copy)
+
+CLAIM: Use mpdecimate for freeze detection (Step 11)
+REASON REMOVED: mpdecimate is an encoder filter that drops frames during encoding.
+Using it in QA would re-encode and corrupt the validated video.
+REPLACED WITH: freezedetect filter in analysis mode (-f null -)
+
+CLAIM: Keep apad in fast mux mode, use -c:a aac to make it safer (Step 10)
+REASON REMOVED: Step 9 already guarantees duration. Adding apad in encoder
+pads already-padded audio, creating drift on top of drift.
+REPLACED WITH: Remove apad entirely. Use -t locked_duration instead.
+
+CLAIM: Scene Rewriter as separate Step 8 with per-scene LLM calls
+REASON REMOVED: 10 extra API calls per video. Breaks Step 4 timeline lock.
+Step ordering in original diagram was wrong relative to actual main.py.
+REPLACED WITH: Director context injected into Step 2 system prompt. Zero
+extra API calls. No lock violations.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

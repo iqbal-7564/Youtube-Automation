@@ -415,50 +415,6 @@ def _consume_velocity_item(logs_dir: Path, item: dict) -> None:
     except Exception:
         pass
 
-
-# ── Algorithm 4 — Saturation Filter ──────────────────────────────────────────
-
-def _check_saturation(title: str) -> bool:
-    """
-    Returns True if the topic has room to compete (passes filter).
-    Returns False if YouTube is already flooded with > _SATURATION_MAX_RESULTS videos.
-
-    Uses YouTube Data API v3 search.list (100 quota units per call).
-    Passes automatically when YOUTUBE_API_KEY is not set — never blocks production.
-    """
-    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
-    if not api_key:
-        return True
-
-    try:
-        r = requests.get(
-            "https://www.googleapis.com/youtube/v3/search",
-            params={
-                "part":       "snippet",
-                "q":          title,
-                "type":       "video",
-                "maxResults": 1,
-                "key":        api_key,
-            },
-            timeout=10,
-        )
-        if not r.ok:
-            log.debug("YouTube saturation check HTTP %s — passing", r.status_code)
-            return True
-
-        total = r.json().get("pageInfo", {}).get("totalResults", 0)
-        if total > _SATURATION_MAX_RESULTS:
-            log.info("Saturated (%d results) — skipping: %.60s", total, title)
-            return False
-
-        log.debug("Saturation OK (%d results): %.60s", total, title)
-        return True
-
-    except Exception as exc:
-        log.debug("Saturation check error: %s", exc)
-        return True  # fail-open: never block when the API is unreachable
-
-
 # ── Existing helpers (unchanged) ──────────────────────────────────────────────
 
 def _prioritise_categories(
@@ -531,9 +487,8 @@ def _build_topic(category: str, seed: str, produced: list[dict],
         log.debug("Duplicate — skipping: %s", title[:60])
         return None
 
-    # Algorithm 4: reject over-saturated topics before committing
-    if not _check_saturation(title):
-        return None
+
+   
 
     return {
         "title":        title[:200],
