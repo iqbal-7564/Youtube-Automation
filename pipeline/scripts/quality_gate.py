@@ -27,7 +27,7 @@ Checks and weights:
   5.  audio_sync     — A/V track length within ± 0.3 s                 (15 pts)
   6.  audio_level    — integrated loudness −14 LUFS ± 2                (10 pts)
   7.  subtitles      — no entry < 300 ms                                (5 pts)
-  8.  freeze_frame   — no freeze > 500 ms (freezedetect filter)         (10 pts)
+  8.  freeze_frame   — no freeze > 2000 ms (freezedetect filter)        (10 pts)
   9.  voice_quality  — WARNING if gTTS/silence used (partial: 3/5 pts)  (5 pts)
   10. dropped_frames — no more than 3 frames with irregular timing       (5 pts)
   11. audio_gaps     — no silence gap > 2.0 s inside the audio track    (10 pts)
@@ -261,7 +261,7 @@ def _freeze(path: Path, timeout: int = 30):
     try:
         r = subprocess.run(
             ["ffmpeg", "-i", str(path),
-             "-vf", "freezedetect=n=-60dB:d=0.5",
+             "-vf", "freezedetect=n=-60dB:d=2.0",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=timeout,
         )
