@@ -580,5 +580,51 @@
       "audio_gaps": "pass"
     },
     "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.07s"
+  },
+  {
+    "timestamp": "2026-06-02T22:22:29.017795",
+    "topic": "NASA's Mars Water Secret",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 2.87s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 2.87s"
+  },
+  {
+    "timestamp": "2026-06-02T22:29:49.666590",
+    "topic": "NASA's Mars Water Secret",
+    "intent": "SPACE",
+    "attempt": 2,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 2.87s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 2.87s"
   }
 ]

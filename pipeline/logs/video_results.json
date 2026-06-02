@@ -268,5 +268,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "xO3UE8RsMy4",
+    "intent": "SPACE",
+    "title": "NASA's Mars Water Secret",
+    "hook_text": "Mars has liquid water.",
+    "total_duration_seconds": 69.46,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-02T22:30:29.737171",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
