@@ -328,5 +328,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "DxWs2JhNm1k",
+    "intent": "ANIMALS",
+    "title": "Crows Never Forget",
+    "hook_text": "40 years: a crow's grudge",
+    "total_duration_seconds": 69.07,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T08:51:25.155010",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
