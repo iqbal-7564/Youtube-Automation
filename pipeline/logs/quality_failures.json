@@ -672,5 +672,28 @@
       "audio_gaps": "pass"
     },
     "fail_reason": "[audio_sync] A/V drift 0.883s"
+  },
+  {
+    "timestamp": "2026-06-03T05:38:52.450840",
+    "topic": "NASA's Hidden Galaxy Map",
+    "intent": "SPACE",
+    "attempt": 1,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.20s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.20s"
   }
 ]
