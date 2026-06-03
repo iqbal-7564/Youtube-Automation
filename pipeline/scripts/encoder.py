@@ -6,11 +6,12 @@ When ass_path is provided, animated subtitles are burned into the video
 (requires re-encode).  Without ass_path the video stream is copied (faster).
 
 A/V sync contract:
-  Audio is hard-trimmed to exactly locked_duration via atrim+asetpts
-  before muxing — eliminates any normalization padding accumulated in
-  audio_processor so both streams are frame-accurate at the quality gate.
-  -t locked_duration caps the container as a second safety net.
-  Post-encode validation confirms output duration matches locked value.
+  Audio is hard-trimmed to min(video_actual_duration, locked_duration) via
+  atrim+asetpts before muxing.  xfade transitions shorten the assembled
+  video below locked_duration (each overlap eats transition_dur seconds);
+  trimming audio to match the actual video length keeps both streams
+  frame-accurate at the quality gate.
+  Post-encode validation confirms output duration matches the trim target.
 """
 
 import json
@@ -54,10 +55,14 @@ def encode_video(
     else:
         v_preset, v_crf, a_bitrate = "medium", "15", "320k"
 
-    # Hard-trim audio to exactly locked_duration — eliminates normalization padding
-    locked_t = ["-t", str(expected_duration_s)] if expected_duration_s > 0 else []
-    if expected_duration_s > 0:
-        audio_trim_filter = f"atrim=0:{expected_duration_s},asetpts=PTS-STARTPTS"
+    # Trim audio to actual video duration so both streams are frame-accurate.
+    # xfade transitions shorten the assembled video below locked_duration;
+    # using the video's real length as the ceiling eliminates the resulting drift.
+    trim_to = min(vdur, expected_duration_s) if expected_duration_s > 0 and vdur > 0 \
+              else (expected_duration_s or vdur)
+    locked_t = ["-t", str(trim_to)] if trim_to > 0 else []
+    if trim_to > 0:
+        audio_trim_filter = f"atrim=0:{trim_to},asetpts=PTS-STARTPTS"
     else:
         audio_trim_filter = None
 
@@ -139,13 +144,13 @@ def encode_video(
     size_mb = output_path.stat().st_size / 1_048_576
     log.info("  Encoded: %.3fs  %.1f MB → %s", out_dur, size_mb, output_path.name)
 
-    # Post-encode validation — confirms output matches locked duration
-    if expected_duration_s > 0 and out_dur > 0:
-        post_drift = abs(out_dur - expected_duration_s)
+    # Post-encode validation — confirms output matches the actual trim target
+    if trim_to > 0 and out_dur > 0:
+        post_drift = abs(out_dur - trim_to)
         if post_drift > 0.5:
             raise RuntimeError(
                 f"Post-encode duration mismatch: "
-                f"got {out_dur:.3f}s, expected {expected_duration_s:.3f}s "
+                f"got {out_dur:.3f}s, expected {trim_to:.3f}s "
                 f"(drift {post_drift:.3f}s > 0.5s tolerance)"
             )
 
