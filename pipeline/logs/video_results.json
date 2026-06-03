@@ -388,5 +388,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "OSWJ8rJsEtQ",
+    "intent": "CULTURE",
+    "title": "Rome's Chinese Secret",
+    "hook_text": "Everything you know about ancient Rome is wrong",
+    "total_duration_seconds": 62.33,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T19:40:49.697258",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
