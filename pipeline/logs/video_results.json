@@ -343,5 +343,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Nb8Wjzh6Ffw",
+    "intent": "NATURE",
+    "title": "Solar Wind's Dark Secret",
+    "hook_text": "1000 space hurricanes hit Earth every year.",
+    "total_duration_seconds": 225.98,
+    "scene_count": 34,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T09:37:50.759204",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
