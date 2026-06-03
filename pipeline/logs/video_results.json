@@ -358,5 +358,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "5E2e5-blxrk",
+    "intent": "GEOGRAPHY",
+    "title": "Finland's Hidden Lake Secret",
+    "hook_text": "Lakes can hold ancient secrets.",
+    "total_duration_seconds": 36.79,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T13:07:48.575904",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
