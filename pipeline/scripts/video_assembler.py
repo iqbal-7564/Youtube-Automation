@@ -133,6 +133,22 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
 
     assembled = temp_dir / "assembled_video.mp4"
     _concat(scene_outputs, assembled, is_shorts)
+
+    # xfade transitions overlap clips and shorten the assembled video below
+    # locked_duration. Pad the last frame to restore exact locked duration so
+    # audio trim and subtitle timestamps all align at the same end point.
+    locked_s = timeline["total_duration_seconds"]
+    actual_s = _duration(assembled)
+    if locked_s - actual_s > 0.05:
+        log.info("Assembly: actual=%.3fs locked=%.3fs — padding %.3fs",
+                 actual_s, locked_s, locked_s - actual_s)
+        padded = temp_dir / "assembled_video_padded.mp4"
+        _pad_to_duration(assembled, padded, locked_s)
+        if padded.exists() and padded.stat().st_size > 1000:
+            padded.replace(assembled)
+        else:
+            log.warning("Assembly pad failed — subtitle sync may drift at end")
+
     return assembled
 
 
@@ -724,6 +740,17 @@ def _font_dir() -> str:
     import os
     d = "/usr/share/fonts/truetype/dejavu"
     return d if os.path.isdir(d) else ""
+
+
+def _pad_to_duration(src: Path, dst: Path, target_s: float) -> None:
+    """Freeze-pad last frame to reach exactly target_s duration."""
+    subprocess.run([
+        "ffmpeg", "-y", "-i", str(src),
+        "-vf", f"tpad=stop_mode=clone:stop_duration={target_s:.3f}",
+        "-t", str(target_s),
+        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        "-pix_fmt", "yuv420p", "-r", "30", "-an", str(dst),
+    ], capture_output=True, timeout=120)
 
 
 def _run(cmd: list, label: str = "ffmpeg", timeout: int = 300) -> None:
