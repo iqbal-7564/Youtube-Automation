@@ -373,5 +373,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "TrkzK9Ko290",
+    "intent": "OCEAN",
+    "title": "Ocean's Glow Exposed",
+    "hook_text": "What makes a gallon of ocean water glow like 1000 light bulbs?",
+    "total_duration_seconds": 163.64,
+    "scene_count": 21,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T18:26:35.247944",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
