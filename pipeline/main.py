@@ -71,7 +71,7 @@ from timeline_builder    import build_timeline
 from voice_generator     import generate_voices
 from scene_planner       import plan_scenes
 from cinematic_planner   import plan_cinematics
-from visual_fetcher      import fetch_visuals
+from visual_fetcher      import fetch_visuals, _warmup_huggingface
 from video_assembler     import assemble_video
 from subtitle_generator  import generate_subtitles, generate_ass_subtitles
 from audio_processor     import process_audio
@@ -405,6 +405,10 @@ def run_pipeline() -> bool:
         if risk["recommendations"]:
             for rec in risk["recommendations"]:
                 log.warning("  Risk recommendation: %s", rec)
+
+        # ── 5.5: Warm up HuggingFace model before visual fetch ───────────────
+        log.info("[5.5] Warming up HuggingFace image model")
+        _warmup_huggingface()
 
         # ── 6: Visual Fetch ──────────────────────────────────────────────────
         log.info("[6/14] Visual Fetch")

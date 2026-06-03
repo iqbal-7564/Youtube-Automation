@@ -70,6 +70,26 @@ _PORTRAIT_SHOTS = {"EXTREME_CLOSE", "CLOSE"}
 
 # ── Main entry ────────────────────────────────────────────────────────────────
 
+def _warmup_huggingface() -> None:
+    keys = [k for k in _HF_KEYS if k]
+    if not keys:
+        return
+    try:
+        r = requests.post(
+            _HF_MODEL_URL,
+            headers={"Authorization": f"Bearer {keys[0]}"},
+            json={"inputs": "warm up", "parameters": {"num_inference_steps": 1}},
+            timeout=45,
+        )
+        if r.status_code == 503:
+            log.info("HuggingFace warming up — waiting 30s")
+            time.sleep(30)
+        else:
+            log.info("HuggingFace model ready")
+    except Exception as exc:
+        log.debug("HuggingFace warmup: %s", exc)
+
+
 def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     """
     Input:  timeline dict with scenes[] containing visual_keywords, emotion,
