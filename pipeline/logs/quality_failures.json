@@ -741,5 +741,74 @@
       "audio_gaps": "pass"
     },
     "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.80s"
+  },
+  {
+    "timestamp": "2026-06-03T06:25:08.676636",
+    "topic": "Ancient Sleep Secrets",
+    "intent": "HISTORY",
+    "attempt": 1,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.77s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.77s"
+  },
+  {
+    "timestamp": "2026-06-03T06:31:20.335717",
+    "topic": "Ancient Sleep Secrets",
+    "intent": "HISTORY",
+    "attempt": 2,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.77s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.77s"
+  },
+  {
+    "timestamp": "2026-06-03T06:31:51.558302",
+    "topic": "Ancient Sleep Secrets",
+    "intent": "HISTORY",
+    "attempt": 3,
+    "passed": false,
+    "quality_score": 90,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "pass",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "fail: freeze detected: 1 event(s), total 3.77s",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 3.77s"
   }
 ]

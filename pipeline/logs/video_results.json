@@ -313,5 +313,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "0wntuRASiWI",
+    "intent": "HISTORY",
+    "title": "Ancient Sleep Secrets",
+    "hook_text": "Ancient sleep patterns exist. Nobody knows why.",
+    "total_duration_seconds": 48.05,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T06:32:05.714627",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
