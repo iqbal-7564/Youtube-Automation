@@ -403,5 +403,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "YUHVTWo_9aI",
+    "intent": "SPACE",
+    "title": "Mars Volcano Secret",
+    "hook_text": "Mars has a volcano three times Mount Everest's height.",
+    "total_duration_seconds": 53.49,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T22:27:51.775689",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
