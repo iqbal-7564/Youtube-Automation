@@ -298,5 +298,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "18KkmcV5xic",
+    "intent": "SPACE",
+    "title": "NASA Hides 3i Atlas Secret",
+    "hook_text": "A toxic exoplanet exists nearby.",
+    "total_duration_seconds": 64.69,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T06:05:33.708899",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
