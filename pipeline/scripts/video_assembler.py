@@ -161,7 +161,7 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
     if clip_type == "image":
         frames = max(int(dur_s * 30), 30)
         z_expr, x_expr, y_expr = _ken_burns_expr(
-            focus, seg_label, motion_emotion, scene_id
+            focus, seg_label, motion_emotion, scene_id, frames
         )
         vf_parts.append(
             f"zoompan=z='{z_expr}':d={frames}:"
@@ -472,7 +472,13 @@ def _apply_transitions(
         if i + 1 < len(scene_files):
             _, sc_b  = scene_files[i + 1]
             label_b  = sc_b.get("segment_label", "")
-            trans_type = _resolve_transition(label_a, label_b)
+            # Respect forced cut override written by main.py on quality gate retry.
+            # Without this check, the retry "without transitions" has no effect
+            # because _resolve_transition reads segment labels, not sc["transition"].
+            if sc_a.get("transition") == "cut" or sc_b.get("transition") == "cut":
+                trans_type = "cut"
+            else:
+                trans_type = _resolve_transition(label_a, label_b)
 
         if i + 1 < len(scene_files) and trans_type != "cut":
             path_b, _ = scene_files[i + 1]
@@ -626,6 +632,30 @@ _MOTION_PRESETS: dict[str, tuple[str, str, str]] = {
     ),
 }
 
+# Frame count at which each preset's zoom expression permanently caps and produces
+# frozen output (zoom stops changing AND x/y derived from zoom also stop changing).
+# Presets where x or y contain `on*` (pan_right, orbit_*, diagonal_drift, etc.)
+# are safe — they keep moving even after zoom caps, so their cap is set to 999_999.
+_PRESET_CAP_FRAMES: dict[str, int] = {
+    "slow_drift":     500,    # zoom 1→1.25  @ +0.0005/frame
+    "push_in":        500,    # zoom 1→1.5   @ +0.001/frame
+    "impact_zoom":    333,    # zoom 1→2.0   @ +0.003/frame
+    "reveal_pull":    400,    # zoom 1.8→1.0 @ -0.002/frame, then x=y=0 forever
+    "fast_push":      375,    # zoom 1→2.5   @ +0.004/frame
+    "zoom_corner_tl": 600,    # zoom 1→1.6   @ +0.001/frame; x=0,y=0 always
+    "zoom_corner_br": 600,    # zoom 1→1.6   @ +0.001/frame; x,y only follow zoom
+    # Safe: x or y expression contains `on*` so they move even after zoom caps
+    "pan_right":    999_999,
+    "pan_left":     999_999,
+    "rise_up":      999_999,
+    "descend":      999_999,
+    "diagonal_drift": 999_999,
+    "tilt_reveal":  999_999,
+    "orbit_left":   999_999,
+    "orbit_right":  999_999,
+    "breathe":      999_999,  # sinusoidal zoom, never permanently caps
+}
+
 # emotion + segment → preferred presets, cycled by scene_id for variety.
 # 5 options per emotion means consecutive scenes of the same emotion
 # use a different animation every time for up to 5 scenes before repeating.
@@ -639,10 +669,17 @@ _PRESET_BY_EMOTION: dict[str, list[str]] = {
 
 def _ken_burns_expr(focus: str, seg_label: str,
                     motion_emotion: str = "neutral",
-                    scene_id: int = 1) -> tuple[str, str, str]:
+                    scene_id: int = 1,
+                    frames: int = 0) -> tuple[str, str, str]:
     """Select a motion preset based on emotion and scene_id for variety."""
     presets = _PRESET_BY_EMOTION.get(motion_emotion, _PRESET_BY_EMOTION["neutral"])
     preset_name = presets[scene_id % len(presets)]
+
+    # If this scene is longer than the preset's zoom cap, the zoompan stops
+    # moving and produces frozen frames that fail the freeze-frame quality check.
+    # Fall back to breathe (sinusoidal, never caps) to keep pixels changing.
+    if frames > 0 and frames > _PRESET_CAP_FRAMES.get(preset_name, 999_999):
+        preset_name = "breathe"
 
     # Focus override: if focus_region is explicit, adjust x/y within the preset
     z, x, y = _MOTION_PRESETS[preset_name]

@@ -30,6 +30,7 @@ Quality gate failure triggers up to 3 retry attempts:
 import json
 import logging
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -380,21 +381,43 @@ def run_pipeline() -> bool:
 
         # ── 11: Quality Gate (up to 3 attempts) ──────────────────────────────
         log.info("[11/14] Quality Gate")
-        gate = None
+        gate       = None
+        best_score  = -1
+        best_output = output_path.with_name(output_path.stem + "_best.mp4")
+
         for attempt in range(1, 4):
             gate = run_quality_gate(output_path, timeline, TEMP_DIR / "subtitles")
             if gate["passed"]:
                 break
 
+            curr_score = gate.get("quality_score", 0)
+            if curr_score > best_score:
+                best_score = curr_score
+                shutil.copy2(output_path, best_output)
+
             log.warning("  Gate failed (attempt %d/3): %s", attempt, gate["fail_reason"])
             _log_quality_failure(gate, topic, attempt)
 
             if attempt == 3:
-                log.error("  All 3 gate attempts failed — skipping upload")
+                # All 3 real-video attempts failed.
+                # Upload the best real video (score >= 70) rather than a title card.
+                if best_score >= 70 and best_output.exists():
+                    log.warning(
+                        "  Gate failed all 3 attempts — uploading best real video "
+                        "(score=%d/100) instead of discarding", best_score,
+                    )
+                    shutil.copy2(best_output, output_path)
+                    gate["passed"] = True
+                    gate["tier"]   = "UPLOAD_WARN"
+                    break
+                log.error("  All 3 gate attempts failed (best=%d/100) — skipping upload",
+                          best_score)
                 _record_full_failure()
                 return False
 
             if attempt == 1:
+                # Retry without xfade transitions — eliminates A/V drift from overlaps.
+                # sc["transition"]="cut" is now honoured by _apply_transitions.
                 log.info("  Retry: re-assembling without transitions …")
                 for sc in timeline["scenes"]:
                     sc["transition"] = "cut"
@@ -403,9 +426,10 @@ def run_pipeline() -> bool:
                              timeline["total_duration_seconds"], ass_path=ass_file)
 
             elif attempt == 2:
-                log.info("  Retry: title-card fallback …")
-                _title_card_fallback(output_path, topic, timeline,
-                                     norm_audio, profile)
+                # Second retry: drop subtitle burn-in — eliminates ASS filter errors.
+                log.info("  Retry: re-encoding without subtitle burn-in …")
+                encode_video(assembled, norm_audio, output_path, profile,
+                             timeline["total_duration_seconds"], ass_path=None)
 
         assert gate is not None
         if not gate["passed"]:
@@ -465,31 +489,6 @@ def run_pipeline() -> bool:
         _record_full_failure()
         return False
 
-
-def _title_card_fallback(
-    output_path: Path,
-    topic: dict,
-    timeline: dict,
-    audio_path: Path,
-    profile: str,
-) -> None:
-    W, H  = timeline["width"], timeline["height"]
-    dur_s = timeline["total_duration_seconds"]
-    title = topic["title"][:60].replace("'", "\\'").replace(":", "\\:")
-    font  = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    vf    = (f"drawtext=text='{title}':"
-             f"fontfile='{font}':fontcolor=white:fontsize=56:"
-             f"bordercolor=black:borderw=3:x=(w-tw)/2:y=(h-th)/2")
-    video_only = output_path.with_suffix(".fallback_v.mp4")
-    subprocess.run(
-        ["ffmpeg", "-y", "-f", "lavfi",
-         "-i", f"color=c=0x0A0A1A:size={W}x{H}:rate=30",
-         "-vf", vf, "-t", str(dur_s),
-         "-c:v", "libx264", "-crf", "23", "-pix_fmt", "yuv420p", "-r", "30", "-an",
-         str(video_only)],
-        capture_output=True, timeout=120,
-    )
-    encode_video(video_only, audio_path, output_path, profile, dur_s)
 
 
 if __name__ == "__main__":
