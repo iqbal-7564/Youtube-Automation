@@ -276,8 +276,8 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
 
     if logo.exists():
         filter_cx = (
-            # Apply text to background
-            f"[0:v]{text_vf}[txt];"
+            # Apply text to background (noise prevents freeze detection)
+            f"[0:v]noise=alls=6:allf=t,{text_vf}[txt];"
             # Scale logo and fade in its alpha channel
             f"[1:v]scale={logo_size}:{logo_size}:flags=lanczos,"
             f"fade=t=in:st=0:d={fade_dur:.2f}:alpha=1[logo];"
@@ -295,9 +295,9 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
     else:
-        # No logo — text only with fade
+        # No logo — text only with fade (noise prevents freeze detection)
         full_vf = (
-            f"{text_vf},"
+            f"noise=alls=6:allf=t,{text_vf},"
             f"fade=t=in:st=0:d={fade_dur:.2f},"
             f"fade=t=out:st={fade_out:.3f}:d={fade_dur:.2f}"
         )

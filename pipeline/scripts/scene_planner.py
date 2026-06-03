@@ -17,8 +17,11 @@ motion presets in video_assembler.
 
 import json
 import logging
+import os
 import re
 from pathlib import Path
+
+import requests
 
 log = logging.getLogger(__name__)
 
@@ -367,9 +370,91 @@ def _score_keywords(candidates: list[str], emotion: str,
     return [kw for _, kw in scores]
 
 
+# ── Groq: batch topic-specific visual keywords ───────────────────────────────
+
+_GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions"
+_GROQ_MODEL = "llama-3.1-8b-instant"
+
+def _groq_batch_keywords(scenes: list[dict], intent: str,
+                         wiki_summary: str = "") -> dict[int, list[str]]:
+    """
+    Single Groq call for all scenes. Returns {scene_id: [kw1, kw2, kw3]}.
+    Keywords are topic-specific (derived from actual script text) rather than
+    generic category banks. Falls back to empty dict on any error.
+    """
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(),
+            os.getenv("GROQ_API_KEY_2", "").strip()]
+    keys = [k for k in keys if k]
+    if not keys:
+        return {}
+
+    scene_lines = [
+        f"Scene {sc['scene_id']} ({sc['segment_label']}): {sc.get('script_text', '')[:150]}"
+        for sc in scenes
+        if sc.get("clip_type") != "close"
+    ]
+    if not scene_lines:
+        return {}
+
+    wiki_ctx = f"\nVerified facts: {wiki_summary[:300]}" if wiki_summary else ""
+
+    system_prompt = (
+        "You generate stock-photo search queries for educational YouTube video scenes.\n"
+        "For each scene output 3 queries (4-6 words each) a photographer would actually shoot.\n"
+        "Translate abstract/scientific concepts into visible physical subjects.\n"
+        "BAD: 'neutron star radiation'  GOOD: 'bright cosmic explosion nebula glow'\n"
+        "BAD: 'Vikings crossed Atlantic' GOOD: 'ancient wooden ship ocean storm'\n"
+        'Return ONLY valid JSON: {"1": ["kw1","kw2","kw3"], "2": [...]}'
+    )
+
+    user_msg = f"Category: {intent}{wiki_ctx}\n\nScenes:\n" + "\n".join(scene_lines)
+
+    for key in keys:
+        try:
+            r = requests.post(
+                _GROQ_URL,
+                headers={"Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json"},
+                json={
+                    "model":    _GROQ_MODEL,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user",   "content": user_msg},
+                    ],
+                    "temperature": 0.4,
+                    "max_tokens":  800,
+                },
+                timeout=30,
+            )
+            if not r.ok:
+                continue
+            raw = r.json()["choices"][0]["message"]["content"].strip()
+            raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
+            raw = re.sub(r"\s*```\s*$",        "", raw, flags=re.MULTILINE)
+            m = re.search(r'\{.*\}', raw, re.DOTALL)
+            if not m:
+                continue
+            data   = json.loads(m.group())
+            result = {}
+            for k, v in data.items():
+                try:
+                    sid = int(k)
+                    if isinstance(v, list) and v:
+                        result[sid] = [str(kw)[:60] for kw in v[:3]]
+                except (ValueError, TypeError):
+                    pass
+            if result:
+                log.info("Groq batch keywords: %d scenes", len(result))
+                return result
+        except Exception as exc:
+            log.debug("Groq batch keywords: %s", exc)
+
+    return {}
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-def plan_scenes(timeline: dict, intent: str) -> dict:
+def plan_scenes(timeline: dict, intent: str, wiki_summary: str = "") -> dict:
     intent = intent.upper()
     if intent not in _HOOK:
         intent = _DEFAULT
@@ -380,6 +465,9 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
 
     used_keywords = _load_used_keywords()
     new_keywords:  list[str] = []
+
+    # Batch Groq call — topic-specific keywords from actual script text
+    groq_keywords = _groq_batch_keywords(timeline["scenes"], intent, wiki_summary)
 
     for sc in timeline["scenes"]:
         label   = sc["segment_label"]
@@ -413,9 +501,14 @@ def plan_scenes(timeline: dict, intent: str) -> dict:
         else:
             kws = _PAYOFF.get(intent, ["nature landscape wide"])
 
-        # Layer 1: semantic text analysis — prepend emotional visual hints
+        # Layer 0: Groq topic-specific keywords (from actual script text) — highest priority
+        groq_kws = groq_keywords.get(sc["scene_id"], [])
+
+        # Layer 1: semantic text analysis — emotional visual hints
         text_hints, motion_override = _text_visual_hints(sc.get("script_text", ""))
-        candidate_pool = text_hints + list(kws)
+
+        # Merge: Groq-specific first, then emotional hints, then static bank
+        candidate_pool = groq_kws + text_hints + list(kws)
 
         # Score: semantic hint +20, emotion alignment +15, novelty +20, penalty -10
         scored   = _score_keywords(candidate_pool, emotion, text_hints, used_keywords)

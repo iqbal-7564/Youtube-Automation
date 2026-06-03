@@ -167,6 +167,16 @@ _FORMAT_TIMING: dict[str, dict] = {
     },
 }
 
+# ── Fact-check prompt ────────────────────────────────────────────────────────
+_FACTCHECK_PROMPT = (
+    "You are a fact-checker for educational YouTube scripts about science, history, "
+    "nature, space, animals, geography, ocean, and culture. "
+    "Read the script and decide if it contains any clearly false, fabricated, or "
+    "wildly exaggerated claims that would embarrass a credible education channel. "
+    "Minor dramatic framing and rhetorical emphasis are fine. "
+    'Respond ONLY with valid JSON: {"has_issues": true/false, "reason": "one sentence or null"}'
+)
+
 # ── Hook formula library ─────────────────────────────────────────────────────
 # Rotated per video to prevent hook fatigue. Each formula creates a different
 # psychological mechanism that captures attention in the first 1-2 seconds.
@@ -201,6 +211,7 @@ _DIRECTOR_CONTEXT = {
 _SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "MindBlownFacts".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 Content: real-world facts — science, history, nature, space, animals, geography, ocean, culture.
+ACCURACY RULE: Every fact, number, and claim must be real and verifiable. Never invent statistics or events. If verified facts are provided below, treat them as ground truth.
 
 NARRATIVE STRUCTURE THIS VIDEO: {description}
 
@@ -236,7 +247,7 @@ _USER_TMPL = """Write a {video_label} "MindBlownFacts" script for this topic:
 TOPIC    : {title}
 DETAILS  : {description}
 CATEGORY : {intent}
-TEMPLATE : {template_name}
+TEMPLATE : {template_name}{wiki_facts}
 
 Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
@@ -257,6 +268,32 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
     "engagement_question": "One question that sparks debate or invites personal stories from viewers"
   }}
 }}"""
+
+
+def _fact_check(text: str, key: str) -> dict:
+    try:
+        r = requests.post(
+            _GROQ_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model":    _MODEL,
+                "messages": [
+                    {"role": "system", "content": _FACTCHECK_PROMPT},
+                    {"role": "user",   "content": text[:2000]},
+                ],
+                "temperature": 0,
+                "max_tokens":  120,
+            },
+            timeout=20,
+        )
+        r.raise_for_status()
+        raw = r.json()["choices"][0]["message"]["content"].strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
+        raw = re.sub(r"\s*```\s*$",        "", raw, flags=re.MULTILINE)
+        return json.loads(raw)
+    except Exception as exc:
+        log.debug("Fact-check skipped: %s", exc)
+        return {"has_issues": False, "reason": None}
 
 
 def generate_script(topic: dict) -> dict:
@@ -297,27 +334,34 @@ def generate_script(topic: dict) -> dict:
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
     )
 
-    prompt = _USER_TMPL.format(
-        video_label   = fmt_timing["video_label"],
-        title         = topic["title"],
-        description   = topic["description"][:400],
-        intent        = topic["intent"],
-        template_name = template_name,
-        hook_dur      = fmt_timing["hook_dur"],
-        tension_dur   = fmt_timing["tension_dur"],
-        core_dur      = fmt_timing["core_dur"],
-        payoff_dur    = fmt_timing["payoff_dur"],
-        close_dur     = fmt_timing["close_dur"],
-        total_est     = fmt_timing["total_est"],
+    wiki_summary = topic.get("wiki_summary", "")
+    wiki_facts = (
+        f"\nVERIFIED FACTS (Wikipedia — use as ground truth, reflect accurately):\n{wiki_summary}"
+        if wiki_summary else ""
     )
 
-    log.info("Generating [%s] script, template=%s", video_format, template_name)
+    log.info("Generating [%s] script, template=%s wiki=%s",
+             video_format, template_name, "yes" if wiki_summary else "no")
 
     for key in _GROQ_KEYS:
         if not key:
             continue
-        for attempt in range(2):
+        for attempt in range(3):  # extra attempt reserved for fact-check retry
             try:
+                filled_prompt = _USER_TMPL.format(
+                    video_label   = fmt_timing["video_label"],
+                    title         = topic["title"],
+                    description   = topic["description"][:400],
+                    intent        = topic["intent"],
+                    template_name = template_name,
+                    wiki_facts    = wiki_facts,
+                    hook_dur      = fmt_timing["hook_dur"],
+                    tension_dur   = fmt_timing["tension_dur"],
+                    core_dur      = fmt_timing["core_dur"],
+                    payoff_dur    = fmt_timing["payoff_dur"],
+                    close_dur     = fmt_timing["close_dur"],
+                    total_est     = fmt_timing["total_est"],
+                )
                 r = requests.post(
                     _GROQ_URL,
                     headers={
@@ -328,7 +372,7 @@ def generate_script(topic: dict) -> dict:
                         "model":    _MODEL,
                         "messages": [
                             {"role": "system", "content": system_prompt},
-                            {"role": "user",   "content": prompt},
+                            {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
                         "max_tokens":  fmt_profile["max_tokens"],
@@ -346,6 +390,15 @@ def generate_script(topic: dict) -> dict:
                     log.info("Script OK — %d words via Groq [%s/%s/hook:%s]",
                              words, video_format, template_name,
                              hook_formula.split(":")[0])
+                    check = _fact_check(script["full_script"], key)
+                    if check.get("has_issues"):
+                        log.warning("Fact-check flagged (attempt %d): %s",
+                                    attempt + 1, check.get("reason"))
+                        if attempt < 2:
+                            continue  # regenerate script
+                        log.warning("Fact-check still flagged after retry — using best available")
+                    else:
+                        log.info("Fact-check passed")
                     script["video_format"] = video_format
                     return script
             except Exception as exc:

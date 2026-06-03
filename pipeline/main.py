@@ -31,11 +31,13 @@ import json
 import logging
 import os
 import shutil
+import smtplib
 import subprocess
 import sys
 import time
 import traceback
 from datetime import datetime
+from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests
@@ -269,6 +271,75 @@ def _preflight() -> None:
             log.warning("PREFLIGHT: %s not set — %s", key, msg)
 
 
+def _send_failure_email(subject: str, body: str) -> None:
+    sender   = os.getenv("GMAIL_SENDER", "").strip()
+    password = os.getenv("GMAIL_APP_PASSWORD", "").strip()
+    if not sender or not password:
+        log.debug("Email notification skipped — GMAIL_SENDER or GMAIL_APP_PASSWORD not set")
+        return
+    try:
+        msg = MIMEText(body, "plain")
+        msg["Subject"] = f"[MindBlownFacts] {subject}"
+        msg["From"]    = sender
+        msg["To"]      = "iqbaliqbaloolife@gmail.com"
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as s:
+            s.login(sender, password)
+            s.sendmail(sender, ["iqbaliqbaloolife@gmail.com"], msg.as_string())
+        log.info("Failure email sent to iqbaliqbaloolife@gmail.com")
+    except Exception as exc:
+        log.warning("Failed to send email notification: %s", exc)
+
+
+def _send_daily_summary() -> None:
+    """Send daily summary email — only fires on the last run of the day (20:00 UTC)."""
+    if datetime.utcnow().hour != 20:
+        return
+    sender   = os.getenv("GMAIL_SENDER", "").strip()
+    password = os.getenv("GMAIL_APP_PASSWORD", "").strip()
+    if not sender or not password:
+        return
+    try:
+        today        = datetime.utcnow().date().isoformat()
+        results_path = LOGS_DIR / "video_results.json"
+        if not results_path.exists():
+            return
+        all_results   = json.loads(results_path.read_text())
+        today_results = [r for r in all_results
+                         if r.get("uploaded_at", "").startswith(today)]
+
+        lines = [f"MindBlownFacts — Daily Summary ({today})", "",
+                 f"Videos uploaded today: {len(today_results)}/3", ""]
+
+        for i, r in enumerate(today_results, 1):
+            vid_id = r.get("video_id", "unknown")
+            title  = r.get("title",    "unknown")
+            cat    = r.get("intent",   "")
+            fmt    = r.get("format",   "")
+            score  = r.get("quality_score", "?")
+            lines += [
+                f"✅ Video {i} — \"{title}\"",
+                f"   Format: {fmt} | Category: {cat}",
+                f"   URL: https://youtu.be/{vid_id}",
+                f"   Quality score: {score}/100",
+                "",
+            ]
+
+        if len(today_results) < 3:
+            for i in range(len(today_results) + 1, 4):
+                lines += [f"❌ Video {i} — failed or not run", ""]
+
+        msg = MIMEText("\n".join(lines), "plain")
+        msg["Subject"] = f"[MindBlownFacts] Daily Summary — {today}"
+        msg["From"]    = sender
+        msg["To"]      = "iqbaliqbaloolife@gmail.com"
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as s:
+            s.login(sender, password)
+            s.sendmail(sender, ["iqbaliqbaloolife@gmail.com"], msg.as_string())
+        log.info("Daily summary email sent")
+    except Exception as exc:
+        log.warning("Daily summary email failed: %s", exc)
+
+
 def run_pipeline() -> bool:
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     log.info("=" * 65)
@@ -321,7 +392,7 @@ def run_pipeline() -> bool:
 
         # ── 5: Scene Planning ────────────────────────────────────────────────
         log.info("[5/14] Scene Planning")
-        timeline = plan_scenes(timeline, topic["intent"])
+        timeline = plan_scenes(timeline, topic["intent"], topic.get("wiki_summary", ""))
         timeline = plan_cinematics(timeline)   # shot types, pacing, suspense arc
         _save(timeline)
         log.info("  Keywords assigned to %d scenes", len(timeline["scenes"]))
@@ -413,6 +484,13 @@ def run_pipeline() -> bool:
                 log.error("  All 3 gate attempts failed (best=%d/100) — skipping upload",
                           best_score)
                 _record_full_failure()
+                _send_failure_email(
+                    "Quality Gate Failed",
+                    f"Time: {datetime.utcnow().isoformat()}\n"
+                    f"Topic: {topic.get('title', 'unknown')}\n"
+                    f"Best score: {best_score}/100\n"
+                    f"Reason: {gate.get('fail_reason', 'unknown')}",
+                )
                 return False
 
             if attempt == 1:
@@ -466,6 +544,12 @@ def run_pipeline() -> bool:
         if not video_id:
             log.error("  Upload failed — no video_id returned")
             _record_full_failure()
+            _send_failure_email(
+                "Upload Failed",
+                f"Time: {datetime.utcnow().isoformat()}\n"
+                f"Topic: {topic.get('title', 'unknown')}\n"
+                "The video was produced but YouTube upload returned no video_id.",
+            )
             return False
         log.info("  https://youtu.be/%s", video_id)
 
@@ -478,6 +562,7 @@ def run_pipeline() -> bool:
         update_velocity_queue(LOGS_DIR)
 
         _record_success()
+        _send_daily_summary()
         log.info("=" * 65)
         log.info("PIPELINE COMPLETE — SUCCESS  video_id=%s", video_id)
         log.info("=" * 65)
@@ -487,6 +572,10 @@ def run_pipeline() -> bool:
         log.error("PIPELINE FAILED: %s", exc)
         log.error(traceback.format_exc())
         _record_full_failure()
+        _send_failure_email(
+            "Pipeline Crashed",
+            f"Time: {datetime.utcnow().isoformat()}\n\nError: {exc}\n\n{traceback.format_exc()}",
+        )
         return False
 
 

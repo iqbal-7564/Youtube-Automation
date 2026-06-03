@@ -38,6 +38,15 @@ GROQ_API_BASE = "https://api.groq.com/openai/v1/chat/completions"
 MAX_RETRIES   = 3
 RETRY_BASE_S  = 5
 
+_HF_MODEL_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+_HF_KEYS = [
+    os.getenv("HUGGINGFACE_API_KEY_1", "").strip(),
+    os.getenv("HUGGINGFACE_API_KEY_2", "").strip(),
+    os.getenv("HUGGINGFACE_API_KEY_3", "").strip(),
+    os.getenv("HUGGINGFACE_API_KEY_4", "").strip(),
+    os.getenv("HUGGINGFACE_API_KEY_5", "").strip(),
+]
+
 _LOGS_DIR = Path(__file__).parent.parent / "logs"
 
 # Query registry — prevents reusing the same search string across videos
@@ -118,8 +127,12 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         qh = _prompt_hash(query)
         used_registry.append(qh)
 
-        # Step 2 — Fetch primary image: Pexels → Pixabay → black clip
-        success = _pexels_fetch(query, out_path, shot_type, _known_images())
+        # Step 2 — Fetch primary image: HuggingFace → Pexels → Pixabay → black clip
+        success = _huggingface_fetch(query, out_path, _known_images())
+
+        if not success:
+            log.debug("Scene %d: HuggingFace failed — trying Pexels", scene_id)
+            success = _pexels_fetch(query, out_path, shot_type, _known_images())
 
         if not success:
             log.warning("Scene %d: Pexels failed — trying Pixabay", scene_id)
@@ -164,14 +177,16 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
 
         sc["retry_count"] = 0
 
-        # Step 3 — Fetch extra image for slideshow (scenes ≥ 4s with multiple keywords)
+        # Step 3 — Always fetch a 2nd image per scene for slideshow variety
         extra_files: list[str] = []
-        if success and dur_s >= 4.0 and len(kw_list) >= 2:
+        if success:
             alt_query  = _ensure_unique_query(
-                _fallback_query(kw_list[1:]), session_img_hashes, used_registry, scene_id + 1000
+                query + " alternative view",
+                session_img_hashes, used_registry, scene_id + 1000
             )
             extra_path = visuals_dir / f"scene_{scene_id}_visual_b.png"
-            extra_ok   = (_pexels_fetch(alt_query, extra_path, shot_type, _known_images()) or
+            extra_ok   = (_huggingface_fetch(alt_query, extra_path, _known_images()) or
+                          _pexels_fetch(alt_query, extra_path, shot_type, _known_images()) or
                           _pixabay_fetch(alt_query, extra_path, _known_images()))
             if extra_ok and _validate_image(extra_path, scene_id):
                 eh = _img_hash(extra_path)
@@ -297,19 +312,29 @@ def _groq_to_search_query(
     api_key = api_keys[0]
 
     system_prompt = (
-        "You convert scene metadata into short stock-photo search queries.\n"
+        "You convert educational video scene metadata into stock-photo search queries.\n"
         "Rules:\n"
         "- Output ONLY the search query. No explanation, no preamble, no quotes.\n"
-        "- 3 to 6 words maximum.\n"
-        "- Use concrete, visual, searchable nouns and adjectives.\n"
-        "- Avoid abstract words like 'concept', 'idea', 'mystery'."
+        "- 4 to 7 words.\n"
+        "- Think: what would a PHOTOGRAPHER actually photograph for this scene?\n"
+        "  Translate abstract/scientific concepts into visible, physical subjects.\n"
+        "  BAD: 'neutron star explosion'  (no stock photos exist)\n"
+        "  GOOD: 'bright star night sky cosmic'\n"
+        "  BAD: 'DNA CRISPR editing'\n"
+        "  GOOD: 'scientist microscope laboratory closeup'\n"
+        "  BAD: 'Vikings discovering America'\n"
+        "  GOOD: 'ancient wooden ship ocean voyage'\n"
+        "- Match the emotion and shot type to the visual mood.\n"
+        "- Use concrete, searchable nouns and adjectives only.\n"
+        "- Never use abstract words: 'concept', 'idea', 'mystery', 'fact', 'truth'."
     )
 
     user_message = (
         f"Keywords: {', '.join(keywords)}\n"
         f"Emotion: {emotion}\n"
         f"Shot type: {shot_type}\n"
-        f"Category: {intent}"
+        f"Category: {intent}\n"
+        "Generate a stock-photo search query that will find a visually relevant image."
     )
 
     for attempt in range(1, MAX_RETRIES + 1):
@@ -326,14 +351,14 @@ def _groq_to_search_query(
                         {"role": "system", "content": system_prompt},
                         {"role": "user",   "content": user_message},
                     ],
-                    "max_tokens":  30,
-                    "temperature": 0.3,
+                    "max_tokens":  50,
+                    "temperature": 0.4,
                 },
                 timeout=15,
             )
             if r.ok:
                 query = r.json()["choices"][0]["message"]["content"].strip()
-                return " ".join(query.split()[:6])
+                return " ".join(query.split()[:7])
             elif r.status_code == 429:
                 # Rate limited — rotate to next key immediately
                 if len(api_keys) > 1:
@@ -359,6 +384,47 @@ def _groq_to_search_query(
             break
 
     return _fallback_query(keywords)
+
+
+def _huggingface_fetch(query: str, out_path: Path,
+                       avoid_hashes: set[str] | None = None) -> bool:
+    keys = [k for k in _HF_KEYS if k]
+    if not keys:
+        return False
+    avoid  = avoid_hashes or set()
+    prompt = f"{query}, photorealistic, cinematic, dramatic lighting, high quality"
+    for key in keys:
+        for attempt in range(2):
+            try:
+                r = requests.post(
+                    _HF_MODEL_URL,
+                    headers={"Authorization": f"Bearer {key}"},
+                    json={"inputs": prompt, "parameters": {"num_inference_steps": 4}},
+                    timeout=60,
+                )
+                if r.status_code == 503:
+                    log.debug("HuggingFace: model loading — waiting 20s")
+                    time.sleep(20)
+                    continue
+                if r.status_code == 429:
+                    log.debug("HuggingFace: rate limit key …%s — trying next", key[-4:])
+                    break
+                if not r.ok or len(r.content) < 1000:
+                    log.debug("HuggingFace: %d bad response", r.status_code)
+                    break
+                tmp = out_path.with_suffix(".hf.tmp.png")
+                tmp.write_bytes(r.content)
+                h = _img_hash(tmp)
+                if h and h not in avoid:
+                    tmp.rename(out_path)
+                    log.info("HuggingFace: generated image for '%s'", query[:50])
+                    return True
+                tmp.unlink(missing_ok=True)
+                break
+            except Exception as exc:
+                log.debug("HuggingFace fetch: %s", exc)
+                break
+    return False
 
 
 def _fallback_query(keywords: list[str]) -> str:

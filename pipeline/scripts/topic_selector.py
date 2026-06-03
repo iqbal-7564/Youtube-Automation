@@ -727,6 +727,13 @@ def _check_saturation(title: str) -> str:
 
 def _build_topic(category: str, seed: str, produced: list[dict],
                  trend_hint: str = "") -> dict | None:
+    # Wikipedia verification first — skip topic if no article found
+    wiki_summary = _wikipedia_verify(seed)
+    if not wiki_summary:
+        log.debug("Wikipedia: no article for '%s' — skipping", seed[:40])
+        return None
+    log.debug("Wikipedia verified seed '%s'", seed[:40])
+
     title, description = _groq_expand(category, seed, trend_hint)
 
     if not title:
@@ -785,7 +792,55 @@ def _build_topic(category: str, seed: str, produced: list[dict],
         "saturation":       saturation,
         "viral_score":      round(viral_score, 1),
         "performance_score": performance_score,
+        "wiki_summary":     wiki_summary,
     }
+
+
+def _wikipedia_verify(seed: str) -> str:
+    """
+    Searches Wikipedia for the seed topic and returns a verified 1-3 sentence
+    summary. Tries full seed first, then simplified (first 2 words) as fallback.
+    Returns empty string only if both attempts fail.
+    """
+    words = seed.strip().split()
+    attempts = [seed]
+    if len(words) > 2:
+        attempts.append(" ".join(words[:2]))
+
+    for query in attempts:
+        try:
+            r = requests.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={"action": "query", "list": "search", "srsearch": query,
+                        "srlimit": "1", "format": "json"},
+                timeout=8,
+            )
+            if not r.ok:
+                continue
+            results = r.json().get("query", {}).get("search", [])
+            if not results:
+                continue
+            page_title = results[0]["title"]
+            ex = requests.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={"action": "query", "titles": page_title,
+                        "prop": "extracts", "exintro": True,
+                        "explaintext": True, "exsentences": 3, "format": "json"},
+                timeout=8,
+            )
+            if not ex.ok:
+                continue
+            pages = ex.json().get("query", {}).get("pages", {})
+            for page in pages.values():
+                extract = page.get("extract", "").strip()
+                if extract and len(extract) > 50:
+                    if query != seed:
+                        log.debug("Wikipedia: simplified retry succeeded for '%s'", seed[:40])
+                    return extract[:400]
+        except Exception as exc:
+            log.debug("Wikipedia verify [%s]: %s", query[:40], exc)
+
+    return ""
 
 
 def _groq_expand(category: str, seed: str, trend_hint: str = "") -> tuple[str, str]:
@@ -805,6 +860,8 @@ def _groq_expand(category: str, seed: str, trend_hint: str = "") -> tuple[str, s
                             "role": "system",
                             "content": (
                                 "You generate specific, mind-blowing world-fact video topics. "
+                                "IMPORTANT: Only generate topics based on real, verifiable facts. "
+                                "Never invent statistics, events, or claims. "
                                 "Return ONLY valid JSON with no markdown: "
                                 "{\"title\": \"...\", \"description\": \"...\"} "
                                 "Title: max 80 chars. Use curiosity-gap psychology — imply "

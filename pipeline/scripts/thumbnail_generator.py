@@ -63,28 +63,42 @@ def generate_thumbnail(
     # ── Background ────────────────────────────────────────────────────────────
     bg = _load_background(visuals_dir, timeline, intent)
 
-    # Dark overlay so text is always readable
-    overlay = Image.new("RGBA", bg.size, (0, 0, 0, 160))
+    # Light overlay — keep background sharp and visible
+    overlay = Image.new("RGBA", bg.size, (0, 0, 0, 80))
     bg = bg.convert("RGBA")
     bg = Image.alpha_composite(bg, overlay).convert("RGB")
 
     draw = ImageDraw.Draw(bg)
 
     # ── Headline text ─────────────────────────────────────────────────────────
-    font_headline = _load_font(80)
+    font_size     = _pick_font_size(headline)
+    font_headline = _load_font(font_size)
     font_small    = _load_font(32)
 
-    wrapped = textwrap.wrap(headline, width=22)[:3]   # max 3 lines
-    line_h  = 90
+    char_width = max(12, int(22 * (80 / font_size)))
+    wrapped = textwrap.wrap(headline, width=char_width)[:3]
+    line_h  = font_size + 14
     total_h = len(wrapped) * line_h
-    y_start = (_TH - total_h) // 2 - 40
+    y_start = (_TH - total_h) // 2 - 30
+
+    # Dark semi-transparent box behind text for contrast
+    box = Image.new("RGBA", bg.size, (0, 0, 0, 0))
+    box_draw = ImageDraw.Draw(box)
+    box_draw.rectangle(
+        [20, y_start - 18, _TW - 20, y_start + total_h + 18],
+        fill=(0, 0, 0, 160),
+    )
+    bg = Image.alpha_composite(bg.convert("RGBA"), box).convert("RGB")
+    draw = ImageDraw.Draw(bg)
 
     for i, line in enumerate(wrapped):
         y = y_start + i * line_h
-        # Shadow
-        draw.text((42 + 3, y + 3), line, font=font_headline, fill=(0, 0, 0, 200))
-        # Main text
-        draw.text((42, y), line, font=font_headline, fill=(255, 230, 0))
+        # White text with thick black stroke — high contrast on any background
+        draw.text(
+            (42, y), line, font=font_headline,
+            fill=(255, 255, 255),
+            stroke_width=3, stroke_fill=(0, 0, 0),
+        )
 
     # ── Channel logo or pill (bottom-left) ───────────────────────────────────
     pill_color = _INTENT_PILL_COLOR.get(intent, (0, 85, 170))
@@ -183,6 +197,16 @@ def _ctr_enhance(title: str, intent: str = "SCIENCE") -> str:
     return clean[:72]
 
 
+def _pick_font_size(text: str) -> int:
+    """Scale font down for longer headlines so text always fits."""
+    words = len(text.split())
+    if words <= 6:
+        return 80
+    if words <= 9:
+        return 68
+    return 56
+
+
 def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.Image":
     from PIL import Image, ImageFilter
 
@@ -202,7 +226,6 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.I
         try:
             img = Image.open(best_file).convert("RGB")
             img = img.resize((_TW, _TH), Image.LANCZOS)
-            img = img.filter(ImageFilter.GaussianBlur(radius=3))
             return img
         except Exception as exc:
             log.debug("Background image load failed: %s", exc)
