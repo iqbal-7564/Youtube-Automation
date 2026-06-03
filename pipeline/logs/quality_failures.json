@@ -626,5 +626,51 @@
       "audio_gaps": "pass"
     },
     "fail_reason": "[freeze_frame] freeze detected: 1 event(s), total 2.87s"
+  },
+  {
+    "timestamp": "2026-06-02T23:47:06.759373",
+    "topic": "Secrets in Sound",
+    "intent": "SCIENCE",
+    "attempt": 1,
+    "passed": false,
+    "quality_score": 85,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "fail: A/V drift 0.883s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[audio_sync] A/V drift 0.883s"
+  },
+  {
+    "timestamp": "2026-06-03T00:12:36.467599",
+    "topic": "Secrets in Sound",
+    "intent": "SCIENCE",
+    "attempt": 2,
+    "passed": false,
+    "quality_score": 85,
+    "tier": "REJECT",
+    "checks": {
+      "audio_failure": "pass",
+      "file_integrity": "pass",
+      "resolution": "pass",
+      "duration": "pass",
+      "audio_sync": "fail: A/V drift 0.883s",
+      "audio_level": "pass",
+      "subtitles": "pass",
+      "freeze_frame": "pass",
+      "voice_quality": "pass",
+      "dropped_frames": "pass",
+      "audio_gaps": "pass"
+    },
+    "fail_reason": "[audio_sync] A/V drift 0.883s"
   }
 ]

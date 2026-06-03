@@ -283,5 +283,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Dvmr6bKwOVY",
+    "intent": "SCIENCE",
+    "title": "Secrets in Sound",
+    "hook_text": "They never taught you this in school: sound can alter your mind.",
+    "total_duration_seconds": 169.35,
+    "scene_count": 22,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-03T00:14:16.577414",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
