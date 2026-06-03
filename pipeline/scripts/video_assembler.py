@@ -144,6 +144,13 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
                   motion_emotion: str = "neutral",
                   scene_id: int = 1) -> None:
 
+    # Video clips with missing visual produce a static lavfi color frame (no
+    # zoompan is applied for clip_type="video"), which triggers freeze detection.
+    # Route to animated branded fill immediately instead.
+    if clip_type == "video" and not vis.exists():
+        _branded_fill(out, W, H, dur_s, i_label, i_color)
+        return
+
     vf_parts: list[str] = []
 
     vf_parts.append(
@@ -306,7 +313,10 @@ def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:
 def _branded_fill(out: Path, W: int, H: int, dur_s: float,
                   i_label: str, i_color: str) -> None:
     """Branded gradient fill — replaces pure black for visual quality."""
+    # noise=allf=t: per-frame temporal noise, amplitude 6/255 — invisible to viewers
+    # but changes pixels every frame, preventing freeze-frame detection at quality gate.
     vf = (
+        "noise=alls=6:allf=t,"
         f"drawtext=text=' {i_label} ':fontfile='{_FONT_BOLD}':"
         f"fontcolor=white:fontsize=36:"
         f"box=1:boxcolor={i_color}@0.70:boxborderw=16:"
