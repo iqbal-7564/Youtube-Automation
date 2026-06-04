@@ -78,7 +78,8 @@ def _warmup_huggingface() -> None:
         r = requests.post(
             _HF_MODEL_URL,
             headers={"Authorization": f"Bearer {keys[0]}"},
-            json={"inputs": "warm up", "parameters": {"num_inference_steps": 1}},
+            json={"inputs": "warm up", "parameters": {"num_inference_steps": 1,
+                                                    "width": 512, "height": 512}},
             timeout=45,
         )
         if r.status_code == 503:
@@ -419,7 +420,8 @@ def _huggingface_fetch(query: str, out_path: Path,
                 r = requests.post(
                     _HF_MODEL_URL,
                     headers={"Authorization": f"Bearer {key}"},
-                    json={"inputs": prompt, "parameters": {"num_inference_steps": 4}},
+                    json={"inputs": prompt, "parameters": {"num_inference_steps": 8,
+                                                        "width": 1280, "height": 720}},
                     timeout=60,
                 )
                 if r.status_code == 503:
