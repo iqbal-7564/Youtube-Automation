@@ -232,7 +232,7 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
         first_line = f"#Shorts {first_line}" if "#Shorts" not in first_line else first_line
 
     # Fix 5: channel link in every description — converts viewers to subscribers
-    channel_link = "🔔 Subscribe for daily mind-blowing facts: https://www.youtube.com/@MindBlownFacts"
+    channel_link = "🔔 Subscribe for daily mind-blowing facts: https://www.youtube.com/@MindBlownFacts-z8o"
 
     parts: list[str] = [
         first_line,
