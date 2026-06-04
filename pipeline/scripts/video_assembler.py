@@ -680,10 +680,14 @@ _PRESET_CAP_FRAMES: dict[str, int] = {
 # 5 options per emotion means consecutive scenes of the same emotion
 # use a different animation every time for up to 5 scenes before repeating.
 _PRESET_BY_EMOTION: dict[str, list[str]] = {
-    "excited":    ["push_in",     "pan_right",     "fast_push",     "orbit_right", "pan_left"],
-    "dramatic":   ["impact_zoom", "reveal_pull",   "fast_push",     "zoom_corner_br", "orbit_left"],
-    "mysterious": ["reveal_pull", "descend",       "breathe",       "zoom_corner_tl", "slow_drift"],
-    "neutral":    ["slow_drift",  "rise_up",       "diagonal_drift","tilt_reveal", "orbit_right"],
+    "excited":    ["push_in",     "pan_right",    "fast_push",      "orbit_right",
+                   "pan_left",    "rise_up",      "diagonal_drift", "zoom_corner_br"],
+    "dramatic":   ["impact_zoom", "reveal_pull",  "fast_push",      "zoom_corner_br",
+                   "orbit_left",  "descend",      "zoom_corner_tl", "breathe"],
+    "mysterious": ["reveal_pull", "descend",      "breathe",        "zoom_corner_tl",
+                   "slow_drift",  "tilt_reveal",  "orbit_left",     "diagonal_drift"],
+    "neutral":    ["slow_drift",  "rise_up",      "diagonal_drift", "tilt_reveal",
+                   "orbit_right", "pan_right",    "breathe",        "pan_left"],
 }
 
 
