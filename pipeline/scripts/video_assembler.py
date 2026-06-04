@@ -38,10 +38,14 @@ _TAGLINE   = "Discover Your World"
 _LOGO_PATH = Path(__file__).parent.parent / "assets" / "logo.png"
 
 _INTENT_COLOR = {
-    "SPACE":     "0x1A0A6B", "SCIENCE":   "0x0055AA",
-    "HISTORY":   "0x6B3A00", "ANIMALS":   "0x1A5C00",
-    "NATURE":    "0x005C1A", "GEOGRAPHY": "0x006666",
-    "OCEAN":     "0x004080", "CULTURE":   "0x7A3500",
+    "SPACE":       "0x1A0A6B", "SCIENCE":     "0x0055AA",
+    "HISTORY":     "0x6B3A00", "ANIMALS":     "0x1A5C00",
+    "NATURE":      "0x005C1A", "GEOGRAPHY":   "0x006666",
+    "OCEAN":       "0x004080", "CULTURE":     "0x7A3500",
+    "TECHNOLOGY":  "0x005AB4", "PSYCHOLOGY":  "0x5A00A0",
+    "MYTHOLOGY":   "0x784600", "MEDICINE":    "0xA00032",
+    "MATHEMATICS": "0x003296", "ECONOMICS":   "0x006E28",
+    "PHYSICS":     "0xA03C00",
 }
 _INTENT_LABEL = {k: k for k in _INTENT_COLOR}
 
