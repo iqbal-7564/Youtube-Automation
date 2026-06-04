@@ -418,5 +418,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "9zrUWHIT568",
+    "intent": "SPACE",
+    "title": "What's Faster Than Light?",
+    "hook_text": "186,000 miles per second is not the fastest thing",
+    "total_duration_seconds": 53.35,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-04T10:39:28.378637",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
