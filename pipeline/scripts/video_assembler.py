@@ -743,14 +743,61 @@ def _font_dir() -> str:
 
 
 def _pad_to_duration(src: Path, dst: Path, target_s: float) -> None:
-    """Freeze-pad last frame to reach exactly target_s duration."""
+    """
+    Freeze-pad last frame to reach exactly target_s.
+    Fast approach: encode only the tiny pad clip, then stream-copy concat.
+    Avoids re-encoding the full assembled video.
+    """
+    actual_s = _duration(src)
+    pad_s    = target_s - actual_s
+    if pad_s <= 0:
+        shutil.copy(src, dst)
+        return
+
+    work = src.parent
+
+    # Step 1: extract last frame as PNG
+    last_frame = work / "_pad_last_frame.png"
     subprocess.run([
-        "ffmpeg", "-y", "-i", str(src),
-        "-vf", f"tpad=stop_mode=clone:stop_duration={target_s:.3f}",
+        "ffmpeg", "-y", "-sseof", "-0.5", "-i", str(src),
+        "-frames:v", "1", str(last_frame),
+    ], capture_output=True, timeout=30)
+
+    if not last_frame.exists():
+        log.warning("Pad: could not extract last frame — skipping pad")
+        shutil.copy(src, dst)
+        return
+
+    # Step 2: encode only the small pad clip
+    pad_clip = work / "_pad_clip.mp4"
+    subprocess.run([
+        "ffmpeg", "-y", "-loop", "1", "-i", str(last_frame),
+        "-t", f"{pad_s + 0.1:.3f}",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-r", "30", "-an", str(pad_clip),
+    ], capture_output=True, timeout=30)
+
+    if not pad_clip.exists():
+        log.warning("Pad: pad clip encode failed — skipping pad")
+        shutil.copy(src, dst)
+        return
+
+    # Step 3: concat original + pad via stream copy (no re-encode)
+    lst = work / "_pad_concat.txt"
+    lst.write_text(
+        f"file '{str(src).replace(chr(92), '/')}'\n"
+        f"file '{str(pad_clip).replace(chr(92), '/')}'"
+    )
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+        "-i", str(lst),
         "-t", str(target_s),
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-pix_fmt", "yuv420p", "-r", "30", "-an", str(dst),
-    ], capture_output=True, timeout=120)
+        "-c", "copy", str(dst),
+    ], capture_output=True, timeout=60)
+
+    # Cleanup temp files
+    for f in [last_frame, pad_clip, lst]:
+        f.unlink(missing_ok=True)
 
 
 def _run(cmd: list, label: str = "ffmpeg", timeout: int = 300) -> None:
