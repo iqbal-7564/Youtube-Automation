@@ -448,5 +448,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "pkKb1OVTqxU",
+    "intent": "HISTORY",
+    "title": "Alexandria's Secret Vault",
+    "hook_text": "What lies beneath Alexandria?",
+    "total_duration_seconds": 69.72,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-04T20:48:11.485305",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
