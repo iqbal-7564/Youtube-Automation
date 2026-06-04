@@ -463,5 +463,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "9kXlhkmvls8",
+    "intent": "ANIMALS",
+    "title": "Jellyfish Defies Death",
+    "hook_text": "Jellyfish are immortal.",
+    "total_duration_seconds": 212.2,
+    "scene_count": 31,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-04T22:48:45.484996",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
