@@ -433,5 +433,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "HefVsG1Y74w",
+    "intent": "SCIENCE",
+    "title": "Memory Hacking",
+    "hook_text": "Memories can be hacked, but how?",
+    "total_duration_seconds": 177.02,
+    "scene_count": 23,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-04T14:22:28.497402",
+    "profile": "standard",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
