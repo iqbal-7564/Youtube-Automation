@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       intent_override:
-        description: 'Force category (SPACE/SCIENCE/HISTORY/ANIMALS/NATURE/GEOGRAPHY/OCEAN/CULTURE)'
+        description: 'Force category (SPACE/SCIENCE/HISTORY/ANIMALS/NATURE/GEOGRAPHY/OCEAN/CULTURE/TECHNOLOGY/PSYCHOLOGY/MYTHOLOGY/MEDICINE/MATHEMATICS/ECONOMICS/PHYSICS)'
         required: false
         default: ''
       video_format:
@@ -64,6 +64,7 @@ jobs:
       - name: Run Video Pipeline
         env:
           VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
+          INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override }}
           GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}

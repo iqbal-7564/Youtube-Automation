@@ -60,14 +60,23 @@ _SCENE_INTERVAL_SHORTS = {
 
 # Base minimum dwell time (ms) per category — audience persona
 _PERSONA_BASE_MS: dict[str, dict[str, int]] = {
-    "SPACE":     {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
-    "SCIENCE":   {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
-    "HISTORY":   {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
-    "CULTURE":   {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
-    "ANIMALS":   {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
-    "NATURE":    {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
-    "GEOGRAPHY": {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
-    "OCEAN":     {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
+    # Original categories
+    "SPACE":       {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "SCIENCE":     {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "HISTORY":     {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
+    "CULTURE":     {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
+    "ANIMALS":     {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
+    "NATURE":      {"simple": 2_000, "moderate": 3_500, "complex": 5_000},
+    "GEOGRAPHY":   {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
+    "OCEAN":       {"simple": 2_500, "moderate": 4_000, "complex": 5_500},
+    # New categories
+    "TECHNOLOGY":  {"simple": 2_500, "moderate": 4_000, "complex": 6_000},
+    "PSYCHOLOGY":  {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "MYTHOLOGY":   {"simple": 3_500, "moderate": 5_500, "complex": 7_500},
+    "MEDICINE":    {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "MATHEMATICS": {"simple": 3_500, "moderate": 5_500, "complex": 8_000},
+    "ECONOMICS":   {"simple": 3_000, "moderate": 5_000, "complex": 7_000},
+    "PHYSICS":     {"simple": 3_000, "moderate": 5_000, "complex": 7_500},
 }
 _DEFAULT_PERSONA_MS = {"simple": 3_000, "moderate": 4_500, "complex": 6_000}
 
@@ -112,9 +121,7 @@ _EMOTIONAL_ARC: dict[str, dict[str, str]] = {
 def build_timeline(script: dict, intent: str = "") -> dict:
     import os
     intent_upper = (intent or "").strip().upper()
-    if intent_upper not in _PERSONA_BASE_MS:
-        intent_upper = "SCIENCE"
-    persona_ms = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
+    persona_ms   = _PERSONA_BASE_MS.get(intent_upper, _DEFAULT_PERSONA_MS)
 
     # Read adaptive params (written by news_analytics after retention analysis)
     _adaptive: dict = {}

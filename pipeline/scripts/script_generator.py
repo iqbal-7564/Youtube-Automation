@@ -228,13 +228,16 @@ CLOSE   ({close_time}): {close_rule}
 
 TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
 
-TITLE RULES (curiosity-gap psychology):
-  GOOD: "The Impossible Thing Hiding Inside Every Human Cell"
-  GOOD: "Scientists Found Something That Breaks Physics"
-  GOOD: "Nobody Told You The Real Reason Dinosaurs Vanished"
-  BAD:  "Amazing Facts About DNA" (too vague)
-  BAD:  "Shocking Truth About X" (overused trigger word)
-  Rule: imply hidden/forbidden knowledge without using overused adjectives.
+TITLE RULES (SEO + curiosity-gap):
+  Rule 1: Start with keywords people actually search on YouTube.
+  Rule 2: Add curiosity gap — imply hidden/forbidden knowledge.
+  Rule 3: No overused words: shocking/unbelievable/amazing/mind-blowing.
+  GOOD: "Why Does The Ocean Glow? The Truth Nobody Told You"
+  GOOD: "How Black Holes Actually Work — Scientists Got It Wrong"
+  GOOD: "Why Did The Roman Empire Really Fall? The Hidden Reason"
+  GOOD: "What Happens Inside A Black Hole? The Real Answer"
+  BAD:  "The Impossible Thing Hiding Inside Every Human Cell" (not searchable)
+  BAD:  "Amazing Facts About DNA" (too vague, no search intent)
 
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON.
@@ -262,9 +265,9 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Curiosity-gap title implying hidden knowledge (max 90 chars, no 'shocking'/'unbelievable'/'amazing')",
-    "description": "2-3 sentence description with the main fact. End with relevant hashtags.",
-    "tags": ["facts", "did you know", "world facts", "real world facts", "category-specific tag", "educational"],
+    "title": "SEO-optimised title: start with a high-search keyword phrase people actually type, then add curiosity gap. Max 90 chars. No 'shocking'/'unbelievable'/'amazing'. Example: 'Why Does The Ocean Glow? The Truth Nobody Told You'",
+    "description": "First line: restate title keyword for SEO. Second line: the most surprising specific fact. Third line: call to action. End with 8-10 relevant hashtags including category, topic, and broad tags like #facts #didyouknow #educational.",
+    "tags": ["facts", "did you know", "world facts", "real world facts", "educational", "mind blowing facts", "category-specific tag", "topic-specific tag", "MindBlownFacts"],
     "engagement_question": "One question that sparks debate or invites personal stories from viewers"
   }}
 }}"""

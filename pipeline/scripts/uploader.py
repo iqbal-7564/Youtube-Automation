@@ -31,14 +31,21 @@ import requests
 log = logging.getLogger(__name__)
 
 _PLAYLISTS = {
-    "SPACE":     "MindBlownFacts — Space",
-    "SCIENCE":   "MindBlownFacts — Science",
-    "HISTORY":   "MindBlownFacts — History",
-    "ANIMALS":   "MindBlownFacts — Animals",
-    "NATURE":    "MindBlownFacts — Nature",
-    "GEOGRAPHY": "MindBlownFacts — Geography",
-    "OCEAN":     "MindBlownFacts — Ocean",
-    "CULTURE":   "MindBlownFacts — Culture",
+    "SPACE":       "MindBlownFacts — Space",
+    "SCIENCE":     "MindBlownFacts — Science",
+    "HISTORY":     "MindBlownFacts — History",
+    "ANIMALS":     "MindBlownFacts — Animals",
+    "NATURE":      "MindBlownFacts — Nature",
+    "GEOGRAPHY":   "MindBlownFacts — Geography",
+    "OCEAN":       "MindBlownFacts — Ocean",
+    "CULTURE":     "MindBlownFacts — Culture",
+    "TECHNOLOGY":  "MindBlownFacts — Technology",
+    "PSYCHOLOGY":  "MindBlownFacts — Psychology",
+    "MYTHOLOGY":   "MindBlownFacts — Mythology",
+    "MEDICINE":    "MindBlownFacts — Medicine",
+    "MATHEMATICS": "MindBlownFacts — Mathematics",
+    "ECONOMICS":   "MindBlownFacts — Economics",
+    "PHYSICS":     "MindBlownFacts — Physics",
 }
 
 _LOGS_DIR            = Path(__file__).parent.parent / "logs"
@@ -95,8 +102,13 @@ def upload_video(
     if is_short and "#Shorts" not in title:
         title = (title[:88] + " #Shorts") if len(title) > 88 else title + " #Shorts"
 
+    # Fix 2: notify subscribers only on first video of the day — prevents
+    # 3 daily notifications which causes subscribers to mute the channel.
+    notify = _should_notify()
+
     # ── Upload video ──────────────────────────────────────────────────────────
-    video_id = _upload(video_path, metadata, token, title, is_short)
+    video_id = _upload(video_path, metadata, token, title, is_short,
+                       notify_subscribers=notify)
     if not video_id:
         return None
 
@@ -207,76 +219,161 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     meta  = script.get("metadata", {})
     title = (meta.get("title") or topic["title"])[:95]
     cat   = topic.get("intent", "SCIENCE")
+    is_short = profile == "shorts"
 
-    parts: list[str] = [title, ""]
+    # ── SEO-optimised description ─────────────────────────────────────────────
+    raw_desc   = meta.get("description", "")
+    desc_lines = raw_desc.split("\n") if raw_desc else []
+    first_line = desc_lines[0].strip() if desc_lines else title
+    rest_lines = "\n".join(desc_lines[1:]).strip() if len(desc_lines) > 1 else ""
 
+    # Fix 3: #Shorts must be in FIRST LINE of description for Shorts algorithm
+    if is_short:
+        first_line = f"#Shorts {first_line}" if "#Shorts" not in first_line else first_line
+
+    # Fix 5: channel link in every description — converts viewers to subscribers
+    channel_link = "🔔 Subscribe for daily mind-blowing facts: https://www.youtube.com/@MindBlownFacts"
+
+    parts: list[str] = [
+        first_line,
+        "",
+        rest_lines if rest_lines else (
+            f"Discover the most mind-blowing facts about {cat.lower()} "
+            f"that most people never learn. Subscribe to MindBlownFacts "
+            f"for new facts every day."
+        ),
+        "",
+        channel_link,
+        "",
+    ]
+
+    # Fix 4: descriptive chapter titles instead of HOOK/TENSION/CORE labels
     if timeline["total_duration_seconds"] > 60:
         parts.append("📌 Chapters")
-        t = 0.0
+        t    = 0.0
+        seen = set()
         for sc in timeline["scenes"]:
             mm, ss = divmod(int(t), 60)
             label  = sc["segment_label"]
-            if not label.startswith("_"):
-                parts.append(f"{mm}:{ss:02d} — {label}")
+            if not label.startswith("_") and label not in seen:
+                seen.add(label)
+                parts.append(f"{mm}:{ss:02d} — {_chapter_label(label)}")
             t += sc["duration_ms"] / 1000
         parts.append("")
 
-    parts += [
-        meta.get("description", f"{title}\n\nCategory: {cat}"),
-        "",
-        _build_hashtags(cat, meta.get("tags", []), profile),
-    ]
-
+    parts.append(_build_hashtags(cat, meta.get("tags", []), profile))
     description = "\n".join(parts)[:4900]
 
-    tags = (
+    # ── SEO tags — mix broad + specific for best reach ────────────────────────
+    cat_lower = cat.lower()
+    tags = list(dict.fromkeys(
         meta.get("tags", [])
-        + ["real world facts", "facts", "did you know", "world facts",
-           "educational", cat.lower()]
-    )[:30]
+        + [
+            "facts", "did you know", "world facts", "real world facts",
+            "mind blowing facts", "educational", "facts you didn't know",
+            "interesting facts", "amazing facts", "MindBlownFacts",
+            f"{cat_lower} facts", f"{cat_lower} explained", cat_lower,
+            "facts in hindi", "facts about the world", "top facts",
+        ]
+    ))[:30]
 
     return {"title": title, "description": description, "tags": tags}
 
 
 _CAT_HASHTAGS: dict[str, list[str]] = {
-    "SPACE":     ["#Space", "#Universe", "#NASA", "#Cosmos", "#Astronomy",
-                  "#Galaxy", "#BlackHole", "#SolarSystem", "#Planets"],
-    "SCIENCE":   ["#Science", "#Physics", "#Biology", "#Discovery",
-                  "#Research", "#Experiment", "#Technology", "#Innovation"],
-    "HISTORY":   ["#History", "#Ancient", "#Archaeology", "#HistoryFacts",
-                  "#AncientCivilization", "#Mythology", "#Historical"],
-    "ANIMALS":   ["#Animals", "#Wildlife", "#Nature", "#WildAnimals",
-                  "#AnimalFacts", "#Predator", "#Survival", "#WildLife"],
-    "NATURE":    ["#Nature", "#Earth", "#NatureFacts", "#NaturalDisaster",
-                  "#Environment", "#Planet", "#Climate", "#Geography"],
-    "GEOGRAPHY": ["#Geography", "#Earth", "#WorldFacts", "#Travel",
-                  "#Countries", "#Maps", "#Geopolitics", "#Exploration"],
-    "OCEAN":     ["#Ocean", "#DeepSea", "#MarineLife", "#Underwater",
-                  "#OceanFacts", "#SeaCreatures", "#Marine", "#Diving"],
-    "CULTURE":   ["#Culture", "#Ancient", "#History", "#Tradition",
-                  "#CulturalFacts", "#Civilisation", "#Ritual", "#Heritage"],
+    "SPACE":       ["#Space", "#Universe", "#NASA", "#Cosmos", "#Astronomy",
+                   "#Galaxy", "#BlackHole", "#SolarSystem", "#SpaceFacts", "#Planets"],
+    "SCIENCE":     ["#Science", "#ScienceFacts", "#Biology", "#Discovery",
+                   "#Research", "#Experiment", "#Innovation", "#ScienceExplained"],
+    "HISTORY":     ["#History", "#Ancient", "#Archaeology", "#HistoryFacts",
+                   "#AncientCivilization", "#Historical", "#HistoryExplained"],
+    "ANIMALS":     ["#Animals", "#Wildlife", "#WildAnimals", "#AnimalFacts",
+                   "#Predator", "#Survival", "#NatureWild", "#AnimalLife"],
+    "NATURE":      ["#Nature", "#Earth", "#NatureFacts", "#NaturalDisaster",
+                   "#Environment", "#Climate", "#NatureExplained", "#Planet"],
+    "GEOGRAPHY":   ["#Geography", "#WorldFacts", "#Travel", "#Countries",
+                   "#GeographyFacts", "#Geopolitics", "#Exploration", "#Maps"],
+    "OCEAN":       ["#Ocean", "#DeepSea", "#MarineLife", "#Underwater",
+                   "#OceanFacts", "#SeaCreatures", "#OceanExplained", "#Marine"],
+    "CULTURE":     ["#Culture", "#CultureFacts", "#Tradition", "#AncientHistory",
+                   "#CulturalFacts", "#Civilisation", "#Ritual", "#Heritage"],
+    "TECHNOLOGY":  ["#Technology", "#Tech", "#AI", "#ArtificialIntelligence",
+                   "#TechFacts", "#FutureTech", "#Innovation", "#TechExplained"],
+    "PSYCHOLOGY":  ["#Psychology", "#PsychologyFacts", "#HumanBehavior", "#MindFacts",
+                   "#Brain", "#BrainFacts", "#MentalScience", "#PsychFacts"],
+    "MYTHOLOGY":   ["#Mythology", "#MythologyFacts", "#AncientMyths", "#Legend",
+                   "#GreekMythology", "#NorseMythology", "#MythsExplained", "#Legends"],
+    "MEDICINE":    ["#Medicine", "#MedicalFacts", "#Health", "#HealthFacts",
+                   "#HumanBody", "#Biology", "#MedicalScience", "#BodyFacts"],
+    "MATHEMATICS": ["#Mathematics", "#MathFacts", "#Numbers", "#MathExplained",
+                   "#Geometry", "#MathematicsExplained", "#NumberFacts", "#Maths"],
+    "ECONOMICS":   ["#Economics", "#EconomicsFacts", "#Money", "#MoneyFacts",
+                   "#Finance", "#FinanceFacts", "#WealthFacts", "#EconomicsExplained"],
+    "PHYSICS":     ["#Physics", "#PhysicsFacts", "#Quantum", "#QuantumPhysics",
+                   "#PhysicsExplained", "#Science", "#Relativity", "#EnergyFacts"],
 }
 
 
+def _should_notify() -> bool:
+    """
+    Returns True only for the first upload of the day.
+    Prevents 3 daily notifications which causes subscribers to mute the channel.
+    Tracks state in logs/notify_state.json.
+    """
+    import datetime
+    state_path = _LOGS_DIR / "notify_state.json"
+    today      = datetime.datetime.utcnow().date().isoformat()
+    try:
+        state = json.loads(state_path.read_text()) if state_path.exists() else {}
+        if state.get("last_notify_date") == today:
+            log.info("Notification suppressed — already notified today")
+            return False
+        state["last_notify_date"] = today
+        _LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps(state, indent=2))
+        log.info("Notification enabled — first upload today")
+        return True
+    except Exception as exc:
+        log.debug("Notify state error: %s", exc)
+        return True  # default to notify on error
+
+
+_CHAPTER_LABELS: dict[str, str] = {
+    "HOOK":    "Introduction",
+    "TENSION": "The Mystery",
+    "CORE":    "The Real Explanation",
+    "PAYOFF":  "The Shocking Truth",
+    "CLOSE":   "Subscribe for More",
+}
+
+
+def _chapter_label(segment_label: str) -> str:
+    """Convert internal segment label to viewer-friendly chapter title."""
+    return _CHAPTER_LABELS.get(segment_label.upper(), segment_label.title())
+
+
 def _build_hashtags(cat: str, script_tags: list, profile: str) -> str:
-    base       = ["#MindBlownFacts", "#Facts", "#DidYouKnow", "#WorldFacts", "#Educational"]
+    base       = ["#MindBlownFacts", "#Facts", "#DidYouKnow", "#WorldFacts",
+                  "#Educational", "#InterestingFacts", "#MindBlowing"]
     pool       = _CAT_HASHTAGS.get(cat.upper(), ["#WorldFacts"])
-    chosen_cat = random.sample(pool, min(3, len(pool)))
-    script_ht  = [f"#{t.replace(' ', '')}" for t in script_tags[:2] if t and len(t) < 20]
+    chosen_cat = random.sample(pool, min(5, len(pool)))
+    script_ht  = [f"#{t.replace(' ', '').title()}" for t in script_tags[:3]
+                  if t and len(t) < 25]
     all_tags   = base + chosen_cat + script_ht
     if profile == "shorts":
-        all_tags.append("#Shorts")
+        all_tags = ["#Shorts"] + all_tags
     return " ".join(all_tags)
 
 
 # ── Upload ────────────────────────────────────────────────────────────────────
 
 def _upload(
-    video_path: Path,
-    meta:       dict,
-    token:      str,
-    title:      str,
-    is_short:   bool,
+    video_path:         Path,
+    meta:               dict,
+    token:              str,
+    title:              str,
+    is_short:           bool,
+    notify_subscribers: bool = True,
 ) -> str | None:
     """
     Input:
@@ -328,14 +425,17 @@ def _upload(
                 },
                 json={
                     "snippet": {
-                        "title":       title[:100],
-                        "description": meta["description"],
-                        "tags":        meta["tags"],
-                        "categoryId":  cat_id,
+                        "title":                title[:100],
+                        "description":          meta["description"],
+                        "tags":                 meta["tags"],
+                        "categoryId":           cat_id,
+                        "defaultLanguage":      "en",       # Fix 1: language indexing
+                        "defaultAudioLanguage": "en",
                     },
                     "status": {
                         "privacyStatus":           "public",
                         "selfDeclaredMadeForKids": False,
+                        "notifySubscribers":       notify_subscribers,  # Fix 2
                     },
                 },
                 timeout=30,

@@ -299,6 +299,33 @@ def select_topic(logs_dir: Path) -> dict | None:
     used_categories = {v.get("intent", "") for v in produced_today}
     perf_weights    = _load_performance_weights(logs_dir)
 
+    # Priority 0: INTENT_OVERRIDE env var — forces a specific category
+    override = os.getenv("INTENT_OVERRIDE", "").strip().upper()
+    if override and override in CATEGORIES:
+        log.info("INTENT_OVERRIDE=%s — forcing category", override)
+        seeds = _SEEDS.get(override, [])
+        random.shuffle(seeds)
+        for seed in seeds[:6]:
+            topic = _build_topic(override, seed, full_history, "")
+            if topic:
+                topic["source"] = "IntentOverride"
+                return topic
+        # Fallback: bypass filters for forced category
+        seed = random.choice(_SEEDS.get(override, ["facts"]))
+        title, description = _groq_expand(override, seed, "")
+        if not title:
+            title = f"The Incredible Truth About {seed.title()}"
+            description = f"Fascinating facts about {seed}."
+        return {
+            "title": title[:200], "description": description[:500],
+            "intent": override, "source": "IntentOverride-Fallback",
+            "published_at": datetime.utcnow().isoformat(),
+            "article_url": "", "seed": seed, "trend_hint": "",
+            "novelty_score": 50, "curiosity_score": 0,
+            "saturation": "pass", "viral_score": 0.0,
+            "performance_score": 50.0,
+        }
+
     # Priority 1: Velocity cluster queue — follow-up topics from viral videos
     velocity_queue = _load_velocity_queue(logs_dir)
     for item in velocity_queue:
