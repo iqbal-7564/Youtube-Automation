@@ -478,5 +478,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "RB3SgcAzMaE",
+    "intent": "NATURE",
+    "title": "Lightning's Shocking Secret",
+    "hook_text": "Lightning strikes create gamma rays",
+    "total_duration_seconds": 63.77,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-05T00:07:49.352278",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
