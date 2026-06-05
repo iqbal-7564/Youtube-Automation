@@ -228,16 +228,30 @@ CLOSE   ({close_time}): {close_rule}
 
 TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
 
-TITLE RULES (SEO + curiosity-gap):
-  Rule 1: Start with keywords people actually search on YouTube.
-  Rule 2: Add curiosity gap — imply hidden/forbidden knowledge.
-  Rule 3: No overused words: shocking/unbelievable/amazing/mind-blowing.
+TITLE RULES (SEO + curiosity-gap + attractive):
+  Rule 1: Start with a question people actually type into YouTube search.
+  Rule 2: Add emotional payoff after the question — what they will FEEL or LEARN.
+  Rule 3: Use power words: real, actual, hidden, never, finally, proof, inside, truth.
+  Rule 4: Include a number or specific detail when possible — specificity = credibility.
+  Rule 5: Max 70 characters — short titles get more clicks on mobile.
+  Rule 6: NO overused words: shocking/unbelievable/amazing/mind-blowing/incredible.
+
+  QUESTION FORMATS (most searchable + attractive):
+  "Why Does [X]? The Answer Will Change How You See [Y]"
+  "How Does [X] Actually Work? Scientists Finally Have Proof"
+  "What Really Happened To [X]? The Truth Was Hidden For [N] Years"
+  "Why Can't [X]? The Real Reason Nobody Talks About"
+  "How Did [X] Survive? The Answer Defies Everything We Know"
+  "What Is Inside [X]? The Discovery That Changes Everything"
+
   GOOD: "Why Does The Ocean Glow? The Truth Nobody Told You"
   GOOD: "How Black Holes Actually Work — Scientists Got It Wrong"
-  GOOD: "Why Did The Roman Empire Really Fall? The Hidden Reason"
-  GOOD: "What Happens Inside A Black Hole? The Real Answer"
-  BAD:  "The Impossible Thing Hiding Inside Every Human Cell" (not searchable)
-  BAD:  "Amazing Facts About DNA" (too vague, no search intent)
+  GOOD: "Why Did Rome Really Fall? Hidden For 1,500 Years"
+  GOOD: "What Lives 11km Deep? The Answer Will Terrify You"
+  GOOD: "How Did Tardigrades Survive 5 Mass Extinctions?"
+  BAD:  "The Impossible Thing Hiding Inside Every Human Cell" (not a question)
+  BAD:  "Amazing Facts About DNA" (too vague, no emotion)
+  BAD:  "Ocean Facts That Will Blow Your Mind" (overused pattern)
 
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON.
@@ -265,7 +279,7 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "SEO-optimised title: start with a high-search keyword phrase people actually type, then add curiosity gap. Max 90 chars. No 'shocking'/'unbelievable'/'amazing'. Example: 'Why Does The Ocean Glow? The Truth Nobody Told You'",
+    "title": "SEO question-based title: MUST start with Why/How/What/Where. Add emotional payoff after question mark. Include one specific number or detail. Max 70 chars. Power words: real/hidden/actual/finally/proof/never. Example: 'Why Does The Ocean Glow? Scientists Finally Have Proof'",
     "description": "First line: restate title keyword for SEO. Second line: the most surprising specific fact. Third line: call to action. End with 8-10 relevant hashtags including category, topic, and broad tags like #facts #didyouknow #educational.",
     "tags": ["facts", "did you know", "world facts", "real world facts", "educational", "mind blowing facts", "category-specific tag", "topic-specific tag", "MindBlownFacts"],
     "engagement_question": "One question that sparks debate or invites personal stories from viewers"

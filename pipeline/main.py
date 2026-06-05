@@ -364,6 +364,8 @@ def run_pipeline() -> bool:
             log.warning("No suitable topic found — aborting.")
             return False
         log.info("  [%s] %s", topic["intent"], topic["title"][:80])
+        log.info("  Competition: %d competing videos on YouTube",
+                 topic.get("competition_count", 0))
 
         # ── 2: Script Generation ─────────────────────────────────────────────
         log.info("[2/14] Script Generation")

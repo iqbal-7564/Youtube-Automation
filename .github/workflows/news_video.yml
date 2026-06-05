@@ -2,9 +2,11 @@ name: MindBlownFacts Video Pipeline
 
 on:
   schedule:
+    - cron: '0 10 * * *'   # 10:00 UTC (3:00 PM PKT)  — Standard — news trigger ONLY
     - cron: '0 13 * * *'   # 13:00 UTC (6:00 PM PKT)  — Shorts  — peak global traffic
     - cron: '0 17 * * *'   # 17:00 UTC (10:00 PM PKT) — Standard/Long — US prime time
     - cron: '0 20 * * *'   # 20:00 UTC (1:00 AM PKT)  — Shorts  — US evening peak
+    - cron: '0 * * * *'    # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
     inputs:
       intent_override:
@@ -20,6 +22,12 @@ jobs:
   news-video:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 10 * * *' ||
+      github.event.schedule == '0 13 * * *' ||
+      github.event.schedule == '0 17 * * *' ||
+      github.event.schedule == '0 20 * * *'
 
     steps:
       - name: Checkout
@@ -52,16 +60,35 @@ jobs:
       - name: Resolve video format
         id: fmt
         run: |
-          # Manual dispatch overrides schedule logic
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "format=${{ github.event.inputs.video_format || 'shorts' }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "0 10 * * *" ]; then
+            # 10:00 UTC — news slot: only run if trigger exists, else skip
+            if [ -f pipeline/logs/news_trigger.json ]; then
+              USED=$(python3 -c "import json; d=json.load(open('pipeline/logs/news_trigger.json')); print(d.get('used','false'))" 2>/dev/null || echo "true")
+              if [ "$USED" = "False" ] || [ "$USED" = "false" ]; then
+                echo "format=standard" >> $GITHUB_OUTPUT
+                echo "has_trigger=true" >> $GITHUB_OUTPUT
+              else
+                echo "format=skip" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "format=skip" >> $GITHUB_OUTPUT
+            fi
           elif [ "${{ github.event.schedule }}" = "0 17 * * *" ]; then
             echo "format=standard" >> $GITHUB_OUTPUT
           else
             echo "format=shorts" >> $GITHUB_OUTPUT
           fi
 
+      - name: Skip if no news trigger at 10:00
+        if: steps.fmt.outputs.format == 'skip'
+        run: |
+          echo "No news trigger available — skipping 10:00 UTC run"
+          exit 0
+
       - name: Run Video Pipeline
+        if: steps.fmt.outputs.format != 'skip'
         env:
           VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
           INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override }}
@@ -100,16 +127,91 @@ jobs:
             git commit -m "bot: update pipeline logs [skip ci]"
           git push 2>/dev/null || true
 
+  # ── News monitor (runs every hour — saves trigger for bonus video) ──────────
+  news-monitor:
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+
+      - name: Check trending news
+        continue-on-error: true
+        env:
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+        run: |
+          mkdir -p pipeline/logs
+          python -c "
+          import sys
+          sys.path.insert(0, 'pipeline/scripts')
+          from news_monitor import run_news_monitor
+          triggered = run_news_monitor()
+          print('Triggered:', triggered)
+          "
+
+      - name: Save news trigger and queue
+        continue-on-error: true
+        run: |
+          git config user.name  "VisionaryMinds Bot"
+          git config user.email "bot@visionaryminds.com"
+          git add pipeline/logs/news_trigger.json \
+                  pipeline/logs/news_queue.json 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "bot: news trigger [skip ci]"
+          git push 2>/dev/null || true
+
+  # ── Comment auto-responder (runs every hour independently) ──────────────────
+  comment-responder:
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+
+      - name: Reply to comments
+        continue-on-error: true
+        env:
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: |
+          mkdir -p pipeline/logs
+          python -c "
+          import sys
+          sys.path.insert(0, 'pipeline/scripts')
+          from comment_responder import run_comment_responder
+          run_comment_responder()
+          "
+
+      - name: Save replied comments log
+        continue-on-error: true
+        run: |
+          git config user.name  "VisionaryMinds Bot"
+          git config user.email "bot@visionaryminds.com"
+          git add pipeline/logs/replied_comments.json 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "bot: update replied comments [skip ci]"
+          git push 2>/dev/null || true
+
   # ── Analytics refresh (runs only on the 12:00 UTC job) ───────────────────────
   analytics-refresh:
     runs-on: ubuntu-latest
     needs: news-video
     if: |
-     always() &&
-     (
-      github.event.schedule == '0 17 * * *' ||
-      github.event_name == 'workflow_dispatch'
-     )
+      always() &&
+      (
+        github.event.schedule == '0 17 * * *' ||
+        github.event_name == 'workflow_dispatch'
+      )
 
     steps:
       - uses: actions/checkout@v4

@@ -293,11 +293,37 @@ _GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
+def _check_news_trigger(logs_dir: Path) -> dict | None:
+    """Pick up news trigger if available and not yet used today."""
+    try:
+        path = logs_dir / "news_trigger.json"
+        if not path.exists():
+            return None
+        data = json.loads(path.read_text())
+        today = datetime.utcnow().date().isoformat()
+        if data.get("date") == today and not data.get("used", False):
+            topic = data.get("topic")
+            if topic:
+                # Mark as used
+                data["used"] = True
+                path.write_text(json.dumps(data, indent=2))
+                log.info("News trigger picked up: %s", topic["title"][:70])
+                return topic
+    except Exception as exc:
+        log.debug("News trigger check: %s", exc)
+    return None
+
+
 def select_topic(logs_dir: Path) -> dict | None:
     produced_today  = _load_produced_today(logs_dir)
     full_history    = _load_full_history(logs_dir)
     used_categories = {v.get("intent", "") for v in produced_today}
     perf_weights    = _load_performance_weights(logs_dir)
+
+    # Priority -1: News trigger — breaking news facts angle
+    news_topic = _check_news_trigger(logs_dir)
+    if news_topic:
+        return news_topic
 
     # Priority 0: INTENT_OVERRIDE env var — forces a specific category
     override = os.getenv("INTENT_OVERRIDE", "").strip().upper()
@@ -858,6 +884,66 @@ def _check_saturation(title: str) -> str:
         return "pass"
 
 
+def _count_youtube_results(query: str, api_key: str) -> int:
+    """Count how many YouTube videos exist for a search query."""
+    try:
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "key": api_key, "q": query,
+                "type": "video", "part": "id",
+                "maxResults": "50",
+            },
+            timeout=10,
+        )
+        if r.ok:
+            return r.json().get("pageInfo", {}).get("totalResults", 999999)
+    except Exception:
+        pass
+    return 999999
+
+
+def _find_best_seo_title(base_title: str, seed: str, category: str) -> tuple[str, int]:
+    """
+    Generate title variants with low-competition modifiers.
+    Returns (best_title, result_count) — lowest competition wins.
+
+    Low competition = few existing YouTube videos = easy to rank #1.
+    """
+    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
+    if not api_key:
+        return base_title, 999999
+
+    year = datetime.utcnow().year
+    cat  = category.title()
+
+    # Generate variants with low-competition modifiers
+    variants = [
+        base_title,
+        f"{base_title} {year}",
+        f"{seed.title()} Facts {year}",
+        f"{seed.title()} Facts Nobody Knows",
+        f"The Truth About {seed.title()} {year}",
+        f"{cat} Facts {year} That Will Shock You",
+        f"Why {seed.title()} Will Surprise You {year}",
+    ]
+
+    best_title  = base_title
+    best_count  = 999999
+
+    for variant in variants[:5]:  # check max 5 variants
+        count = _count_youtube_results(variant, api_key)
+        log.debug("SEO check '%s': %d results", variant[:50], count)
+        if count < best_count:
+            best_count = count
+            best_title = variant
+        time.sleep(0.3)  # gentle rate limiting
+
+    log.info("SEO: best title '%s' (%d competing videos)",
+             best_title[:60], best_count)
+    return best_title[:200], best_count
+
+
 def _build_topic(category: str, seed: str, produced: list[dict],
                  trend_hint: str = "") -> dict | None:
     # Wikipedia verification first — skip topic if no article found
@@ -881,6 +967,9 @@ def _build_topic(category: str, seed: str, produced: list[dict],
     if saturation == "reject":
         log.debug("Saturation reject (high competition): %s", title[:60])
         return None
+
+    # SEO upgrade — find lowest competition title variant
+    title, competition_count = _find_best_seo_title(title, seed, category)
 
     # Curiosity gap validation — reject generic titles
     curiosity = _curiosity_gap_score(title)
@@ -923,9 +1012,10 @@ def _build_topic(category: str, seed: str, produced: list[dict],
         "novelty_score":    novelty,
         "curiosity_score":  curiosity,
         "saturation":       saturation,
-        "viral_score":      round(viral_score, 1),
-        "performance_score": performance_score,
-        "wiki_summary":     wiki_summary,
+        "viral_score":        round(viral_score, 1),
+        "performance_score":  performance_score,
+        "wiki_summary":       wiki_summary,
+        "competition_count":  competition_count,
     }
 
 
