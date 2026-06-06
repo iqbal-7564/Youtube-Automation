@@ -77,7 +77,7 @@ _INTENT_ACCENT: dict[str, tuple[int, int, int]] = {
     "PHYSICS":     (255, 140,  50),
 }
 
-_LAYOUTS = ["left", "center", "bottom_band", "top_split", "diagonal"]
+_LAYOUTS = ["left", "center", "bottom_band", "top_split", "diagonal", "number_hero"]
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "that", "could", "was", "is", "are", "were",
@@ -128,7 +128,13 @@ def generate_thumbnail(
     keyword, subtitle = _extract_keyword_and_subtitle(title)
     accent     = _INTENT_ACCENT.get(intent, (255, 220, 50))
     pill_color = _INTENT_PILL_COLOR.get(intent, (0, 85, 170))
-    layout     = _LAYOUTS[abs(hash(title)) % len(_LAYOUTS)]
+
+    # Force number_hero layout when title contains an impressive number
+    big_number = _extract_number(title)
+    if big_number:
+        layout = "number_hero"
+    else:
+        layout = _LAYOUTS[abs(hash(title)) % (len(_LAYOUTS) - 1)]  # exclude number_hero
 
     bg = _load_background(visuals_dir, timeline, intent)
 
@@ -176,8 +182,7 @@ def generate_thumbnail(
             lw   = bbox[2] - bbox[0]
             x    = (_TW - lw) // 2
             y    = y_start + i * (kw_font_size + 10)
-            draw.text((x, y), line, font=font_kw, fill=accent,
-                      stroke_width=6, stroke_fill=(0, 0, 0))
+            _draw_glow_text(draw, (x, y), line, font_kw, accent, accent)
         if sub_lines:
             sub_y = y_start + len(kw_lines) * (kw_font_size + 10) + 22
             for i, line in enumerate(sub_lines):
@@ -217,6 +222,33 @@ def generate_thumbnail(
         y_start   = pad + 20
         _draw_text_block(draw, kw_lines, sub_lines, x_start, y_start,
                          kw_font_size, font_kw, font_sub, accent)
+
+    elif layout == "number_hero":
+        # Giant number dominates center — proven highest-CTR thumbnail style
+        num_font_size = 220 if len(big_number) <= 4 else (180 if len(big_number) <= 7 else 140)
+        font_num  = _load_font(num_font_size)
+        font_sub2 = _load_font(52)
+        # Number centered, slightly above middle
+        bbox_n = draw.textbbox((0, 0), big_number, font=font_num)
+        nw = bbox_n[2] - bbox_n[0]
+        nx = (_TW - nw) // 2
+        ny = int(_TH * 0.12)
+        _draw_glow_text(draw, (nx, ny), big_number, font_num, accent, accent)
+        # Keyword below number
+        kw_lines = textwrap.wrap(keyword, width=max(5, int(_TW * 0.9 / (96 * 0.56))))[:2]
+        _draw_text_block(draw, kw_lines, [], pad, ny + num_font_size + 20,
+                         96, _load_font(96), font_sub, accent)
+        # Subtitle below keyword
+        if subtitle:
+            sub_lines = textwrap.wrap(subtitle, width=max(10, int((_TW - 2*pad) / (52 * 0.53))))[:2]
+            sub_y = ny + num_font_size + 20 + len(kw_lines) * 106 + 18
+            for i, line in enumerate(sub_lines):
+                draw.text((pad, sub_y + i * 58), line, font=font_sub2,
+                          fill=(255, 255, 255), stroke_width=3, stroke_fill=(0, 0, 0))
+
+    # ── Shock badge ("!" for secrets/danger, "?" for questions) ──────────────
+    badge_char = "?"  if any(w in title.lower() for w in ("why", "how", "what", "where", "when")) else "!"
+    _draw_shock_badge(draw, badge_char, _load_font(52), _TW - 110, _TH - 110, accent)
 
     # ── Channel logo / name (bottom-left) ─────────────────────────────────────
     logo_path = Path(__file__).parent.parent / "assets" / "logo.png"
@@ -316,15 +348,67 @@ def _draw_text_block(draw, kw_lines: list, sub_lines: list,
                      x: int, y: int, kw_font_size: int,
                      font_kw, font_sub, accent: tuple) -> None:
     for i, line in enumerate(kw_lines):
-        draw.text((x, y + i * (kw_font_size + 10)), line,
-                  font=font_kw, fill=accent,
-                  stroke_width=5, stroke_fill=(0, 0, 0))
+        _draw_glow_text(draw, (x, y + i * (kw_font_size + 10)),
+                        line, font_kw, accent, accent)
     if sub_lines:
         sub_y = y + len(kw_lines) * (kw_font_size + 10) + 22
         for i, line in enumerate(sub_lines):
             draw.text((x, sub_y + i * 52), line,
                       font=font_sub, fill=(255, 255, 255),
                       stroke_width=2, stroke_fill=(0, 0, 0))
+
+
+def _extract_number(title: str) -> str:
+    """Extract the most impressive number/quantity from title for number_hero layout."""
+    patterns = [
+        r'\d[\d,]*\s*(?:billion|million|trillion)',   # "4 billion"
+        r'\d[\d,]*\s*(?:thousand)',                    # "10 thousand"
+        r'\d[\d,.]*\s*(?:km|mph|km/h|ly|°|%)',        # "186,000 mph"
+        r'\d[\d,]{3,}',                                # 4+ digit: "1,670"
+        r'\d+\s*(?:years?|days?|seconds?|meters?)',    # "4 billion years"
+    ]
+    for pat in patterns:
+        m = re.search(pat, title, re.IGNORECASE)
+        if m:
+            return m.group().strip()
+    return ""
+
+
+def _draw_glow_text(draw, pos: tuple, text: str, font,
+                    fill: tuple, glow: tuple) -> None:
+    """Draw text with a multi-layer glow effect for maximum visual impact."""
+    x, y = pos
+    # Outer glow — large offset, semi-transparent
+    for r in (14, 10, 7):
+        for dx in range(-r, r + 1, r):
+            for dy in range(-r, r + 1, r):
+                if dx != 0 or dy != 0:
+                    draw.text((x + dx, y + dy), text, font=font,
+                              fill=glow, stroke_width=r // 2,
+                              stroke_fill=(0, 0, 0))
+    # Main text with black stroke
+    draw.text((x, y), text, font=font, fill=fill,
+              stroke_width=5, stroke_fill=(0, 0, 0))
+
+
+def _draw_shock_badge(draw, char: str, font, x: int, y: int,
+                      accent: tuple) -> None:
+    """Draw a bold circular badge with '!' or '?' — urgency signal."""
+    try:
+        bbox = draw.textbbox((0, 0), char, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+    except AttributeError:
+        tw = th = 40
+    r  = max(tw, th) // 2 + 20
+    cx, cy = x, y
+    # Dark circle with accent border
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(20, 20, 20))
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r],
+                 outline=accent, width=5)
+    # Character centered in circle
+    draw.text((cx - tw // 2, cy - th // 2), char, font=font,
+              fill=accent, stroke_width=2, stroke_fill=(0, 0, 0))
 
 
 def _extract_keyword_and_subtitle(title: str) -> tuple[str, str]:

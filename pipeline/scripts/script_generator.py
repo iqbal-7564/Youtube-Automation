@@ -190,7 +190,20 @@ _HOOK_FORMULAS = [
     "SCALE BREAK: Make the scale incomprehensible. Compare it to something familiar but make the comparison impossible to process.",
     "TENSION GAP: State something happened without explaining why. 'X exists. Nobody knows why.' Open loop psychology.",
     "FORBIDDEN KNOWLEDGE: Frame the fact as something suppressed. 'They never taught you this in school.'",
+    "STOP SCROLL: Command viewer to stop. 'Stop. This is real.' Direct confrontation forces a pause.",
+    "PERSONAL THREAT: Make it about the viewer's body or life right now. 'Your brain is doing this right now.' Instant relevance.",
+    "IMPOSSIBLE CLAIM: Lead with a claim that sounds like a lie. 'Scientists just broke the laws of physics.' Disbelief = engagement.",
+    "TIMER: Create urgency with a specific time. 'Every 24 hours, this planet does something impossible.' Makes it feel urgent.",
 ]
+
+# Shorts-specific boost — injected only for Shorts format
+_SHORTS_SYSTEM_BOOST = """
+SHORTS CRITICAL RULES (viewer decides to watch or swipe in 2 seconds):
+1. HOOK must work as a STANDALONE SENTENCE shown as text on screen. Max 10 words. If someone reads only the hook sentence, they must feel compelled to watch.
+2. PAYOFF must end with ONE like CTA sentence. Examples: 'Tap like if this broke your brain.' / 'Like if you never knew this.' / 'Double tap if this surprised you.' Keep it short and natural.
+3. CLOSE must echo a word or phrase from the HOOK — creates a loop sensation that makes viewers rewatch. Example: Hook says 'black holes shine' → Close ends with 'and black holes keep shining, waiting to be discovered.'
+4. Every sentence must earn its place. Cut anything that doesn't build suspense or deliver a fact.
+"""
 
 # Director Brain — global story state injected into every Groq system prompt.
 # Zero extra API calls: context is appended to the existing system prompt.
@@ -364,7 +377,7 @@ def generate_script(topic: dict) -> dict:
         payoff_time    = fmt_timing["payoff_time"],
         close_time     = fmt_timing["close_time"],
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
-    ) + _load_viewer_note()
+    ) + _load_viewer_note() + (_SHORTS_SYSTEM_BOOST if video_format == "shorts" else "")
 
     wiki_summary = topic.get("wiki_summary", "")
     wiki_facts = (

@@ -52,6 +52,17 @@ _INTENT_LABEL = {k: k for k in _INTENT_COLOR}
 _FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 _FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
+
+def _escape_drawtext(text: str) -> str:
+    """Escape special characters for FFmpeg drawtext filter."""
+    text = text.replace("\\", "\\\\")
+    text = text.replace("'",  "\\'")
+    text = text.replace(":",  "\\:")
+    text = text.replace("%",  "\\%")
+    # Keep only first 10 words so it fits on one line
+    words = text.split()[:10]
+    return " ".join(words)
+
 # Cinematic color grade filters — movie-quality LUT-style grading per emotion
 _COLOR_GRADE: dict[str, str] = {
     # Warm golden blockbuster — boosted saturation, lifted shadows, warm highlights
@@ -93,6 +104,11 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
     i_label = _INTENT_LABEL.get(i_upper, "FACTS")
     i_color = _INTENT_COLOR.get(i_upper, "0x0055AA")
 
+    # First-frame hook text — shown on scene 1 for Shorts to stop the scroll
+    hook_text = ""
+    if is_shorts and timeline["scenes"]:
+        hook_text = timeline["scenes"][0].get("script_text", "")
+
     scene_outputs: list[tuple[Path, dict]] = []
 
     for sc in timeline["scenes"]:
@@ -118,13 +134,15 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                         sc["segment_label"], i_label, i_color, focus,
                         motion_emotion=sc.get("motion_emotion", "neutral"),
                         scene_id=sc["scene_id"],
+                        hook_text=hook_text if sc["scene_id"] == 1 else "",
                     )
                 else:
                     _render_scene(vis, out, W, H, dur_s, clip_type,
                                   sc["segment_label"],
                                   i_label, i_color, focus,
                                   motion_emotion=sc.get("motion_emotion", "neutral"),
-                                  scene_id=sc["scene_id"])
+                                  scene_id=sc["scene_id"],
+                                  hook_text=hook_text if sc["scene_id"] == 1 else "")
         except Exception as exc:
             log.warning("Scene %d render error: %s — fallback", sc["scene_id"], exc)
             _branded_fill(out, W, H, dur_s, i_label, i_color)
@@ -162,7 +180,8 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
                   dur_s: float, clip_type: str, seg_label: str,
                   i_label: str, i_color: str, focus: str,
                   motion_emotion: str = "neutral",
-                  scene_id: int = 1) -> None:
+                  scene_id: int = 1,
+                  hook_text: str = "") -> None:
 
     # Video clips with missing visual produce a static lavfi color frame (no
     # zoompan is applied for clip_type="video"), which triggers freeze detection.
@@ -203,6 +222,19 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         f"fontcolor=white:fontsize=24:"
         f"box=1:boxcolor={i_color}@0.92:boxborderw=10:x=w-tw-50:y=42"
     )
+
+    # First-frame hook text — large bold overlay for first 3s of scene 1 (Shorts only)
+    # Stops the scroll: viewer reads hook before deciding to swipe
+    if hook_text and scene_id == 1:
+        escaped = _escape_drawtext(hook_text)
+        font_sz = max(42, W // 18)
+        vf_parts.append(
+            f"drawtext=text='{escaped}':fontfile='{_FONT_BOLD}':"
+            f"fontcolor=white:fontsize={font_sz}:"
+            f"box=1:boxcolor=black@0.72:boxborderw=18:"
+            f"x=(w-tw)/2:y=h*0.38:"
+            f"enable='between(t,0,3)'"
+        )
 
     base_cmd = _base_cmd(vis, dur_s, clip_type, W, H)
     logo     = _LOGO_PATH
@@ -375,6 +407,7 @@ def _render_slideshow(
     vis_list: list[Path], out: Path, W: int, H: int, dur_s: float,
     seg_label: str, i_label: str, i_color: str, focus: str,
     motion_emotion: str, scene_id: int,
+    hook_text: str = "",
 ) -> None:
     """Render 2-3 images as a Ken-Burns slideshow with crossfade transitions."""
     n      = len(vis_list)
@@ -390,7 +423,8 @@ def _render_slideshow(
         try:
             _render_scene(vis, sub_out, W, H, per_img, "image", seg_label,
                           i_label, i_color, focus,
-                          motion_emotion=emo, scene_id=scene_id * 100 + idx)
+                          motion_emotion=emo, scene_id=scene_id * 100 + idx,
+                          hook_text=hook_text if idx == 0 else "")
         except Exception as exc:
             log.warning("Slideshow sub-render %d failed: %s — fallback", idx, exc)
             _branded_fill(sub_out, W, H, per_img, i_label, i_color)
