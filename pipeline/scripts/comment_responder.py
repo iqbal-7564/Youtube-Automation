@@ -159,6 +159,13 @@ def _save_replied(logs_dir: Path, replied: set[str]) -> None:
 
 
 def run_comment_responder() -> None:
+    # Analyze all comments for pipeline self-correction
+    try:
+        from comment_analyzer import run_comment_analyzer
+        run_comment_analyzer()
+    except Exception as exc:
+        log.debug("Comment analyzer skipped: %s", exc)
+
     token = _token()
     if not token:
         log.error("Comment responder: token failed")

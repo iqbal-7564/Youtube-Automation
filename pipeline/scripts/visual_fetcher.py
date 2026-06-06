@@ -57,6 +57,17 @@ REGISTRY_LIMIT   = 300
 IMAGE_REGISTRY       = _LOGS_DIR / "used_images.json"
 IMAGE_REGISTRY_LIMIT = 2000      # ~180 days at 3 videos/day × 10 scenes
 
+
+def _auto_hf_steps() -> int:
+    try:
+        p = _LOGS_DIR / "auto_fixes.json"
+        if p.exists():
+            return 8 + int(json.loads(p.read_text()).get("hf_steps_adjust", 0))
+    except Exception:
+        pass
+    return 8
+
+
 # Modifiers cycled when a duplicate query is detected
 _UNIQUE_MODIFIERS = [
     "different angle", "alternative perspective", "unique composition",
@@ -420,7 +431,7 @@ def _huggingface_fetch(query: str, out_path: Path,
                 r = requests.post(
                     _HF_MODEL_URL,
                     headers={"Authorization": f"Bearer {key}"},
-                    json={"inputs": prompt, "parameters": {"num_inference_steps": 8,
+                    json={"inputs": prompt, "parameters": {"num_inference_steps": _auto_hf_steps(),
                                                         "width": 1280, "height": 720}},
                     timeout=60,
                 )

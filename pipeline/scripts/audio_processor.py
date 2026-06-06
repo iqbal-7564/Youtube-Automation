@@ -38,6 +38,16 @@ log = logging.getLogger(__name__)
 _STD_RATE = 44100
 _STD_CH   = 2
 
+
+def _auto_loudnorm_target() -> int:
+    try:
+        p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
+        if p.exists():
+            return int(json.loads(p.read_text()).get("loudnorm_target", -14))
+    except Exception:
+        pass
+    return -14
+
 def detect_audio_gaps(path: Path, max_gap_s: float = 2.0) -> list[float]:
     r = subprocess.run([
         "ffmpeg", "-i", str(path),
@@ -175,8 +185,9 @@ def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
     log.info("  Normalize stage 2b: loudnorm pass-2 (apply linear) + afftdn + apad …")
 
     if stats:
+        _ln_target = _auto_loudnorm_target()
         loudnorm_af = (
-            f"loudnorm=I=-14:TP=-1.5:LRA=11"
+            f"loudnorm=I={_ln_target}:TP=-1.5:LRA=11"
             f":measured_I={stats.get('input_i', '-70.0')}"
             f":measured_TP={stats.get('input_tp', '-70.0')}"
             f":measured_LRA={stats.get('input_lra', '0.0')}"
@@ -189,7 +200,7 @@ def _normalize_3stage(src: Path, out: Path, tmp_dir: Path) -> None:
     else:
         # Fallback: single-pass loudnorm (may still truncate, but apad repairs it)
         log.warning("  loudnorm stats parse failed — using single-pass fallback")
-        loudnorm_af = "loudnorm=I=-14:TP=-1.5:LRA=11"
+        loudnorm_af = f"loudnorm=I={_auto_loudnorm_target()}:TP=-1.5:LRA=11"
 
     _run(
         ["ffmpeg", "-y", "-i", str(clean_wav),
@@ -247,7 +258,7 @@ def _loudnorm_measure(path: Path) -> dict | None:
     try:
         r = subprocess.run(
             ["ffmpeg", "-nostats", "-i", str(path),
-             "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+             "-af", f"loudnorm=I={_auto_loudnorm_target()}:TP=-1.5:LRA=11:print_format=json",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=120,
         )

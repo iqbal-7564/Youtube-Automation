@@ -14,10 +14,21 @@ karaoke word-fill timing (\\kf) so each word lights up as it is spoken.
 The ASS file is burned into the final MP4 by the encoder (step 10).
 """
 
+import json
 import logging
 from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+
+def _auto_font_adjust() -> int:
+    try:
+        p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
+        if p.exists():
+            return int(json.loads(p.read_text()).get("subtitle_font_adjust", 0))
+    except Exception:
+        pass
+    return 0
 
 
 def _ms_to_srt(ms: int) -> str:
@@ -112,7 +123,7 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
     H         = timeline.get("height", 1080)
     is_shorts = profile == "shorts"
 
-    font_size = 52 if is_shorts else 42
+    font_size = (52 if is_shorts else 42) + _auto_font_adjust()
     # Shorts: 350px from bottom clears YouTube UI (like/share/follow buttons)
     # Standard: 80px from bottom is safe for landscape
     margin_v  = 350 if is_shorts else 80

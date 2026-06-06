@@ -40,6 +40,16 @@ _EDGE_RATE: dict[str, str] = {
     "neutral":    "-5%",
 }
 
+def _auto_tts_rate_adjust() -> int:
+    try:
+        p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
+        if p.exists():
+            return int(json.loads(p.read_text()).get("tts_rate_adjust", 0))
+    except Exception:
+        pass
+    return 0
+
+
 _SCENE_PAD_MS            = 300
 _SECTION_BOUNDARY_PAD_MS = 600   # CORE → PAYOFF transition
 
@@ -145,7 +155,9 @@ def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3
 
 
 def _edge_tts(text: str, out: Path, emotion: str) -> bool:
-    rate = _EDGE_RATE.get(emotion, "-5%")
+    base = int(_EDGE_RATE.get(emotion, "-5%").replace("%", ""))
+    adjusted = max(-30, min(20, base + _auto_tts_rate_adjust()))
+    rate = f"{adjusted:+d}%"
     for attempt in range(2):
         try:
             async def _run():

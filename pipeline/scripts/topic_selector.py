@@ -668,6 +668,16 @@ def _consume_velocity_item(logs_dir: Path, item: dict) -> None:
 
 # ── Existing helpers (unchanged) ──────────────────────────────────────────────
 
+def _load_comment_boost() -> dict[str, int]:
+    try:
+        p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
+        if p.exists():
+            return json.loads(p.read_text()).get("category_boost", {})
+    except Exception:
+        pass
+    return {}
+
+
 def _prioritise_categories(
     cats: list[str],
     used_today: set[str],
@@ -676,7 +686,11 @@ def _prioritise_categories(
     available = [c for c in cats if c not in used_today]
     if not available:
         available = list(cats)
-    available.sort(key=lambda c: weights.get(c, 1.0), reverse=True)
+    boost = _load_comment_boost()
+    available.sort(
+        key=lambda c: weights.get(c, 1.0) + boost.get(c, 0),
+        reverse=True,
+    )
     return available
 
 

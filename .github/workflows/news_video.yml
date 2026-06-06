@@ -192,14 +192,16 @@ jobs:
           run_comment_responder()
           "
 
-      - name: Save replied comments log
+      - name: Save replied comments log and auto-fixes
         continue-on-error: true
         run: |
           git config user.name  "VisionaryMinds Bot"
           git config user.email "bot@visionaryminds.com"
-          git add pipeline/logs/replied_comments.json 2>/dev/null || true
+          git add pipeline/logs/replied_comments.json \
+                  pipeline/logs/auto_fixes.json \
+                  pipeline/logs/script_feedback.json 2>/dev/null || true
           git diff --staged --quiet || \
-            git commit -m "bot: update replied comments [skip ci]"
+            git commit -m "bot: update comments + auto-fixes [skip ci]"
           git push 2>/dev/null || true
 
   # ── Analytics refresh (runs only on the 12:00 UTC job) ───────────────────────

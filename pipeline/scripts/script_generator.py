@@ -208,6 +208,19 @@ _DIRECTOR_CONTEXT = {
     ),
 }
 
+def _load_viewer_note() -> str:
+    try:
+        from pathlib import Path as _P
+        p = _P(__file__).parent.parent / "logs" / "script_feedback.json"
+        if p.exists():
+            note = json.loads(p.read_text()).get("viewer_note", "")
+            if note:
+                return f"\n\nVIEWER FEEDBACK (apply to this script):\n{note}"
+    except Exception:
+        pass
+    return ""
+
+
 _SYSTEM_TMPL = """You are a world-class educational YouTube scriptwriter for the channel "MindBlownFacts".
 Your scripts use retention psychology to make viewers feel they can't stop watching.
 Content: real-world facts — science, history, nature, space, animals, geography, ocean, culture.
@@ -349,7 +362,7 @@ def generate_script(topic: dict) -> dict:
         payoff_time    = fmt_timing["payoff_time"],
         close_time     = fmt_timing["close_time"],
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
-    )
+    ) + _load_viewer_note()
 
     wiki_summary = topic.get("wiki_summary", "")
     wiki_facts = (
