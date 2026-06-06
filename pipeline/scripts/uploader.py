@@ -48,8 +48,21 @@ _PLAYLISTS = {
     "PHYSICS":     "MindBlownFacts — Physics",
 }
 
+# Master playlists by format — keeps Shorts and full videos separate for autoplay
+_MASTER_PLAYLIST_SHORTS   = "MindBlownFacts — Best Shorts"
+_MASTER_PLAYLIST_STANDARD = "MindBlownFacts — Full Episodes"
+
 _LOGS_DIR            = Path(__file__).parent.parent / "logs"
 _PLAYLIST_CACHE_FILE = _LOGS_DIR / "playlist_ids.json"
+
+# Comment posted on Shorts to funnel viewers to full videos
+_SHORTS_PROMO_COMMENTS = [
+    "Want the FULL story? Watch our full episodes on the channel! 🎬 Subscribe so you never miss one!",
+    "This is just a taste! Full deep-dive videos on our channel every day 👆 Subscribe for more!",
+    "Love this? We have 8-10 min full episodes on the channel with even MORE facts! Subscribe 🔔",
+    "Short on time? Save this! Full version with deeper facts is on our channel 📌 Subscribe!",
+    "Watch the full episode on our channel for the complete mind-blowing story! Subscribe 🚀",
+]
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -145,15 +158,34 @@ def upload_video(
         ])
     _post_comment(video_id, question, token)
 
+    # ── Promo comment on Shorts (funnels viewers to full episodes) ───────────
+    if profile == "shorts":
+        try:
+            token = _token()
+            promo = random.choice(_SHORTS_PROMO_COMMENTS)
+            _post_comment(video_id, promo, token)
+            log.info("  Promo comment posted on Short")
+        except Exception as exc:
+            log.debug("Promo comment failed: %s", exc)
+
     # ── Playlist ──────────────────────────────────────────────────────────────
     try:
         token = _token()
     except Exception as exc:
         log.warning("Token re-fetch before playlist failed: %s", exc)
+
+    # Category playlist (e.g. MindBlownFacts — Space)
     pl_name = _PLAYLISTS.get(topic.get("intent", "").upper(), "MindBlownFacts — World")
     pl_id   = _playlist(token, pl_name)
     if pl_id:
         _add_to_playlist(token, video_id, pl_id)
+
+    # Master format playlist — keeps Shorts and full videos separate for autoplay
+    master_name = _MASTER_PLAYLIST_SHORTS if profile == "shorts" else _MASTER_PLAYLIST_STANDARD
+    master_id   = _playlist(token, master_name)
+    if master_id:
+        _add_to_playlist(token, video_id, master_id)
+        log.info("  Added to master playlist: %s", master_name)
 
     return video_id
 

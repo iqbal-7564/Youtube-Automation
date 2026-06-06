@@ -94,15 +94,17 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "max_tokens":    1200,
     },
     "standard": {
-        "word_target":   "680-840 words total",
-        "duration_hint": "4-5 minutes",
+        "word_target":   "1400-1700 words total",
+        "duration_hint": "8-10 minutes",
         "core_depth":    (
-            "18-24 sentences spread across 4 sub-topics. Go deep on each fact. "
-            "Include real numbers, scale comparisons, and a counterintuitive twist. "
-            "Vary sentence length: short punch. Longer explanatory follow-up. Short again. "
+            "35-48 sentences covering 5-6 distinct angles on the topic. "
+            "Each angle gets 6-8 sentences: state the surprising fact, explain the mechanism, "
+            "give a real-world scale comparison, reveal the counterintuitive implication. "
+            "Include historical context, modern research, and a mind-blowing 'so what' moment. "
+            "Vary sentence rhythm aggressively: short punch. Medium explanation. Short again. Longer story. "
             "Mark the single most shocking sentence in CORE with [WOW]."
         ),
-        "max_tokens":    4000,
+        "max_tokens":    6000,
     },
     "long": {
         "word_target":   "900-1344 words total",
@@ -138,18 +140,18 @@ _FORMAT_TIMING: dict[str, dict] = {
         "total_est":     50,
     },
     "standard": {
-        "video_label":   "YouTube educational video (target 4-5 minutes)",
-        "hook_time":     "0-15s",
-        "tension_time":  "15-60s",
-        "core_time":     "60-270s",
-        "payoff_time":   "270-300s",
-        "close_time":    "300-315s",
-        "hook_dur":      12,
-        "tension_dur":   45,
-        "core_dur":      195,
-        "payoff_dur":    30,
-        "close_dur":     18,
-        "total_est":     300,
+        "video_label":   "YouTube educational video (target 8-10 minutes)",
+        "hook_time":     "0-20s",
+        "tension_time":  "20-80s",
+        "core_time":     "80-520s",
+        "payoff_time":   "520-570s",
+        "close_time":    "570-590s",
+        "hook_dur":      18,
+        "tension_dur":   60,
+        "core_dur":      440,
+        "payoff_dur":    50,
+        "close_dur":     22,
+        "total_est":     590,
     },
     "long": {
         "video_label":   "YouTube educational video (target 6-8 minutes)",
