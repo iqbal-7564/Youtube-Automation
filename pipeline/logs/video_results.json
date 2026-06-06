@@ -493,5 +493,20 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "Io4nb-1ne3Q",
+    "intent": "SPACE",
+    "title": "Jupiter's Giant Storms",
+    "hook_text": "This fact will completely change how you see the world.",
+    "total_duration_seconds": 37.44,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "uploaded_at": "2026-06-06T00:00:57.021541",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
