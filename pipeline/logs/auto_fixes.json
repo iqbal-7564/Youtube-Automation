@@ -1,0 +1,9 @@
+{
+  "tts_rate_adjust": 0,
+  "loudnorm_target": -14,
+  "hf_steps_adjust": 0,
+  "subtitle_font_adjust": 0,
+  "category_boost": {},
+  "last_updated": "2026-06-06T10:39:51.451273+00:00",
+  "fault_counts": {}
+}
