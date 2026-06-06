@@ -123,11 +123,13 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
     H         = timeline.get("height", 1080)
     is_shorts = profile == "shorts"
 
-    font_size = (52 if is_shorts else 42) + _auto_font_adjust()
-    # Shorts: 350px from bottom clears YouTube UI (like/share/follow buttons)
-    # Standard: 80px from bottom is safe for landscape
-    margin_v  = 350 if is_shorts else 80
-    secondary = "&H0000FFFF"   # yellow karaoke highlight — &HAABBGGRR
+    font_size  = (84 if is_shorts else 42) + _auto_font_adjust()
+    # Kinetic Shorts: center screen (\an5). Standard: bottom (\an2, 80px margin)
+    margin_v   = 0  if is_shorts else 80
+    align_tag  = r"\an5" if is_shorts else r"\an2"
+    fade_tag   = r"\fad(60,60)"  if is_shorts else r"\fad(150,150)"
+    chunk_size = 2 if is_shorts else 4
+    secondary  = "&H0000FFFF"   # yellow karaoke highlight — &HAABBGGRR
 
     header = "\n".join([
         "[Script Info]",
@@ -168,15 +170,15 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
         if not words:
             continue
 
-        # Chunk into 4-word groups for readable subtitle lines
-        chunks = [words[i:i + 4] for i in range(0, len(words), 4)]
+        # Chunk into groups (2 words for kinetic Shorts, 4 for standard)
+        chunks = [words[i:i + chunk_size] for i in range(0, len(words), chunk_size)]
         n      = len(chunks)
         ms_per = speech_dur // n
 
         for i, chunk in enumerate(chunks):
             c_start = speech_start + i * ms_per
             c_end   = (speech_start + (i + 1) * ms_per) if i < n - 1 else speech_end
-            c_end   = max(c_end, c_start + 300)
+            c_end   = max(c_end, c_start + 200)   # 200ms min for fast 2-word flashes
 
             dur_cs  = max(len(chunk), (c_end - c_start) // 10)
             base_cs = dur_cs // len(chunk)
@@ -184,13 +186,15 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
 
             karaoke = ""
             for j, word in enumerate(chunk):
+                display = word.upper() if is_shorts else word
                 wcs = base_cs + (1 if j < extra else 0)
-                karaoke += f"{{\\kf{wcs}}}{word} "
+                karaoke += f"{{\\kf{wcs}}}{display} "
 
             s = _ms_to_ass(c_start)
             e = _ms_to_ass(c_end)
             events.append(
-                f"Dialogue: 0,{s},{e},Default,,0,0,0,,{{\\an2\\fad(150,150)}}{karaoke.strip()}"
+                f"Dialogue: 0,{s},{e},Default,,0,0,0,,"
+                f"{{{align_tag}{fade_tag}}}{karaoke.strip()}"
             )
 
     ass_path = out_dir / "full_video.ass"
