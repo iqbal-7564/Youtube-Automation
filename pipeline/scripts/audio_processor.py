@@ -30,6 +30,7 @@ Rules:
 
 import json
 import logging
+import os
 import subprocess
 from pathlib import Path
 
@@ -446,6 +447,15 @@ def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Pa
       • Faded in over 1.5s and faded out over 2s
       • Mixed at weight 0.10 (≈ -20 dB under voice)
     """
+    # Auto-generate ambient music if the folder is missing or empty
+    existing = list(music_dir.glob("*.mp3")) + list(music_dir.glob("*.wav")) + list(music_dir.glob("*.m4a"))
+    if not existing:
+        try:
+            from music_fetcher import generate_music
+            generate_music(music_dir)
+        except Exception as exc:
+            log.debug("Auto music generation skipped: %s", exc)
+
     if not music_dir.exists():
         return None
 
@@ -472,7 +482,10 @@ def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Pa
             "-filter_complex", (
                 f"[0:a]aresample=44100,lowpass=f=12000,"
                 f"atrim=0:{duration_s:.3f},"
-                f"afade=t=in:st=0:d=1.5,"
+                + (
+                    "" if os.getenv("VIDEO_FORMAT", "").lower() == "shorts"
+                    else f"afade=t=in:st=0:d=1.5,"
+                ) +
                 f"afade=t=out:st={fade_out_start:.3f}:d=2.0,"
                 f"volume=0.10[music];"
                 f"[1:a][music]amix=inputs=2:duration=first:dropout_transition=2[out]"

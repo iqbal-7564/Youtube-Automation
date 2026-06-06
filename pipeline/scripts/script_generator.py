@@ -199,7 +199,7 @@ _HOOK_FORMULAS = [
 # Shorts-specific boost — injected only for Shorts format
 _SHORTS_SYSTEM_BOOST = """
 SHORTS CRITICAL RULES (viewer decides to watch or swipe in 2 seconds):
-1. HOOK must work as a STANDALONE SENTENCE shown as text on screen. Max 10 words. If someone reads only the hook sentence, they must feel compelled to watch.
+1. HOOK must work as a STANDALONE SENTENCE shown as text on screen. Max 8 words — shorter is stronger. If someone reads only the hook sentence, they must feel compelled to watch.
 2. PAYOFF must end with ONE like CTA sentence. Examples: 'Tap like if this broke your brain.' / 'Like if you never knew this.' / 'Double tap if this surprised you.' Keep it short and natural.
 3. CLOSE must echo a word or phrase from the HOOK — creates a loop sensation that makes viewers rewatch. Example: Hook says 'black holes shine' → Close ends with 'and black holes keep shining, waiting to be discovered.'
 4. Every sentence must earn its place. Cut anything that doesn't build suspense or deliver a fact.

@@ -27,6 +27,7 @@ Brand overlays (all non-CLOSE scenes):
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -730,6 +731,11 @@ def _ken_burns_expr(focus: str, seg_label: str,
                     scene_id: int = 1,
                     frames: int = 0) -> tuple[str, str, str]:
     """Select a motion preset based on emotion and scene_id for variety."""
+    # Scene 1 of Shorts must grab attention instantly — use the most aggressive zoom
+    if scene_id == 1 and os.getenv("VIDEO_FORMAT", "").lower() == "shorts":
+        z, x, y = _MOTION_PRESETS["fast_push"]
+        return z, x, y
+
     presets = _PRESET_BY_EMOTION.get(motion_emotion, _PRESET_BY_EMOTION["neutral"])
     preset_name = presets[scene_id % len(presets)]
 
