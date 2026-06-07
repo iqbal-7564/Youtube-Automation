@@ -426,10 +426,12 @@ def select_topic(logs_dir: Path) -> dict | None:
 
 def _fetch_trending_seeds(logs_dir: Path) -> dict[str, list[tuple[str, float]]]:
     """
-    Returns {category: [(rising_topic, trend_score), ...]} using pytrends.
-    trend_score is the Google Trends 'value' field (0-100+, higher = more rising).
-    Results are cached at logs_dir/trend_cache.json for _TREND_CACHE_TTL_HOURS hours.
-    Falls back to empty dict if pytrends is unavailable or rate-limited.
+    Returns {category: [(rising_topic, trend_score), ...]} using Google Trends
+    daily RSS feeds — no library, no API key, works from GitHub Actions.
+
+    Fetches 4 English-speaking markets (US, GB, AU, IN), maps each trending
+    topic to a category via keywords, scores by cross-market frequency.
+    Results cached for _TREND_CACHE_TTL_HOURS to avoid repeat fetches.
     """
     cached = _load_trend_cache(logs_dir)
     if cached:
@@ -438,70 +440,50 @@ def _fetch_trending_seeds(logs_dir: Path) -> dict[str, list[tuple[str, float]]]:
 
     results: dict[str, list[tuple[str, float]]] = {cat: [] for cat in CATEGORIES}
 
-    try:
-        from pytrends.request import TrendReq
-    except ImportError:
-        log.debug("pytrends not installed — no Google Trends data")
-        return results
+    # Daily trending RSS — free, no auth, works from any IP including CI runners
+    _RSS_MARKETS = [
+        ("US", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=US"),
+        ("GB", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=GB"),
+        ("AU", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=AU"),
+        ("IN", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN"),
+    ]
 
-    try:
-        pt = TrendReq(hl="en-US", tz=0, timeout=(10, 25), retries=2, backoff_factor=0.5)
+    import xml.etree.ElementTree as ET
+    market_counts: dict[str, int] = {}
 
-        # Step 1: trending searches across 4 English-speaking markets.
-        # Topics appearing in multiple markets score higher — cross-market
-        # momentum means a topic is breaking globally before it peaks.
-        #   1 market  →  95   (local trend)
-        #   2 markets → 140   (gaining momentum)
-        #   3 markets → 185   (strong global signal)
-        #   4 markets → 230   (viral — publish immediately)
-        _MARKETS = ["united_states", "india", "united_kingdom", "australia"]
-        market_counts: dict[str, int] = {}  # topic → number of markets it appears in
-
-        for market in _MARKETS:
-            try:
-                time.sleep(0.4)  # pace between market calls
-                df      = pt.trending_searches(pn=market)
-                topics  = [t.lower() for t in df[0].tolist()[:30]]
-                for topic in topics:
+    for geo, url in _RSS_MARKETS:
+        try:
+            r = requests.get(url, timeout=12,
+                             headers={"User-Agent": "Mozilla/5.0"})
+            if not r.ok:
+                log.debug("Trends RSS [%s]: HTTP %d", geo, r.status_code)
+                continue
+            root   = ET.fromstring(r.content)
+            topics = [item.findtext("title", "").strip().lower()
+                      for item in root.findall(".//item")][:30]
+            for topic in topics:
+                if topic:
                     market_counts[topic] = market_counts.get(topic, 0) + 1
-                log.debug("Trending [%s]: %d topics", market, len(topics))
-            except Exception as exc:
-                log.debug("Trending searches [%s]: %s", market, exc)
+            log.debug("Trends RSS [%s]: %d topics", geo, len(topics))
+        except Exception as exc:
+            log.debug("Trends RSS [%s]: %s", geo, exc)
 
-        # Map to categories and assign cross-market score
-        for trend, count in market_counts.items():
-            score = 95.0 + 45.0 * (count - 1)
-            for cat, keywords in _CATEGORY_KEYWORDS.items():
-                if any(kw in trend for kw in keywords):
-                    results[cat].append((trend, score))
-                    break
+    # Score: 95 base + 45 per additional market (cross-market = stronger signal)
+    for trend, count in market_counts.items():
+        score = 95.0 + 45.0 * (count - 1)
+        for cat, keywords in _CATEGORY_KEYWORDS.items():
+            if any(kw in trend for kw in keywords):
+                results[cat].append((trend, score))
+                break
 
-        multi_market = sum(1 for c in market_counts.values() if c > 1)
-        log.info("Trending now: %d topics (%d cross-market) mapped across categories",
-                 len(market_counts), multi_market)
+    multi_market = sum(1 for c in market_counts.values() if c > 1)
+    total_mapped = sum(len(v) for v in results.values())
+    log.info("Trending now: %d topics (%d cross-market) mapped across categories",
+             total_mapped, multi_market)
 
-        # Step 2: rising related queries per category (one call each, rate-limited)
-        for cat in CATEGORIES:
-            search_term = _CATEGORY_SEARCH_TERMS[cat]
-            try:
-                time.sleep(0.6)  # gentle pacing — avoids Google 429
-                pt.build_payload([search_term], timeframe="now 7-d", geo="")
-                related = pt.related_queries()
-                rising  = related.get(search_term, {}).get("rising")
-                if rising is not None and not rising.empty:
-                    for _, row in rising.head(5).iterrows():
-                        score = min(float(row.get("value", 50)), 100.0)
-                        results[cat].append((str(row["query"]), score))
-                    log.debug("Trends [%s]: %d rising queries", cat, len(results[cat]))
-            except Exception as exc:
-                log.debug("Rising queries [%s]: %s", cat, exc)
-
-        _save_trend_cache(logs_dir, {cat: list(v) for cat, v in results.items()})
-        total = sum(len(v) for v in results.values())
-        log.info("Google Trends: %d rising topics fetched across %d categories", total, len(CATEGORIES))
-
-    except Exception as exc:
-        log.warning("Google Trends fetch failed: %s", exc)
+    _save_trend_cache(logs_dir, {cat: list(v) for cat, v in results.items()})
+    log.info("Google Trends: %d rising topics fetched across %d categories",
+             total_mapped, len(CATEGORIES))
 
     return results
 

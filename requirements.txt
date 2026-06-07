@@ -3,4 +3,3 @@ gtts
 edge-tts
 rapidfuzz
 Pillow
-pytrends
