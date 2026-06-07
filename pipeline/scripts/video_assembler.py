@@ -55,11 +55,18 @@ _FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 
 def _escape_drawtext(text: str) -> str:
-    """Escape special characters for FFmpeg drawtext filter."""
+    """Sanitise text for FFmpeg drawtext filter.
+
+    Apostrophes and colons cannot be safely escaped inside single-quoted
+    drawtext strings across all FFmpeg versions — remove them outright.
+    Backslash and percent still need escaping.
+    """
     text = text.replace("\\", "\\\\")
-    text = text.replace("'",  "\\'")
-    text = text.replace(":",  "\\:")
     text = text.replace("%",  "\\%")
+    # Remove characters that break FFmpeg filter parsing regardless of escaping
+    text = text.replace("'", "")
+    text = text.replace('"', "")
+    text = text.replace(":", " ")
     # Keep only first 10 words so it fits on one line
     words = text.split()[:10]
     return " ".join(words)

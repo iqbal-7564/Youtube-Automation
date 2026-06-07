@@ -102,10 +102,15 @@ def _score_story(title: str, desc: str) -> int:
     score = 0
     for kw in _HIGH_VALUE_KEYWORDS:
         if kw in text:
-            score += 6
-    # Bonus for specific numbers
-    if re.search(r"\d+\s*(million|billion|thousand|years?|km|species)", text):
-        score += 10
+            score += 10
+    # Bonus for specific numbers/measurements
+    if re.search(r"\d+\s*(million|billion|thousand|years?|km|species|percent|%)", text):
+        score += 15
+    # Bonus if it appears in the title specifically (stronger signal)
+    title_lower = title.lower()
+    for kw in _HIGH_VALUE_KEYWORDS:
+        if kw in title_lower:
+            score += 5
     return min(100, score)
 
 
@@ -234,7 +239,7 @@ def run_news_monitor() -> bool:
                 continue
 
             score = _score_story(story["title"], story["desc"])
-            if score < 60:
+            if score < 25:
                 continue
 
             # Convert to facts angle
