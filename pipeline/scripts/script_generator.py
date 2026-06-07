@@ -257,7 +257,8 @@ CLOSE   ({close_time}): {close_rule}
 TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
 
 TITLE RULES (SEO + curiosity-gap + attractive):
-  Rule 1: Start with a question people actually type into YouTube search.
+  Rule 0: MOST IMPORTANT — The title MUST be about the exact same subject as the TOPIC given in the user prompt. Never invent a new subject.
+  Rule 1: Reframe the topic as a question people actually type into YouTube search.
   Rule 2: Add emotional payoff after the question — what they will FEEL or LEARN.
   Rule 3: Use power words: real, actual, hidden, never, finally, proof, inside, truth.
   Rule 4: Include a number or specific detail when possible — specificity = credibility.
@@ -287,12 +288,19 @@ Respond ONLY with valid JSON. No text outside the JSON.
 DIRECTOR BRIEF:
 {director_brief}"""
 
-_USER_TMPL = """Write a {video_label} "MindBlownFacts" script for this topic:
+_USER_TMPL = """Write a {video_label} "MindBlownFacts" script for this EXACT topic:
 
 TOPIC    : {title}
 DETAILS  : {description}
 CATEGORY : {intent}
 TEMPLATE : {template_name}{wiki_facts}
+
+CRITICAL CONTENT RULES:
+1. Every single segment (HOOK, TENSION, CORE, PAYOFF, CLOSE) MUST be directly about "{title}". Do NOT drift to related or similar topics.
+2. The HOOK must reference the specific subject from "{title}" — not a generic fact.
+3. The CORE must deliver real, specific facts about "{title}" as stated in DETAILS above.
+4. If VERIFIED FACTS are provided above, build the script around those exact facts.
+5. NEVER write a generic script. The viewer clicked because of "{title}" — deliver exactly that.
 
 Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
@@ -307,10 +315,10 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "SEO question-based title: MUST start with Why/How/What/Where. Add emotional payoff after question mark. Include one specific number or detail. Max 70 chars. Power words: real/hidden/actual/finally/proof/never. Example: 'Why Does The Ocean Glow? Scientists Finally Have Proof'",
-    "description": "First line: restate title keyword for SEO. Second line: the most surprising specific fact. Third line: call to action. End with 8-10 relevant hashtags including category, topic, and broad tags like #facts #didyouknow #educational.",
+    "title": "Reframe '{title}' as a curiosity-gap question. MUST keep the exact same subject as the topic above — do not change the subject. Start with Why/How/What/Where if it fits naturally. Max 70 chars. Power words: real/hidden/actual/finally/proof/never. NO overused words: shocking/unbelievable/amazing/mind-blowing.",
+    "description": "First line: restate the topic keyword for SEO. Second line: the most surprising specific fact from the script. Third line: call to action. End with 8-10 relevant hashtags including category, topic, and broad tags like #facts #didyouknow #educational.",
     "tags": ["facts", "did you know", "world facts", "real world facts", "educational", "mind blowing facts", "category-specific tag", "topic-specific tag", "MindBlownFacts"],
-    "engagement_question": "One question that sparks debate or invites personal stories from viewers"
+    "engagement_question": "One question about '{title}' that sparks debate or invites personal stories from viewers"
   }}
 }}"""
 
