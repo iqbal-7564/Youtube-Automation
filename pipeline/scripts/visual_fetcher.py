@@ -114,8 +114,9 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
     # Remove PNG files from previous runs (> 2 h old) so images are never reused
     _cleanup_stale_visuals(visuals_dir, max_age_hours=2)
 
-    W, H   = timeline["width"], timeline["height"]
-    intent = timeline.get("intent", "SCIENCE")
+    W, H      = timeline["width"], timeline["height"]
+    intent    = timeline.get("intent", "SCIENCE")
+    is_shorts = timeline.get("profile") == "shorts"
 
     # Load both registries
     used_registry      = _load_prompt_registry()    # list[str] — query hashes
@@ -137,6 +138,30 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         kw_list   = sc.get("visual_keywords") or [sc["visual_keyword"]]
         emotion   = sc.get("emotion", "neutral")
         shot_type = sc.get("shot_type", "MEDIUM")
+
+        # ── Scene 1 Shorts: real video clip for maximum hook impact ──────────
+        # Real footage stops the swipe far better than any AI-generated image.
+        # Groq picks a shocking/dramatic search term from the script text,
+        # Pexels returns an actual HD video clip, assembler plays it directly.
+        if scene_id == 1 and is_shorts:
+            script_text  = sc.get("script_text", " ".join(kw_list))
+            shock_query  = _groq_to_shock_video_query(script_text)
+            video_out    = visuals_dir / f"scene_{scene_id}_visual.mp4"
+            log.info("Scene 1 Shorts | shock video query: %s", shock_query)
+
+            video_ok = _pexels_video_fetch(shock_query, video_out, _known_images())
+            if video_ok:
+                h = _img_hash(video_out)
+                if h:
+                    session_img_hashes.add(h)
+                sc["visual_file"]       = video_out.name
+                sc["clip_type"]         = "video"
+                sc["clip_score"]        = 1.0
+                sc["extra_visual_files"] = []
+                log.info("Scene 1: real Pexels video → %s", video_out.name)
+                continue   # skip image fetch for scene 1
+            else:
+                log.warning("Scene 1: Pexels video failed — falling back to image")
 
         out_path  = visuals_dir / f"scene_{scene_id}_visual.png"
 
@@ -316,7 +341,8 @@ def _ensure_unique_query(
 
 def _cleanup_stale_visuals(visuals_dir: Path, max_age_hours: int = 2) -> None:
     cutoff = time.time() - max_age_hours * 3600
-    for pattern in ("scene_*_visual.png", "scene_*_visual_b.png", "scene_*_visual_alt.png"):
+    for pattern in ("scene_*_visual.png", "scene_*_visual_b.png",
+                    "scene_*_visual_alt.png", "scene_*_visual.mp4"):
         for f in visuals_dir.glob(pattern):
             try:
                 if f.stat().st_mtime < cutoff:
@@ -324,6 +350,157 @@ def _cleanup_stale_visuals(visuals_dir: Path, max_age_hours: int = 2) -> None:
                     log.debug("Removed stale visual: %s", f.name)
             except Exception:
                 pass
+
+
+# ── Groq: scene 1 shock video query ──────────────────────────────────────────
+
+def _groq_to_shock_video_query(script_text: str) -> str:
+    """Generate a visually shocking/dramatic Pexels video search query for scene 1."""
+    api_keys = [
+        os.getenv("GROQ_API_KEY_1", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+    ]
+    api_keys = [k for k in api_keys if k]
+    if not api_keys:
+        return " ".join(script_text.split()[:4])
+    api_key = api_keys[0]
+
+    system_prompt = (
+        "You generate search queries to find SHOCKING or STUNNING stock video footage.\n"
+        "Rules:\n"
+        "- Output ONLY the search query. No explanation, no quotes.\n"
+        "- 3 to 5 words maximum.\n"
+        "- The query must relate to the script topic.\n"
+        "- Target visually DRAMATIC real-world moments cameras can capture:\n"
+        "  wild animals attacking or hunting, extreme weather (tornado, lightning, tsunami),\n"
+        "  volcanic eruptions, space explosions, deep sea creatures, avalanche, wildfire,\n"
+        "  extreme sports crashes, natural disasters, microscopic discoveries.\n"
+        "- NEVER use abstract or invisible concepts.\n"
+        "BAD: 'space facts shocking'  → GOOD: 'asteroid explosion space bright'\n"
+        "BAD: 'ocean is deep'         → GOOD: 'great white shark attack water'\n"
+        "BAD: 'human brain powerful'  → GOOD: 'brain neuron firing closeup microscope'\n"
+        "BAD: 'history is surprising' → GOOD: 'ancient ruins crumbling collapse'\n"
+    )
+    user_message = (
+        f"Script opening (first scene): {script_text[:400]}\n\n"
+        "Generate a shocking/dramatic stock video search query for this topic."
+    )
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            r = requests.post(
+                GROQ_API_BASE,
+                headers={"Authorization": f"Bearer {api_key}",
+                         "Content-Type":  "application/json"},
+                json={
+                    "model":       GROQ_MODEL,
+                    "messages":    [{"role": "system", "content": system_prompt},
+                                    {"role": "user",   "content": user_message}],
+                    "max_tokens":  30,
+                    "temperature": 0.5,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                q = r.json()["choices"][0]["message"]["content"].strip()
+                return " ".join(q.split()[:5])
+            if r.status_code == 429 and len(api_keys) > 1:
+                api_key = api_keys[1]
+            else:
+                break
+        except Exception as exc:
+            log.debug("shock query attempt %d: %s", attempt, exc)
+            if attempt < MAX_RETRIES:
+                time.sleep(RETRY_BASE_S)
+
+    return " ".join(script_text.split()[:4])
+
+
+# ── Pexels: real video clip for scene 1 ──────────────────────────────────────
+
+def _pexels_video_fetch(query: str, out_path: Path,
+                        avoid_hashes: set[str] | None = None) -> bool:
+    """
+    Downloads a real HD portrait video clip from Pexels Videos API.
+    Used for Shorts scene 1 only — gives an immediate shocking visual
+    that static AI images cannot match.
+    Falls back gracefully: returns False if API key missing or no results.
+    """
+    api_key = os.getenv("PEXELS_API_KEY", "")
+    if not api_key:
+        return False
+
+    avoid = avoid_hashes or set()
+
+    try:
+        r = requests.get(
+            "https://api.pexels.com/videos/search",
+            headers={"Authorization": api_key},
+            params={
+                "query":       query,
+                "per_page":    10,
+                "orientation": "portrait",   # vertical = Shorts format
+                "size":        "medium",     # excludes tiny low-res clips
+            },
+            timeout=20,
+        )
+        if not r.ok:
+            log.warning("Pexels Video API %d: %s", r.status_code, r.text[:120])
+            return False
+
+        videos = r.json().get("videos", [])
+        if not videos:
+            # Retry without orientation constraint — portrait stock video is rarer
+            r2 = requests.get(
+                "https://api.pexels.com/videos/search",
+                headers={"Authorization": api_key},
+                params={"query": query, "per_page": 10, "size": "medium"},
+                timeout=20,
+            )
+            if r2.ok:
+                videos = r2.json().get("videos", [])
+
+        for video in videos:
+            files = video.get("video_files", [])
+            if not files:
+                continue
+
+            # Prefer portrait HD, fall back to any HD, then any file
+            portrait = [f for f in files
+                        if f.get("height", 0) > f.get("width", 0)]
+            hd       = [f for f in (portrait or files)
+                        if f.get("quality") in ("hd", "uhd")]
+            pool     = hd or portrait or files
+
+            best = max(pool, key=lambda f: f.get("width", 0) * f.get("height", 0))
+            link = best.get("link")
+            if not link:
+                continue
+
+            tmp = out_path.with_suffix(".tmp.mp4")
+            if not _download(link, tmp):
+                tmp.unlink(missing_ok=True)
+                continue
+
+            if tmp.stat().st_size < 50_000:   # reject tiny/corrupt files
+                tmp.unlink(missing_ok=True)
+                continue
+
+            h = _img_hash(tmp)
+            if h and h not in avoid:
+                tmp.rename(out_path)
+                log.info("Pexels VIDEO scene 1: '%s' → %dx%d %s",
+                         query, best.get("width", 0), best.get("height", 0),
+                         best.get("quality", "?"))
+                return True
+
+            tmp.unlink(missing_ok=True)
+            log.debug("Pexels video id=%s duplicate — trying next", video.get("id"))
+
+    except Exception as exc:
+        log.warning("Pexels video fetch error: %s", exc)
+
+    return False
 
 
 # ── Groq: scene metadata → search query ──────────────────────────────────────
@@ -473,13 +650,19 @@ def _validate_image(path: Path, scene_id: int) -> bool:
     try:
         from PIL import Image
         with Image.open(path) as img:
+            img.verify()   # catches truncated / corrupt files
+        with Image.open(path) as img:
             w, h = img.size
             if w < 960 or h < 540:
                 log.warning("Scene %d: image resolution too low (%dx%d) — skipping",
                             scene_id, w, h)
                 return False
-    except Exception:
-        pass  # PIL not available or corrupt — accept based on file size
+    except ImportError:
+        pass   # PIL not installed — accept based on file size only
+    except Exception as exc:
+        log.warning("Scene %d: image corrupt or unreadable (%s) — skipping",
+                    scene_id, exc)
+        return False
     return True
 
 

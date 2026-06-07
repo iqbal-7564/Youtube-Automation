@@ -369,7 +369,6 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
     # noise=allf=t: per-frame temporal noise, amplitude 6/255 — invisible to viewers
     # but changes pixels every frame, preventing freeze-frame detection at quality gate.
     vf = (
-        "noise=alls=6:allf=t,"
         f"drawtext=text=' {i_label} ':fontfile='{_FONT_BOLD}':"
         f"fontcolor=white:fontsize=36:"
         f"box=1:boxcolor={i_color}@0.70:boxborderw=16:"
@@ -399,7 +398,7 @@ def _branded_fill(out: Path, W: int, H: int, dur_s: float,
             "-c:v", "libx264", "-preset", "fast", "-crf", "18",
             "-pix_fmt", "yuv420p", "-r", "30", "-an", str(out),
         ]
-    subprocess.run(cmd, capture_output=True, timeout=30)
+    subprocess.run(cmd, capture_output=True, timeout=120)
 
 
 # ── Slideshow renderer (multiple images → animated crossfade sequence) ────────
