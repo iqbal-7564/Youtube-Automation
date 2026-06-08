@@ -44,7 +44,10 @@ def _auto_loudnorm_target() -> int:
     try:
         p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
         if p.exists():
-            return int(json.loads(p.read_text()).get("loudnorm_target", -14))
+            val = int(json.loads(p.read_text()).get("loudnorm_target", -14))
+            # Clamp: quality gate accepts -16 to -12 LUFS. A stored value of -18
+            # (from past viewer complaints) would make the gate fail every time.
+            return max(val, -16)
     except Exception:
         pass
     return -14
@@ -488,7 +491,9 @@ def _mix_background_music(voice: Path, music_dir: Path, duration_s: float) -> Pa
                 ) +
                 f"afade=t=out:st={fade_out_start:.3f}:d=2.0,"
                 f"volume=0.10[music];"
-                f"[1:a][music]amix=inputs=2:duration=first:dropout_transition=2[out]"
+                # normalize=0: do NOT divide by input count — default amix halves
+                # each input (−6 dB), which drops voice from −14 LUFS to ~−20 LUFS
+                f"[1:a][music]amix=inputs=2:duration=first:dropout_transition=2:normalize=0[out]"
             ),
             "-map", "[out]",
             "-c:a", "aac", "-b:a", "192k",

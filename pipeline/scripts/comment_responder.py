@@ -53,9 +53,11 @@ def _token() -> str | None:
             timeout=15,
         )
         d = r.json()
+        if not d.get("access_token"):
+            log.warning("Token refresh failed — response: %s", d)
         return d.get("access_token")
     except Exception as exc:
-        log.error("Token error: %s", exc)
+        log.warning("Token error: %s", exc)
         return None
 
 
@@ -92,27 +94,33 @@ def _get_unreplied_comments(token: str, video_id: str) -> list[dict]:
             timeout=15,
         )
         if not r.ok:
+            log.warning("Comments fetch HTTP %d for video %s: %s",
+                        r.status_code, video_id, r.text[:300])
             return []
 
         unreplied = []
         for item in r.json().get("items", []):
-            # Skip if already has replies
-            if item.get("replies"):
+            snippet = item["snippet"]
+            top     = snippet["topLevelComment"]["snippet"]
+
+            # Use totalReplyCount from snippet — always present, more reliable
+            # than checking for the optional `replies` object in the response
+            if snippet.get("totalReplyCount", 0) > 0:
                 continue
-            snippet = item["snippet"]["topLevelComment"]["snippet"]
-            # Skip our own comments
-            if snippet.get("authorChannelId", {}).get("value") == \
-               item["snippet"].get("channelId"):
+
+            # Skip our own top-level comments
+            if top.get("authorChannelId", {}).get("value") == snippet.get("channelId"):
                 continue
+
             unreplied.append({
-                "comment_id": item["snippet"]["topLevelComment"]["id"],
-                "text":       snippet.get("textDisplay", ""),
-                "author":     snippet.get("authorDisplayName", ""),
+                "comment_id": snippet["topLevelComment"]["id"],
+                "text":       top.get("textDisplay", ""),
+                "author":     top.get("authorDisplayName", ""),
             })
         return unreplied
 
     except Exception as exc:
-        log.debug("Comments fetch error: %s", exc)
+        log.warning("Comments fetch error: %s", exc)
         return []
 
 
@@ -132,9 +140,11 @@ def _reply(token: str, comment_id: str, text: str) -> bool:
             },
             timeout=15,
         )
+        if not r.ok:
+            log.warning("Reply failed HTTP %d: %s", r.status_code, r.text[:300])
         return r.ok
     except Exception as exc:
-        log.debug("Reply error: %s", exc)
+        log.warning("Reply error: %s", exc)
         return False
 
 

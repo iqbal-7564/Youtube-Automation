@@ -69,10 +69,10 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
         )
         is_last_scene = (i == len(scenes) - 1)
         if is_last_scene:
-            # Stage 3 normalization applies a 1-second fade-out on the merged track.
-            # Without enough trailing silence the fade eats into the final spoken words.
-            # 1200ms > fade duration (1000ms), so the fade lands entirely in silence.
-            pad_s = 1.2
+            # Stage 3 applies a 1s fade-out. 1050ms > 1000ms fade so the fade lands
+            # entirely in silence. Kept under 2000ms so silencedetect(d=2) never fires
+            # on the trailing gap (TTS natural end ≈300-500ms + 1050ms = ≤1550ms).
+            pad_s = 1.05
         elif is_core_payoff:
             pad_s = _SECTION_BOUNDARY_PAD_MS / 1000
         else:

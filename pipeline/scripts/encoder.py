@@ -2,8 +2,9 @@
 STEP 10 — Encoding
 
 Muxes assembled video-only track + normalised audio into final MP4.
-When ass_path is provided, animated subtitles are burned into the video
-(requires re-encode).  Without ass_path the video stream is copied (faster).
+Always re-encodes with libx264 to guarantee 2-second keyframe intervals
+required for YouTube HLS segmentation. When ass_path is provided, subtitles
+are burned in via the ass filter.
 
 A/V sync contract:
   Audio is hard-trimmed to min(video_actual_duration, locked_duration) via
@@ -44,16 +45,26 @@ def encode_video(
     burn_subs = ass_path and ass_path.exists()
 
     # Profile-aware quality settings:
-    #   Shorts   → CRF 16, medium preset, 192k audio  (fast, good quality)
-    #   Standard → CRF 14, slow preset,   320k audio  (cinema quality)
-    #   Long     → CRF 13, slow preset,   320k audio  (maximum quality)
+    #   Shorts   → CRF 18, fast preset,   192k audio
+    #   Standard → CRF 16, medium preset, 320k audio
+    #   Long     → CRF 15, medium preset, 320k audio
     is_shorts = profile == "shorts"
     if is_shorts:
-        v_preset, v_crf, a_bitrate = "fast",   "16", "192k"
+        v_preset, v_crf, a_bitrate = "fast",   "18", "192k"
     elif profile == "long":
-        v_preset, v_crf, a_bitrate = "medium", "14", "320k"
-    else:
         v_preset, v_crf, a_bitrate = "medium", "15", "320k"
+    else:
+        v_preset, v_crf, a_bitrate = "medium", "16", "320k"
+
+    # YouTube HLS streaming requires a keyframe at least every 2 seconds so its
+    # CDN can segment the video correctly. Without this, playback fails mid-video
+    # ("An error occurred") at the first segment boundary with no keyframe.
+    # -g 60        = keyframe every 60 frames (2s at 30fps)
+    # -keyint_min 30 = never skip more than 1s between forced keyframes
+    # -sc_threshold 0 = disable scene-change extra keyframes (we control this)
+    h264_keyframe_args = [
+        "-g", "60", "-keyint_min", "30", "-sc_threshold", "0",
+    ]
 
     # Trim audio to actual video duration so both streams are frame-accurate.
     # xfade transitions shorten the assembled video below locked_duration;
@@ -65,6 +76,11 @@ def encode_video(
         audio_trim_filter = f"atrim=0:{trim_to},asetpts=PTS-STARTPTS"
     else:
         audio_trim_filter = None
+
+    v264_args = [
+        "-c:v", "libx264", "-preset", v_preset, "-crf", v_crf,
+        "-pix_fmt", "yuv420p",
+    ] + h264_keyframe_args
 
     if burn_subs:
         safe_ass = "'" + str(ass_path).replace("\\", "/") + "'"
@@ -80,8 +96,7 @@ def encode_video(
                 "-filter_complex", filter_complex,
                 "-map", "[vout]",
                 "-map", "[aout]",
-                "-c:v", "libx264", "-preset", v_preset, "-crf", v_crf,
-                "-pix_fmt", "yuv420p",
+            ] + v264_args + [
                 "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
             ] + locked_t + [
                 "-movflags", "+faststart",
@@ -94,18 +109,21 @@ def encode_video(
                 "-i", str(audio_path),
                 "-map", "0:v", "-map", "1:a",
                 "-vf", f"ass={safe_ass}",
-                "-c:v", "libx264", "-preset", v_preset, "-crf", v_crf,
-                "-pix_fmt", "yuv420p",
+            ] + v264_args + [
                 "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
                 "-movflags", "+faststart",
                 str(output_path),
             ]
-        # slow preset needs more time — scale timeout by profile
         t_mult = 2.0 if is_shorts else 4.0
         timeout = max(600, 180 + int(expected_duration_s * t_mult))
         log.info("  Encoding [%s] preset=%s crf=%s audio=%s …",
                  profile, v_preset, v_crf, a_bitrate)
     else:
+        # No subtitle burn — still re-encode (never stream copy) so that
+        # keyframe spacing is guaranteed every 2s for YouTube HLS segmentation.
+        # Stream copy preserves the assembler's irregular keyframes which causes
+        # "An error occurred" mid-video when YouTube's CDN finds no keyframe
+        # at a segment boundary.
         if audio_trim_filter:
             cmd = [
                 "ffmpeg", "-y",
@@ -114,7 +132,7 @@ def encode_video(
                 "-map", "0:v",
                 "-filter_complex", f"[1:a]{audio_trim_filter}[aout]",
                 "-map", "[aout]",
-                "-c:v", "copy",
+            ] + v264_args + [
                 "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
             ] + locked_t + [
                 "-movflags", "+faststart",
@@ -126,13 +144,14 @@ def encode_video(
                 "-i", str(video_path),
                 "-i", str(audio_path),
                 "-map", "0:v", "-map", "1:a",
-                "-c:v", "copy",
+            ] + v264_args + [
                 "-c:a", "aac", "-b:a", a_bitrate, "-ar", "44100", "-ac", "2",
                 "-movflags", "+faststart",
                 str(output_path),
             ]
-        timeout = max(180, 60 + int(expected_duration_s * 0.8))
-        log.info("  Muxing [%s] audio=%s …", profile, a_bitrate)
+        timeout = max(600, 180 + int(expected_duration_s * 2.0))
+        log.info("  Encoding [%s] preset=%s crf=%s audio=%s (no subs) …",
+                 profile, v_preset, v_crf, a_bitrate)
 
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 

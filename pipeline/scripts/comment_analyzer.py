@@ -236,7 +236,8 @@ def _compute_fixes(fault_counts: dict) -> dict:
     if net_audio >= T:
         loudnorm = min(-14 + int(net_audio / T) * 2, -10)   # louder
     elif -net_audio >= T:
-        loudnorm = max(-14 - int(-net_audio / T) * 2, -18)  # quieter
+        # Floor at -16: quality gate accepts -16 to -12 LUFS. -18 would fail the gate.
+        loudnorm = max(-14 - int(-net_audio / T) * 2, -16)  # quieter
     else:
         loudnorm = -14
 

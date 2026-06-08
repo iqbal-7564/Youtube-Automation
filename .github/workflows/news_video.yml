@@ -186,7 +186,8 @@ jobs:
         run: |
           mkdir -p pipeline/logs
           python -c "
-          import sys
+          import sys, logging
+          logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
           sys.path.insert(0, 'pipeline/scripts')
           from comment_responder import run_comment_responder
           run_comment_responder()
