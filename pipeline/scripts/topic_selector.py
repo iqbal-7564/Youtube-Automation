@@ -293,6 +293,135 @@ _GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
+def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
+    """
+    For standard/long videos: pick a category, then select n seeds from that
+    category that all connect to ONE central angle. Returns a topic dict with an
+    extra 'topics' key — a list of sub-topics the script will cover in sequence.
+
+    Falls back to select_topic() if clustering fails (e.g. Groq unavailable).
+    """
+    full_history   = _load_full_history(logs_dir)
+    perf_weights   = _load_performance_weights(logs_dir)
+    produced_today = _load_produced_today(logs_dir)
+    used_categories = {v.get("intent", "") for v in produced_today}
+
+    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights, logs_dir)
+
+    for cat in ordered:
+        cluster = _build_topic_cluster(cat, n, full_history)
+        if cluster:
+            log.info("Cluster [%s] '%s' — %d related topics",
+                     cat, cluster["title"][:60], len(cluster["topics"]))
+            return cluster
+
+    log.warning("Cluster selection failed — falling back to single topic")
+    return select_topic(logs_dir)
+
+
+def _build_topic_cluster(category: str, n: int, produced: list[dict]) -> dict | None:
+    """Pick n related seeds from the category and ask Groq to build a cluster."""
+    seeds = _SEEDS.get(category, [])
+    if len(seeds) < n:
+        return None
+
+    # Sample n+2 seeds so Groq has extras to choose from
+    candidates = random.sample(seeds, min(n + 2, len(seeds)))
+
+    cluster = _groq_build_cluster(category, candidates, n)
+    if not cluster:
+        return None
+
+    if _is_duplicate(cluster["title"], produced):
+        log.debug("Cluster title duplicate — skipping: %s", cluster["title"][:60])
+        return None
+
+    return cluster
+
+
+def _groq_build_cluster(category: str, seeds: list[str], n: int) -> dict | None:
+    """
+    Ask Groq to:
+    1. Choose n seeds that share ONE central angle / connecting theme
+    2. Generate an overarching video title (curiosity-gap, max 70 chars)
+    3. Generate a short description
+    Returns a cluster dict ready for use as a topic.
+    """
+    keys = [
+        os.getenv("GROQ_API_KEY_1", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+    ]
+    seeds_str = "\n".join(f"- {s}" for s in seeds)
+
+    for key in [k for k in keys if k]:
+        try:
+            r = requests.post(
+                _GROQ_URL,
+                headers={"Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json"},
+                json={
+                    "model": _GROQ_MODEL,
+                    "messages": [{
+                        "role": "system",
+                        "content": (
+                            "You are a viral YouTube content strategist. "
+                            "Return ONLY valid JSON, no markdown, no explanation."
+                        ),
+                    }, {
+                        "role": "user",
+                        "content": (
+                            f"Category: {category}\n"
+                            f"Available topics:\n{seeds_str}\n\n"
+                            f"Task: Select exactly {n} topics that connect to ONE central "
+                            "angle or theme — they should feel like chapters of the same "
+                            "story, not random facts. The viewer must feel they are getting "
+                            "a deep dive into one idea, not a random list.\n\n"
+                            "Also generate:\n"
+                            "- overarching video title (max 70 chars, curiosity-gap question "
+                            "starting with Why/How/What — no words: shocking/amazing/mind-blowing)\n"
+                            "- description (2 sentences: most surprising angle, then why it matters)\n"
+                            "- central_angle (the connecting theme in 6-10 words)\n\n"
+                            "Return JSON:\n"
+                            '{"title": "...", "description": "...", "central_angle": "...", '
+                            f'"topics": [{{"seed": "...", "title": "...", "description": "..."}}]}} '
+                            f"(exactly {n} items in topics array)"
+                        ),
+                    }],
+                    "temperature": 0.8,
+                    "max_tokens":  900,
+                },
+                timeout=25,
+            )
+            if r.ok:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                m   = re.search(r'\{.*\}', raw, re.DOTALL)
+                if m:
+                    data = json.loads(m.group())
+                    if data.get("title") and isinstance(data.get("topics"), list) and data["topics"]:
+                        curiosity = _curiosity_gap_score(data["title"])
+                        return {
+                            "title":             data["title"][:200],
+                            "description":       data.get("description", "")[:500],
+                            "intent":            category,
+                            "source":            "Cluster",
+                            "published_at":      datetime.utcnow().isoformat(),
+                            "article_url":       "",
+                            "seed":              data.get("central_angle", seeds[0]),
+                            "trend_hint":        "",
+                            "novelty_score":     50,
+                            "curiosity_score":   curiosity,
+                            "saturation":        "pass",
+                            "viral_score":       0.0,
+                            "performance_score": 50.0,
+                            "competition_count": 0,
+                            "central_angle":     data.get("central_angle", ""),
+                            "topics":            data["topics"],
+                        }
+        except Exception as exc:
+            log.debug("Groq cluster build: %s", exc)
+    return None
+
+
 def _check_news_trigger(logs_dir: Path) -> dict | None:
     """Pick up news trigger if available and not yet used today."""
     try:

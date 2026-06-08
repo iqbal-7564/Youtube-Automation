@@ -65,7 +65,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("pipeline.main")
 
-from topic_selector      import select_topic
+from topic_selector      import select_topic, select_topic_cluster
 from script_generator    import generate_script
 from timeline_builder    import build_timeline
 from voice_generator     import generate_voices
@@ -359,13 +359,23 @@ def run_pipeline() -> bool:
     try:
         # ── 1: Topic Selection ───────────────────────────────────────────────
         log.info("[1/14] Topic Selection")
-        topic = select_topic(LOGS_DIR)
+        _vfmt = os.getenv("VIDEO_FORMAT", "shorts").lower()
+        if _vfmt in ("standard", "long"):
+            # Standard/long: pick a cluster of related topics so the video
+            # covers one central angle from multiple connected angles
+            topic = select_topic_cluster(LOGS_DIR)
+        else:
+            topic = select_topic(LOGS_DIR)
         if not topic:
             log.warning("No suitable topic found — aborting.")
             return False
         log.info("  [%s] %s", topic["intent"], topic["title"][:80])
-        log.info("  Competition: %d competing videos on YouTube",
-                 topic.get("competition_count", 0))
+        if topic.get("topics"):
+            log.info("  Cluster: %d related topics — central angle: %s",
+                     len(topic["topics"]), topic.get("central_angle", "")[:60])
+        else:
+            log.info("  Competition: %d competing videos on YouTube",
+                     topic.get("competition_count", 0))
 
         # ── 2: Script Generation ─────────────────────────────────────────────
         log.info("[2/14] Script Generation")

@@ -323,6 +323,154 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 }}"""
 
 
+_CLUSTER_USER_TMPL = """Write a {video_label} "MindBlownFacts" script covering these RELATED topics as one cohesive video:
+
+OVERARCHING THEME : {title}
+CENTRAL ANGLE     : {central_angle}
+CATEGORY          : {intent}
+TEMPLATE          : {template_name}
+
+TOPICS TO COVER (cover ALL of them in the CORE, in this exact order):
+{topics_list}
+
+STRUCTURE RULES:
+- HOOK     : ONE sentence (max 12 words) teasing the central angle — NOT a single sub-topic. Pure curiosity gap.
+             HOOK FORMULA TO USE: {hook_formula}
+- TENSION  : 2-3 sentences building anticipation. Hint that viewers are about to learn several things that connect in a surprising way.
+- CORE     : Cover EACH topic as its own named mini-segment. For every topic:
+               * Open with a clear transition: "First...", "Second...", "Now here's where it gets strange...", "But that's not the most surprising part..." etc.
+               * 4-6 sentences: the surprising fact → the mechanism → real-world scale comparison → counterintuitive implication
+               * Place [WOW] on the single most shocking sentence across ALL topics (only one [WOW] total)
+             Vary rhythm: short punch. Longer explanation. Short again.
+             DEPTH: {core_depth}
+- PAYOFF   : 2 sentences connecting ALL topics back to the central angle — the big-picture insight that ties everything together.
+- CLOSE    : {close_rule}
+
+TARGET: {word_target}. Duration hint: {duration_hint}.
+
+Return EXACTLY this JSON (no extra keys, no markdown):
+{{
+  "narrative_template": "{template_name}",
+  "segments": [
+    {{"id": 1, "label": "HOOK",    "text": "...", "estimated_duration_seconds": {hook_dur},    "emotion": "excited",    "complexity": "simple"}},
+    {{"id": 2, "label": "TENSION", "text": "...", "estimated_duration_seconds": {tension_dur}, "emotion": "mysterious", "complexity": "moderate"}},
+    {{"id": 3, "label": "CORE",    "text": "...", "estimated_duration_seconds": {core_dur},    "emotion": "neutral",    "complexity": "complex"}},
+    {{"id": 4, "label": "PAYOFF",  "text": "...", "estimated_duration_seconds": {payoff_dur},  "emotion": "dramatic",   "complexity": "simple"}},
+    {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": {close_dur},   "emotion": "neutral",    "complexity": "simple"}}
+  ],
+  "total_estimated_seconds": {total_est},
+  "full_script": "all segments combined into one paragraph",
+  "metadata": {{
+    "title": "Reframe '{title}' as a curiosity-gap question. Max 70 chars. Start with Why/How/What. Power words: real/hidden/actual/finally/proof/never. NO: shocking/unbelievable/amazing/mind-blowing.",
+    "description": "First line: restate the overarching theme keyword for SEO. Second line: the most surprising connection across all topics. Third line: call to action. End with 8-10 relevant hashtags.",
+    "tags": ["facts", "did you know", "world facts", "educational", "MindBlownFacts"],
+    "engagement_question": "One question about '{title}' that sparks debate or personal stories"
+  }}
+}}"""
+
+
+def _generate_cluster_script(topic: dict, video_format: str) -> dict:
+    """Generate a multi-topic cluster script for standard/long videos."""
+    fmt_profile  = _FORMAT_PROFILES.get(video_format, _FORMAT_PROFILES["standard"])
+    fmt_timing   = _FORMAT_TIMING.get(video_format, _FORMAT_TIMING["standard"])
+    template_name = random.choice(list(_NARRATIVE_VARIANTS.keys()))
+    hook_formula  = random.choice(_HOOK_FORMULAS)
+    variant       = _NARRATIVE_VARIANTS[template_name]
+
+    topics_list = "\n".join(
+        f"{i+1}. {t.get('title', t.get('seed', ''))} — {t.get('description', '')}"
+        for i, t in enumerate(topic["topics"])
+    )
+
+    system_prompt = _SYSTEM_TMPL.format(
+        description    = variant["description"],
+        hook_rule      = variant["hook_rule"],
+        tension_rule   = variant["tension_rule"],
+        core_rule      = variant["core_rule"],
+        payoff_rule    = variant["payoff_rule"],
+        close_rule     = variant["close_rule"],
+        word_target    = fmt_profile["word_target"],
+        duration_hint  = fmt_profile["duration_hint"],
+        core_depth     = fmt_profile["core_depth"],
+        hook_time      = fmt_timing["hook_time"],
+        tension_time   = fmt_timing["tension_time"],
+        core_time      = fmt_timing["core_time"],
+        payoff_time    = fmt_timing["payoff_time"],
+        close_time     = fmt_timing["close_time"],
+        director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
+    ) + _load_viewer_note()
+
+    filled_prompt = _CLUSTER_USER_TMPL.format(
+        video_label    = fmt_timing["video_label"],
+        title          = topic["title"],
+        central_angle  = topic.get("central_angle", topic["description"][:60]),
+        intent         = topic["intent"],
+        template_name  = template_name,
+        topics_list    = topics_list,
+        hook_formula   = hook_formula,
+        core_depth     = fmt_profile["core_depth"],
+        close_rule     = variant["close_rule"],
+        word_target    = fmt_profile["word_target"],
+        duration_hint  = fmt_profile["duration_hint"],
+        hook_dur       = fmt_timing["hook_dur"],
+        tension_dur    = fmt_timing["tension_dur"],
+        core_dur       = fmt_timing["core_dur"],
+        payoff_dur     = fmt_timing["payoff_dur"],
+        close_dur      = fmt_timing["close_dur"],
+        total_est      = fmt_timing["total_est"],
+    )
+
+    for key in _GROQ_KEYS:
+        if not key:
+            continue
+        for attempt in range(3):
+            try:
+                r = requests.post(
+                    _GROQ_URL,
+                    headers={"Authorization": f"Bearer {key}",
+                             "Content-Type":  "application/json"},
+                    json={
+                        "model":    _MODEL,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user",   "content": filled_prompt},
+                        ],
+                        "temperature": 0.75,
+                        "max_tokens":  fmt_profile["max_tokens"],
+                    },
+                    timeout=60,
+                )
+                if r.status_code == 429:
+                    log.warning("Rate limit on key …%s (cluster)", key[-4:])
+                    break
+                r.raise_for_status()
+                raw    = r.json()["choices"][0]["message"]["content"].strip()
+                script = _parse(raw)
+                if script:
+                    words = len(script["full_script"].split())
+                    log.info("Cluster script OK — %d words [%s/%s/%d topics]",
+                             words, video_format, template_name, len(topic["topics"]))
+                    check = _fact_check(script["full_script"], key)
+                    if check.get("has_issues"):
+                        log.warning("Fact-check flagged cluster (attempt %d): %s",
+                                    attempt + 1, check.get("reason"))
+                        if attempt < 2:
+                            continue
+                        log.warning("Fact-check still flagged — using best available")
+                    else:
+                        log.info("Cluster fact-check passed")
+                    script["video_format"] = video_format
+                    script["is_cluster"]   = True
+                    script["cluster_topics"] = [t.get("title", t.get("seed", ""))
+                                                for t in topic["topics"]]
+                    return script
+            except Exception as exc:
+                log.warning("Groq cluster attempt %d: %s", attempt + 1, exc)
+
+    log.warning("Cluster LLM unavailable — falling back to single-topic script")
+    return _fallback(topic)
+
+
 def _fact_check(text: str, key: str) -> dict:
     try:
         r = requests.post(
@@ -357,6 +505,10 @@ def generate_script(topic: dict) -> dict:
     # For standard (non-shorts) runs randomly alternate 4-5 min vs 6-8 min
     if video_format == "standard":
         video_format = random.choice(["standard", "long"])
+
+    # Cluster topics (standard/long only): use the multi-topic prompt
+    if topic.get("topics") and video_format != "shorts":
+        return _generate_cluster_script(topic, video_format)
     fmt_profile = _FORMAT_PROFILES[video_format]
 
     # Rotate narrative template + hook formula — double variety prevents formula fatigue
