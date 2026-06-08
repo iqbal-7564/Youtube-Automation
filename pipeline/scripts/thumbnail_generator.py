@@ -97,7 +97,16 @@ _POWER_WORDS = {
     "insane", "crazy", "genius", "perfect", "ultimate", "survive", "kill",
     "glow", "frozen", "burning", "alive", "missing", "banned", "warning",
     "crisis", "shock", "mystery", "cursed", "haunted", "doomed",
+    # extra high-CTR words
+    "lied", "hiding", "banned", "erased", "wiped", "collapsed", "silent",
+    "proof", "confirmed", "leaked", "classified", "untold", "covered",
 }
+
+# Single-word ribbon labels shown on the red accent stripe — picked from title
+_RIBBON_POWER = [
+    "EXPOSED", "REVEALED", "TRUTH", "PROOF", "HIDDEN", "REAL",
+    "LEAKED", "LIED", "BANNED", "UNTOLD", "CONFIRMED", "FORBIDDEN",
+]
 
 
 # ── Main entry ────────────────────────────────────────────────────────────────
@@ -153,9 +162,9 @@ def generate_thumbnail(
 
     # ── Text positioning per layout ───────────────────────────────────────────
     kw_words     = len(keyword.split())
-    kw_font_size = 140 if kw_words == 1 else (118 if kw_words == 2 else 96)
+    kw_font_size = 150 if kw_words == 1 else (124 if kw_words == 2 else 100)
     font_kw    = _load_font(kw_font_size)
-    font_sub   = _load_font(44)
+    font_sub   = _load_font(58)
     font_small = _load_font(30)
 
     pad = 55
@@ -171,7 +180,7 @@ def generate_thumbnail(
 
     elif layout == "center":
         # Single big keyword centered — maximum impact
-        kw_font_size = 160 if kw_words == 1 else (130 if kw_words == 2 else 104)
+        kw_font_size = 170 if kw_words == 1 else (138 if kw_words == 2 else 108)
         font_kw   = _load_font(kw_font_size)
         zone_w    = _TW - 2 * pad
         kw_lines  = textwrap.wrap(keyword,  width=max(5, int(zone_w / (kw_font_size * 0.56))))[:2]
@@ -248,7 +257,10 @@ def generate_thumbnail(
 
     # ── Shock badge ("!" for secrets/danger, "?" for questions) ──────────────
     badge_char = "?"  if any(w in title.lower() for w in ("why", "how", "what", "where", "when")) else "!"
-    _draw_shock_badge(draw, badge_char, _load_font(52), _TW - 110, _TH - 110, accent)
+    _draw_shock_badge(draw, badge_char, _load_font(72), _TW - 120, _TH - 120, accent)
+
+    # ── Truth ribbon — red accent strip with a high-impact word ──────────────
+    _draw_truth_ribbon(draw, title, accent)
 
     # ── Channel logo / name (bottom-left) ─────────────────────────────────────
     logo_path = Path(__file__).parent.parent / "assets" / "logo.png"
@@ -449,24 +461,54 @@ def _extract_keyword_and_subtitle(title: str) -> tuple[str, str]:
     return title[:24].upper(), ""
 
 
+def _drama_score(img_path: Path) -> float:
+    """Score image visual impact: contrast × saturation. Higher = more eye-catching."""
+    try:
+        from PIL import Image, ImageStat
+        img  = Image.open(img_path).convert("RGB").resize((160, 90), Image.LANCZOS)
+        gray = img.convert("L")
+        gray_stat = ImageStat.Stat(gray)
+        contrast  = gray_stat.stddev[0]          # 0-127: std dev of brightness
+        color_stat = ImageStat.Stat(img)
+        saturation = sum(color_stat.stddev) / 3  # avg channel spread = color richness
+        return contrast * 0.6 + saturation * 0.4
+    except Exception:
+        return 0.0
+
+
 def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.Image":
     from PIL import Image
+
+    # Priority 1: dedicated thumbnail background image (shocking query, purpose-built)
+    thumb_bg = visuals_dir / "thumbnail_bg.png"
+    if thumb_bg.exists() and thumb_bg.stat().st_size > 5_000:
+        try:
+            img = Image.open(thumb_bg).convert("RGB")
+            return img.resize((_TW, _TH), Image.LANCZOS)
+        except Exception as exc:
+            log.debug("thumbnail_bg.png load failed: %s", exc)
+
+    # Priority 2: most visually dramatic scene image (highest contrast + saturation)
     best_file  = None
     best_score = -1.0
     for sc in timeline.get("scenes", []):
-        if sc.get("clip_type") == "image" and sc.get("clip_score", 0) > best_score:
+        if sc.get("clip_type") == "image":
             vf = sc.get("visual_file", "")
             if vf and vf != "CLOSE":
                 candidate = visuals_dir / vf
                 if candidate.exists():
-                    best_file  = candidate
-                    best_score = sc["clip_score"]
+                    drama = _drama_score(candidate)
+                    if drama > best_score:
+                        best_file  = candidate
+                        best_score = drama
+
     if best_file:
         try:
             img = Image.open(best_file).convert("RGB")
             return img.resize((_TW, _TH), Image.LANCZOS)
         except Exception as exc:
             log.debug("Background load failed: %s", exc)
+
     return Image.new("RGB", (_TW, _TH), _INTENT_BG.get(intent, (10, 10, 40)))
 
 
@@ -482,6 +524,58 @@ def _load_font(size: int):
         except (IOError, OSError):
             pass
     return ImageFont.load_default()
+
+
+def _draw_truth_ribbon(draw, title: str, accent: tuple) -> None:
+    """Red accent strip at bottom-left with a single power word (EXPOSED, TRUTH, etc.)."""
+    title_lower = title.lower()
+
+    # Prefer explicit ribbon words found in the title
+    ribbon_word = None
+    for rw in _RIBBON_POWER:
+        if rw.lower() in title_lower:
+            ribbon_word = rw
+            break
+
+    # Fall back to any power word from the title
+    if not ribbon_word:
+        for w in title.split():
+            clean = re.sub(r"[^a-z]", "", w.lower())
+            if clean in _POWER_WORDS and len(clean) >= 5:
+                ribbon_word = clean.upper()
+                break
+
+    # Generic fallback that always signals intrigue
+    if not ribbon_word:
+        ribbon_word = "REVEALED"
+
+    font_r = _load_font(54)
+    try:
+        bbox   = draw.textbbox((0, 0), ribbon_word, font=font_r)
+        tw     = bbox[2] - bbox[0]
+        th     = bbox[3] - bbox[1]
+    except AttributeError:
+        tw, th = 220, 52
+
+    pad_x, pad_y  = 20, 10
+    rx = 55
+    # Place ribbon so it doesn't overlap the logo (logo is at _TH - 84)
+    ry = _TH - 165
+
+    ribbon_w = tw + pad_x * 2
+    ribbon_h = th + pad_y * 2
+
+    # Red rectangle (urgency color — always overrides category accent)
+    ribbon_color = (205, 30, 30)
+    draw.rectangle([rx, ry, rx + ribbon_w, ry + ribbon_h], fill=ribbon_color)
+    # Thin light line at top edge for depth
+    draw.line([rx, ry, rx + ribbon_w, ry], fill=(255, 100, 100), width=3)
+
+    draw.text(
+        (rx + pad_x, ry + pad_y), ribbon_word,
+        font=font_r, fill=(255, 255, 255),
+        stroke_width=2, stroke_fill=(0, 0, 0),
+    )
 
 
 def _draw_pill(draw, text: str, font, x: int, y: int, color: tuple) -> None:

@@ -196,13 +196,45 @@ _HOOK_FORMULAS = [
     "TIMER: Create urgency with a specific time. 'Every 24 hours, this planet does something impossible.' Makes it feel urgent.",
 ]
 
+# Shorts-only hook formulas — more extreme than the standard set.
+# These are tuned to the 2-second scroll window where a viewer decides to stay or leave.
+_SHORTS_HOOK_FORMULAS = [
+    "PERSONAL NOW: About the viewer's body RIGHT NOW. 'Your brain is lying to you right now.' First word = 'Your' or 'You'. Present tense. No explanation.",
+    "SINGLE IMPOSSIBLE WORD OPENER: Start with one word that creates instant dissonance. 'Dead. Yet still moving.' Short pause after word one.",
+    "SILENT THREAT: Make it feel like critical survival info is being withheld. 'This is slowly killing you.' No qualifier, no softening.",
+    "AGENCY SECRET: Frame it as information a powerful entity hid. 'NASA never told you this.' or 'Schools hid this for 100 years.'",
+    "SPECIES SHOCK: Challenge human identity. 'You are 90% not human.' or 'Humans are the only species that...' — end on something disturbing.",
+    "COUNTDOWN URGENCY: Attach a real time interval to something impossible. 'Every 2 seconds your body does something impossible.' Forces the viewer to count.",
+    "WORLD LIE: Challenge one fundamental belief everyone holds. 'The sky is not actually blue.' State it as fact, zero hedging.",
+    "SCALE CRUSH: Something so extreme it breaks comprehension. 'A teaspoon of this weighs a billion tonnes.' Specificity = credibility.",
+    "DIRECT STOP: Force the scroll to stop. 'Wait.' Then the fact. One word command creates a micro-pause that curiosity fills.",
+    "IDENTITY SHATTER: Attack who the viewer thinks they are. 'You share 60% of your DNA with a banana.' Make it personal, make it absurd.",
+]
+
 # Shorts-specific boost — injected only for Shorts format
 _SHORTS_SYSTEM_BOOST = """
-SHORTS CRITICAL RULES (viewer decides to watch or swipe in 2 seconds):
-1. HOOK must work as a STANDALONE SENTENCE shown as text on screen. Max 8 words — shorter is stronger. If someone reads only the hook sentence, they must feel compelled to watch.
-2. PAYOFF must end with ONE like CTA sentence. Examples: 'Tap like if this broke your brain.' / 'Like if you never knew this.' / 'Double tap if this surprised you.' Keep it short and natural.
-3. CLOSE must echo a word or phrase from the HOOK — creates a loop sensation that makes viewers rewatch. Example: Hook says 'black holes shine' → Close ends with 'and black holes keep shining, waiting to be discovered.'
-4. Every sentence must earn its place. Cut anything that doesn't build suspense or deliver a fact.
+SHORTS RETENTION RULES — viewer swipes in 2 seconds if not shocked immediately:
+
+HOOK RULES (most critical element — this is the ONLY thing that stops the scroll):
+1. MAX 6 WORDS. Fewer = stronger. 'You are not human.' beats 'Did you know humans have non-human cells?'
+2. FIRST 2 WORDS = MAXIMUM IMPACT. BANNED first words: Did, Have, There, This, In, A, The, Today, Welcome, Here.
+   REQUIRED strong openers: Your / You / Wait / Stop / Dead / Never / a SPECIFIC NUMBER / the shocking subject noun itself.
+3. PRESENT TENSE ONLY. 'Your brain is lying' — not 'Scientists discovered brains lie'. Present tense = happening to the viewer right now.
+4. PERSONAL THREAT or IDENTITY BREAK. The viewer must feel personally affected or intellectually shattered — not just intellectually curious.
+5. ZERO EXPLANATION in the hook. The hook is a cliff edge — do not explain, do not soften. Let it hang.
+
+TENSION:
+6. First sentence of TENSION must DEEPEN the personal threat — do not answer the hook, make it feel more real and unavoidable.
+
+PAYOFF:
+7. End PAYOFF with exactly ONE like CTA: 'Tap like if this broke your brain.' / 'Like if you never knew this.' / 'Double tap if this surprised you.' Natural, short.
+
+CLOSE:
+8. CLOSE must echo a specific word or phrase from the HOOK — creates a loop sensation. Hook: 'You are not human' → Close: 'and you have never been fully human.'
+
+EVERY SENTENCE:
+9. Delete filler transitions: never 'So', 'Basically', 'In other words', 'To summarize', 'Essentially'.
+10. Every sentence raises stakes OR delivers a fact. Nothing else earns its place.
 """
 
 # Director Brain — global story state injected into every Groq system prompt.
@@ -222,6 +254,38 @@ _DIRECTOR_CONTEXT = {
         "CLOSE is calm and invites return — never high-energy at this stage."
     ),
 }
+
+# Category-specific seed tags. Injected into the tags instruction so the LLM
+# generates relevant long-tail phrases instead of generic ones.
+_CATEGORY_TAGS: dict[str, list[str]] = {
+    "SPACE":       ["space facts", "nasa facts", "universe facts", "black hole facts", "astronomy facts", "space science", "galaxy facts", "planet facts", "cosmos facts", "space discovery 2025"],
+    "SCIENCE":     ["science facts", "biology facts", "chemistry facts", "scientific discovery", "science explained", "real science facts", "science secrets", "physics facts"],
+    "HISTORY":     ["history facts", "ancient history", "historical facts", "world history", "ancient civilizations", "forgotten history", "history mysteries", "historical secrets"],
+    "ANIMALS":     ["animal facts", "wildlife facts", "amazing animals", "animal behavior", "rare animals", "strange animals", "animal science", "nature facts animals"],
+    "NATURE":      ["nature facts", "earth facts", "natural phenomena", "environment facts", "plant facts", "nature science", "natural world facts", "ecology facts"],
+    "GEOGRAPHY":   ["geography facts", "world geography", "country facts", "earth geography", "map facts", "countries of the world", "places on earth facts"],
+    "OCEAN":       ["ocean facts", "deep sea facts", "marine biology facts", "deep ocean creatures", "sea facts", "underwater facts", "ocean science", "pacific ocean facts"],
+    "CULTURE":     ["culture facts", "world culture facts", "ancient culture", "cultural history", "traditions facts", "civilization facts", "human culture"],
+    "TECHNOLOGY":  ["technology facts", "tech facts", "computer science facts", "ai facts", "invention facts", "engineering facts", "science and technology"],
+    "PSYCHOLOGY":  ["psychology facts", "human psychology", "brain facts", "mind facts", "mental science", "behavioral psychology", "cognitive science facts"],
+    "MYTHOLOGY":   ["mythology facts", "greek mythology", "ancient myths", "mythology explained", "world mythology", "legend facts", "myths and legends"],
+    "MEDICINE":    ["medical facts", "health facts", "human body facts", "anatomy facts", "biology human body", "medicine science", "doctor facts", "disease facts"],
+    "MATHEMATICS": ["math facts", "mathematics facts", "number facts", "math history", "geometry facts", "mathematical discoveries", "math science"],
+    "ECONOMICS":   ["economics facts", "money facts", "finance facts", "world economy facts", "economic history", "business facts", "wealth facts"],
+    "PHYSICS":     ["physics facts", "quantum physics facts", "physics explained", "energy facts", "force facts", "physics science", "laws of physics"],
+}
+
+
+def _build_tags_for_prompt(intent: str) -> str:
+    """Build a JSON array hint with category seeds + a placeholder the LLM will fill."""
+    seeds = _CATEGORY_TAGS.get(intent.upper(), ["facts", "educational"])
+    tags: list[str] = list(seeds[:8])
+    tags.append(
+        "REPLACE_WITH_5_TOPIC_SPECIFIC_TAGS: use exact long-tail phrases people search for this topic"
+    )
+    tags += ["MindBlownFacts", "educational", "facts", "did you know"]
+    return json.dumps(tags)
+
 
 def _load_viewer_note() -> str:
     try:
@@ -316,8 +380,8 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
     "title": "Reframe '{title}' as a curiosity-gap question. MUST keep the exact same subject as the topic above — do not change the subject. Start with Why/How/What/Where if it fits naturally. Max 70 chars. Power words: real/hidden/actual/finally/proof/never. NO overused words: shocking/unbelievable/amazing/mind-blowing.",
-    "description": "First line: restate the topic keyword for SEO. Second line: the most surprising specific fact from the script. Third line: call to action. End with 8-10 relevant hashtags including category, topic, and broad tags like #facts #didyouknow #educational.",
-    "tags": ["facts", "did you know", "world facts", "real world facts", "educational", "mind blowing facts", "category-specific tag", "topic-specific tag", "MindBlownFacts"],
+    "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this topic, then a compelling sentence. Front-load the keyword — YouTube indexes first words most heavily. Example: 'Black holes are regions...' / 'Octopuses have three hearts...' / 'The real reason Rome collapsed...'\nLine 2: The single most shocking specific fact from the script — include a real number or a scale comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords people actually search (e.g. 'Scientists recently discovered...', 'Most people never learn that...', 'The truth about X is...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad ones: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
+    "tags": {tags_instruction},
     "engagement_question": "One question about '{title}' that sparks debate or invites personal stories from viewers"
   }}
 }}"""
@@ -362,8 +426,8 @@ Return EXACTLY this JSON (no extra keys, no markdown):
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
     "title": "Reframe '{title}' as a curiosity-gap question. Max 70 chars. Start with Why/How/What. Power words: real/hidden/actual/finally/proof/never. NO: shocking/unbelievable/amazing/mind-blowing.",
-    "description": "First line: restate the overarching theme keyword for SEO. Second line: the most surprising connection across all topics. Third line: call to action. End with 8-10 relevant hashtags.",
-    "tags": ["facts", "did you know", "world facts", "educational", "MindBlownFacts"],
+    "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this overarching theme, then a compelling sentence. Front-load the keyword.\nLine 2: The single most surprising connection across all topics — include a real number or comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords (e.g. 'Scientists recently discovered...', 'Most people never learn that...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
+    "tags": {tags_instruction},
     "engagement_question": "One question about '{title}' that sparks debate or personal stories"
   }}
 }}"""
@@ -401,23 +465,24 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
     ) + _load_viewer_note()
 
     filled_prompt = _CLUSTER_USER_TMPL.format(
-        video_label    = fmt_timing["video_label"],
-        title          = topic["title"],
-        central_angle  = topic.get("central_angle", topic["description"][:60]),
-        intent         = topic["intent"],
-        template_name  = template_name,
-        topics_list    = topics_list,
-        hook_formula   = hook_formula,
-        core_depth     = fmt_profile["core_depth"],
-        close_rule     = variant["close_rule"],
-        word_target    = fmt_profile["word_target"],
-        duration_hint  = fmt_profile["duration_hint"],
-        hook_dur       = fmt_timing["hook_dur"],
-        tension_dur    = fmt_timing["tension_dur"],
-        core_dur       = fmt_timing["core_dur"],
-        payoff_dur     = fmt_timing["payoff_dur"],
-        close_dur      = fmt_timing["close_dur"],
-        total_est      = fmt_timing["total_est"],
+        video_label       = fmt_timing["video_label"],
+        title             = topic["title"],
+        central_angle     = topic.get("central_angle", topic["description"][:60]),
+        intent            = topic["intent"],
+        template_name     = template_name,
+        topics_list       = topics_list,
+        hook_formula      = hook_formula,
+        core_depth        = fmt_profile["core_depth"],
+        close_rule        = variant["close_rule"],
+        word_target       = fmt_profile["word_target"],
+        duration_hint     = fmt_profile["duration_hint"],
+        hook_dur          = fmt_timing["hook_dur"],
+        tension_dur       = fmt_timing["tension_dur"],
+        core_dur          = fmt_timing["core_dur"],
+        payoff_dur        = fmt_timing["payoff_dur"],
+        close_dur         = fmt_timing["close_dur"],
+        total_est         = fmt_timing["total_est"],
+        tags_instruction  = _build_tags_for_prompt(topic["intent"]),
     )
 
     for key in _GROQ_KEYS:
@@ -513,7 +578,9 @@ def generate_script(topic: dict) -> dict:
 
     # Rotate narrative template + hook formula — double variety prevents formula fatigue
     template_name = random.choice(list(_NARRATIVE_VARIANTS.keys()))
-    hook_formula  = random.choice(_HOOK_FORMULAS)
+    # Shorts uses a more extreme formula pool — tuned for 2-second scroll psychology
+    formula_pool  = _SHORTS_HOOK_FORMULAS if video_format == "shorts" else _HOOK_FORMULAS
+    hook_formula  = random.choice(formula_pool)
     variant       = _NARRATIVE_VARIANTS[template_name]
 
     # Inject hook formula into the hook rule
@@ -554,18 +621,19 @@ def generate_script(topic: dict) -> dict:
         for attempt in range(3):  # extra attempt reserved for fact-check retry
             try:
                 filled_prompt = _USER_TMPL.format(
-                    video_label   = fmt_timing["video_label"],
-                    title         = topic["title"],
-                    description   = topic["description"][:400],
-                    intent        = topic["intent"],
-                    template_name = template_name,
-                    wiki_facts    = wiki_facts,
-                    hook_dur      = fmt_timing["hook_dur"],
-                    tension_dur   = fmt_timing["tension_dur"],
-                    core_dur      = fmt_timing["core_dur"],
-                    payoff_dur    = fmt_timing["payoff_dur"],
-                    close_dur     = fmt_timing["close_dur"],
-                    total_est     = fmt_timing["total_est"],
+                    video_label      = fmt_timing["video_label"],
+                    title            = topic["title"],
+                    description      = topic["description"][:400],
+                    intent           = topic["intent"],
+                    template_name    = template_name,
+                    wiki_facts       = wiki_facts,
+                    hook_dur         = fmt_timing["hook_dur"],
+                    tension_dur      = fmt_timing["tension_dur"],
+                    core_dur         = fmt_timing["core_dur"],
+                    payoff_dur       = fmt_timing["payoff_dur"],
+                    close_dur        = fmt_timing["close_dur"],
+                    total_est        = fmt_timing["total_est"],
+                    tags_instruction = _build_tags_for_prompt(topic["intent"]),
                 )
                 r = requests.post(
                     _GROQ_URL,

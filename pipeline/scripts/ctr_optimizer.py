@@ -129,56 +129,86 @@ def _score_synergy(title: str, headline: str) -> float:
 
 
 def _total_score(title: str, headline: str) -> float:
+    # Curiosity-gap + tension drive >60% of CTR decisions on YouTube
     return (
-        _score_curiosity(title)    * 0.25 +
-        _score_tension(title)      * 0.20 +
-        _score_specificity(title)  * 0.10 +
-        _score_length(title, 90)   * 0.10 +
-        _score_novelty(title)      * 0.15 +
-        _score_synergy(title, headline) * 0.20
+        _score_curiosity(title)         * 0.30 +
+        _score_tension(title)           * 0.25 +
+        _score_specificity(title)       * 0.10 +
+        _score_length(title, 90)        * 0.05 +
+        _score_novelty(title)           * 0.15 +
+        _score_synergy(title, headline) * 0.15
     )
 
 
 # ── Candidate generation ──────────────────────────────────────────────────────
 
 def _generate_title_variants(title: str, hook_text: str) -> list[str]:
-    """Generate up to 3 title variants from the base title and hook text."""
+    """Generate up to 4 title variants — always include a question-format version."""
     variants = [title]
-
-    # Variant 2: curiosity-frame if base lacks power words
     title_lower = title.lower()
+
+    # Variant 2: question-format only for noun-phrase titles (short, no conjugated verb)
+    _verb_mid = re.compile(r"\b(are|is|was|were|have|has|had|fell|died|broke|happened)\b")
+    if not re.match(r"^(why|how|what|where|when|who)\b", title_lower) and not _verb_mid.search(title_lower):
+        base = title.rstrip(".!?")
+        if re.search(r"\b(real|truth|hidden|secret|actual)\b", title_lower):
+            variants.append(f"Why {base}?")
+        elif len(title.split()) <= 6:
+            variants.append(f"How Does {base} Actually Work?")
+
+    # Variant 3: "Nobody told you" framing — strong curiosity gap
     has_power = any(w in title_lower for w in _POWER_WORDS)
     if not has_power:
-        topic = title.rstrip(".")
-        variants.append(f"The Real Reason {topic} Changes Everything")
+        # Strip question starters + auxiliaries to get the topic noun phrase
+        _strip = r"^(why |how |what |where |when |who |does |do |did |is |are |was |were |can |will |should |the |a |an )+"
+        core_phrase = re.sub(_strip, "", title_lower, flags=re.I).rstrip(".!?")
+        variants.append(f"Nobody Told You The Truth About {core_phrase.title()}")
 
-    # Variant 3: hook-derived (use first 10 words of hook if it's stronger)
-    hook_words = hook_text.split()[:12]
-    hook_snippet = " ".join(hook_words).rstrip(".")
-    if hook_snippet and len(hook_snippet) > 20:
+    # Variant 4: hook-sentence trimmed to title length (often strongest)
+    hook_words = hook_text.split()[:14]
+    hook_snippet = " ".join(hook_words).rstrip(".!?,")
+    if hook_snippet and len(hook_snippet) >= 20 and hook_snippet.lower() != title_lower:
         variants.append(hook_snippet)
 
-    return variants[:3]
+    # Deduplicate and cap
+    seen: list[str] = []
+    for v in variants:
+        if v and v not in seen:
+            seen.append(v)
+    return seen[:4]
 
 
 def _generate_headline_variants(title: str, hook_text: str) -> list[str]:
-    """Generate up to 3 thumbnail headline variants."""
-    variants = []
+    """Generate up to 4 thumbnail headline variants (used as text overlay)."""
+    variants: list[str] = []
 
-    # Variant 1: direct title (first 72 chars)
+    # Variant 1: extract 1-2 power-word-rich words from title — short punchy overlay
+    title_lower = title.lower()
+    punch_words = [
+        w.upper() for w in title.split()
+        if re.sub(r"[^a-z]", "", w.lower()) in _POWER_WORDS
+    ][:2]
+    if punch_words:
+        variants.append(" ".join(punch_words))
+
+    # Variant 2: question from first 7 words of title
+    words = title.split()
+    if len(words) >= 5:
+        variants.append(" ".join(words[:7]).rstrip(".!?,") + "?")
+
+    # Variant 3: hook's first clause — often the most visceral sentence
+    hook_short = re.split(r"[.!?]", hook_text.strip())[0].strip()
+    if hook_short and hook_short not in variants:
+        variants.append(hook_short[:72])
+
+    # Variant 4: title truncated (safe fallback)
     variants.append(title[:72])
 
-    # Variant 2: question form
-    words = title.split()
-    if len(words) >= 4:
-        variants.append(f"Wait… {' '.join(words[:7])}?")
-
-    # Variant 3: hook excerpt
-    hook_short = " ".join(hook_text.split()[:8])
-    if hook_short and hook_short not in variants:
-        variants.append(hook_short)
-
-    return [v[:72] for v in variants[:3]]
+    seen: list[str] = []
+    for v in variants:
+        if v and v not in seen:
+            seen.append(v)
+    return [v[:72] for v in seen[:4]]
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

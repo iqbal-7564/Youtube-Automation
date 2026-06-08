@@ -78,6 +78,26 @@ _UNIQUE_MODIFIERS = [
 # Shot types that produce naturally tall subjects — prefer portrait orientation
 _PORTRAIT_SHOTS = {"EXTREME_CLOSE", "CLOSE"}
 
+# Category-specific fallback queries for the thumbnail background image
+# These are hard-coded "last resort" dramatic queries used when Groq fails.
+_INTENT_THUMB_FALLBACK: dict[str, str] = {
+    "SPACE":       "galaxy nebula explosion cosmic dramatic dark",
+    "SCIENCE":     "laboratory experiment dramatic neon closeup",
+    "HISTORY":     "ancient ruins dramatic storm lightning",
+    "ANIMALS":     "wild predator dramatic intense closeup",
+    "NATURE":      "storm lightning forest dark dramatic",
+    "GEOGRAPHY":   "dramatic cliffside storm waves crash",
+    "OCEAN":       "deep ocean bioluminescent creature dark",
+    "CULTURE":     "ancient temple ruins dramatic sunset fire",
+    "TECHNOLOGY":  "circuit board neon glow dramatic dark",
+    "PSYCHOLOGY":  "human brain neuron neon glow dramatic",
+    "MYTHOLOGY":   "ancient statue lightning storm ruins",
+    "MEDICINE":    "microscope cell dramatic neon closeup",
+    "MATHEMATICS": "fractal geometry colorful dramatic glow",
+    "ECONOMICS":   "city skyline night golden dramatic storm",
+    "PHYSICS":     "plasma energy explosion dramatic burst",
+}
+
 
 # ── Main entry ────────────────────────────────────────────────────────────────
 
@@ -257,6 +277,37 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
                 extra_path.unlink(missing_ok=True)
 
         sc["extra_visual_files"] = extra_files
+
+    # ── Dedicated thumbnail background image ─────────────────────────────────
+    # Fetch one purpose-built "shocking/dramatic" image for the thumbnail.
+    # Uses hook-scene keywords + category to generate a query optimised for
+    # visual impact (contrast, saturation) rather than content accuracy.
+    thumb_bg = visuals_dir / "thumbnail_bg.png"
+    if not thumb_bg.exists() or thumb_bg.stat().st_size < 5_000:
+        hook_sc = next(
+            (sc for sc in timeline["scenes"]
+             if sc.get("segment_label") == "HOOK" or sc.get("scene_id") == 1),
+            None,
+        )
+        hook_kw = (
+            (hook_sc.get("visual_keywords") or [hook_sc.get("visual_keyword", "dramatic")])
+            if hook_sc else [intent.lower(), "dramatic"]
+        )
+        time.sleep(1.0)
+        tb_query = _groq_thumbnail_bg_query(hook_kw, intent)
+        log.info("Thumbnail BG query: %s", tb_query)
+
+        tb_ok = (_huggingface_fetch(tb_query, thumb_bg, _known_images()) or
+                 _pexels_fetch(tb_query, thumb_bg, "MEDIUM", _known_images()))
+
+        if tb_ok and _validate_image(thumb_bg, 9999):
+            th = _img_hash(thumb_bg)
+            if th:
+                session_img_hashes.add(th)
+            log.info("Thumbnail BG saved: %s", thumb_bg.name)
+        else:
+            thumb_bg.unlink(missing_ok=True)
+            log.warning("Thumbnail BG: all sources failed — thumbnail will use best scene image")
 
     # Persist both registries
     _save_prompt_registry(used_registry)
@@ -501,6 +552,72 @@ def _pexels_video_fetch(query: str, out_path: Path,
         log.warning("Pexels video fetch error: %s", exc)
 
     return False
+
+
+# ── Groq: dedicated thumbnail background query ───────────────────────────────
+
+def _groq_thumbnail_bg_query(hook_keywords: list[str], intent: str) -> str:
+    """
+    Generate a search query specifically for a shocking thumbnail background.
+    Result is more dramatic than scene queries — optimised for CTR, not content accuracy.
+    """
+    api_keys = [
+        os.getenv("GROQ_API_KEY_1", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+    ]
+    api_keys = [k for k in api_keys if k]
+    if not api_keys:
+        return _INTENT_THUMB_FALLBACK.get(intent, "dramatic explosion dark fire")
+
+    system_prompt = (
+        "You generate stock-image search queries for YouTube thumbnail backgrounds.\n"
+        "The image must look SHOCKING, DRAMATIC, and CLICKABLE.\n"
+        "Rules:\n"
+        "- Output ONLY the search query. No explanation. No quotes.\n"
+        "- 4 to 6 words.\n"
+        "- Prefer: explosions, extreme weather, deep-sea creatures, cosmic phenomena,\n"
+        "  animals in dramatic moments, extreme close-ups, lightning, fire, lava,\n"
+        "  vivid bioluminescence, dramatic silhouettes, ruins, microscopy, neon glows.\n"
+        "- The image MUST have HIGH CONTRAST and VIVID COLOR — no flat or grey shots.\n"
+        "- Must be a real photographable subject. Never use abstract words.\n"
+        "EXAMPLES:\n"
+        "  ocean glow + OCEAN   → 'bioluminescent ocean wave night blue'\n"
+        "  volcano eruption + NATURE → 'lava explosion volcano dramatic dark'\n"
+        "  black hole + SPACE → 'nebula explosion galaxy dark cosmic'\n"
+        "  brain memory + PSYCHOLOGY → 'neuron glow brain neon dark closeup'\n"
+        "  Roman Empire + HISTORY → 'ancient ruins dramatic lightning storm'\n"
+    )
+    user_message = (
+        f"Keywords: {', '.join(hook_keywords[:5])}\n"
+        f"Category: {intent}\n"
+        "Generate a shocking/dramatic thumbnail background search query."
+    )
+
+    for attempt in range(2):
+        try:
+            r = requests.post(
+                GROQ_API_BASE,
+                headers={"Authorization": f"Bearer {api_keys[0]}",
+                         "Content-Type":  "application/json"},
+                json={
+                    "model":       GROQ_MODEL,
+                    "messages":    [{"role": "system", "content": system_prompt},
+                                    {"role": "user",   "content": user_message}],
+                    "max_tokens":  30,
+                    "temperature": 0.5,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                q = r.json()["choices"][0]["message"]["content"].strip()
+                return " ".join(q.split()[:6])
+            if r.status_code == 429 and len(api_keys) > 1:
+                api_keys[0] = api_keys[1]
+        except Exception as exc:
+            log.debug("thumbnail bg query: %s", exc)
+            break
+
+    return _INTENT_THUMB_FALLBACK.get(intent, "dramatic storm explosion dark fire")
 
 
 # ── Groq: scene metadata → search query ──────────────────────────────────────

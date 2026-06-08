@@ -75,8 +75,10 @@ def _escape_drawtext(text: str) -> str:
 def _hook_text_vf(text: str, W: int, H: int, dur_s: float) -> str:
     """Large, impactful two-line hook text overlay for Shorts scene 1.
 
-    Bigger font, strong black border, split into two lines so it reads
-    instantly on a phone screen without truncation.
+    Yellow text (#FFE000) with a thick black border + a deep black drop-shadow
+    offset below-right. Yellow reads instantly on ANY background on a phone
+    screen — white blends into bright visuals, yellow never does.
+    Two drawtext filters are stacked: shadow first, then the yellow text on top.
     """
     clean = (text.replace("\\", "")
                  .replace("%",  "")
@@ -96,15 +98,29 @@ def _hook_text_vf(text: str, W: int, H: int, dur_s: float) -> str:
     else:
         display = " ".join(words)
 
-    font_sz = max(78, W // 11)   # ~98px on 1080-wide Shorts — 60% bigger than before
+    font_sz   = max(88, W // 10)   # ~108px on 1080-wide — bigger than before
+    enable    = f"between(t,0,{dur_s:.2f})"
+    y_pos     = "(h-th)/2-h*0.08"
+    shadow_x  = f"(w-tw)/2+6"
+    shadow_y  = f"{y_pos}+6"
 
-    return (
+    # Layer 1: black drop-shadow (offset +6px right, +6px down) for depth
+    shadow = (
         f"drawtext=text='{display}':fontfile='{_FONT_BOLD}':"
-        f"fontcolor=white:fontsize={font_sz}:"
-        f"bordercolor=black:borderw=8:"
-        f"x=(w-tw)/2:y=(h-th)/2-h*0.08:"
-        f"enable='between(t,0,{dur_s:.2f})'"
+        f"fontcolor=black:fontsize={font_sz}:"
+        f"bordercolor=black:borderw=10:"
+        f"x={shadow_x}:y={shadow_y}:"
+        f"enable='{enable}'"
     )
+    # Layer 2: bright yellow text on top — visible on both dark and bright scenes
+    label = (
+        f"drawtext=text='{display}':fontfile='{_FONT_BOLD}':"
+        f"fontcolor=#FFE000:fontsize={font_sz}:"
+        f"bordercolor=black:borderw=8:"
+        f"x=(w-tw)/2:y={y_pos}:"
+        f"enable='{enable}'"
+    )
+    return f"{shadow},{label}"
 
 # Cinematic color grade filters — movie-quality LUT-style grading per emotion
 _COLOR_GRADE: dict[str, str] = {
