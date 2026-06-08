@@ -67,7 +67,16 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
             i + 1 < len(scenes) and
             scenes[i + 1]["segment_label"] == "PAYOFF"
         )
-        pad_s = (_SECTION_BOUNDARY_PAD_MS if is_core_payoff else _SCENE_PAD_MS) / 1000
+        is_last_scene = (i == len(scenes) - 1)
+        if is_last_scene:
+            # Stage 3 normalization applies a 1-second fade-out on the merged track.
+            # Without enough trailing silence the fade eats into the final spoken words.
+            # 1200ms > fade duration (1000ms), so the fade lands entirely in silence.
+            pad_s = 1.2
+        elif is_core_payoff:
+            pad_s = _SECTION_BOUNDARY_PAD_MS / 1000
+        else:
+            pad_s = _SCENE_PAD_MS / 1000
 
         sc["_voice_pad_ms"] = int(pad_s * 1000)   # stored for subtitle sync
 

@@ -71,6 +71,41 @@ def _escape_drawtext(text: str) -> str:
     words = text.split()[:10]
     return " ".join(words)
 
+
+def _hook_text_vf(text: str, W: int, H: int, dur_s: float) -> str:
+    """Large, impactful two-line hook text overlay for Shorts scene 1.
+
+    Bigger font, strong black border, split into two lines so it reads
+    instantly on a phone screen without truncation.
+    """
+    clean = (text.replace("\\", "")
+                 .replace("%",  "")
+                 .replace("'",  "")
+                 .replace('"',  "")
+                 .replace(":",  " "))
+    words = clean.split()
+    if not words:
+        return ""
+
+    # Split at midpoint into 2 lines — more readable at large size on phone
+    if len(words) > 4:
+        mid   = (len(words) + 1) // 2
+        line1 = " ".join(words[:mid])
+        line2 = " ".join(words[mid:])
+        display = line1 + r"\n" + line2
+    else:
+        display = " ".join(words)
+
+    font_sz = max(78, W // 11)   # ~98px on 1080-wide Shorts — 60% bigger than before
+
+    return (
+        f"drawtext=text='{display}':fontfile='{_FONT_BOLD}':"
+        f"fontcolor=white:fontsize={font_sz}:"
+        f"bordercolor=black:borderw=8:"
+        f"x=(w-tw)/2:y=(h-th)/2-h*0.08:"
+        f"enable='between(t,0,{dur_s:.2f})'"
+    )
+
 # Cinematic color grade filters — movie-quality LUT-style grading per emotion
 _COLOR_GRADE: dict[str, str] = {
     # Warm golden blockbuster — boosted saturation, lifted shadows, warm highlights
@@ -231,18 +266,12 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         f"box=1:boxcolor={i_color}@0.92:boxborderw=10:x=w-tw-50:y=42"
     )
 
-    # First-frame hook text — large bold overlay for first 3s of scene 1 (Shorts only)
-    # Stops the scroll: viewer reads hook before deciding to swipe
+    # First-frame hook text — large impactful overlay for scene 1 (Shorts only)
+    # Two-line layout, ~98px font, strong border — stops the scroll in <1 second
     if hook_text and scene_id == 1:
-        escaped = _escape_drawtext(hook_text)
-        font_sz = max(42, W // 18)
-        vf_parts.append(
-            f"drawtext=text='{escaped}':fontfile='{_FONT_BOLD}':"
-            f"fontcolor=white:fontsize={font_sz}:"
-            f"box=1:boxcolor=black@0.72:boxborderw=18:"
-            f"x=(w-tw)/2:y=h*0.38:"
-            f"enable='between(t,0,3)'"
-        )
+        hook_vf = _hook_text_vf(hook_text, W, H, dur_s)
+        if hook_vf:
+            vf_parts.append(hook_vf)
 
     base_cmd = _base_cmd(vis, dur_s, clip_type, W, H)
     logo     = _LOGO_PATH

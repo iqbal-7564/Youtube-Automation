@@ -119,6 +119,8 @@ def plan_cinematics(timeline: dict) -> dict:
     Also overrides motion_emotion based on shot type for consistent preset selection.
     """
     scenes = timeline.get("scenes", [])
+    profile   = timeline.get("profile", "standard")
+    is_shorts = profile == "shorts"
     retention_signal = _load_retention_signal()
     pool_idx: dict[str, int] = {}
     prev_shot = None
@@ -138,6 +140,18 @@ def plan_cinematics(timeline: dict) -> dict:
             sc["motion_emotion"] = "neutral"
             prev_prev_shot = prev_shot
             prev_shot = "MEDIUM"
+            continue
+
+        # Shorts HOOK: maximum visual shock — EXTREME_CLOSE + IMPACT, no exceptions.
+        # Wide shots on the opening frame lose viewers in the first second.
+        if label == "HOOK" and is_shorts:
+            sc["shot_type"]      = "EXTREME_CLOSE"
+            sc["pacing"]         = "IMPACT"
+            sc["suspense_level"] = 1.0
+            sc["contrast_shot"]  = False
+            sc["motion_emotion"] = "dramatic"
+            prev_prev_shot       = prev_shot
+            prev_shot            = "EXTREME_CLOSE"
             continue
 
         pool   = _SHOT_POOL.get(label, ["MEDIUM"])
