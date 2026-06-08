@@ -2,8 +2,8 @@
 STEP 1 — Topic Selection (MindBlownFacts Edition)
 
 Uses Groq to generate a specific, surprising world-fact topic from a curated seed bank.
-Categories (priority order): SPACE > SCIENCE > HISTORY > ANIMALS > NATURE > GEOGRAPHY > OCEAN > CULTURE
-Deduplication: token_set_ratio > 0.80 against today's produced videos.
+Categories are rotated evenly across all 15 types using a frequency-inverse score so no
+single category dominates. Deduplication: token_set_ratio > 0.80 against today's produced videos.
 
 Algorithm 1 — Trending Topic Arbitrage (Google Trends via pytrends):
   Fetches rising related queries per category. Trending seeds are ranked ahead
@@ -378,7 +378,7 @@ def select_topic(logs_dir: Path) -> dict | None:
     # AI-generated angle hints (used to enrich Groq topic expansion)
     trending_hints = _fetch_trending_hints()
 
-    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights)
+    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights, logs_dir)
 
     for cat in ordered:
         candidates = _rank_seeds(
@@ -660,19 +660,53 @@ def _load_comment_boost() -> dict[str, int]:
     return {}
 
 
+def _recent_category_counts(logs_dir: Path, n: int = 30) -> dict[str, int]:
+    """Count how many times each category appears in the last n uploaded videos."""
+    try:
+        path = logs_dir / "video_results.json"
+        if not path.exists():
+            return {}
+        results = json.loads(path.read_text())
+        counts: dict[str, int] = {}
+        for r in results[-n:]:
+            cat = r.get("intent", "")
+            if cat:
+                counts[cat] = counts.get(cat, 0) + 1
+        return counts
+    except Exception:
+        return {}
+
+
 def _prioritise_categories(
     cats: list[str],
     used_today: set[str],
     weights: dict[str, float],
+    logs_dir: Path | None = None,
 ) -> list[str]:
     available = [c for c in cats if c not in used_today]
     if not available:
         available = list(cats)
-    boost = _load_comment_boost()
-    available.sort(
-        key=lambda c: weights.get(c, 1.0) + boost.get(c, 0),
-        reverse=True,
-    )
+
+    boost        = _load_comment_boost()
+    recent_counts = _recent_category_counts(logs_dir, n=30) if logs_dir else {}
+
+    # With 15 categories and ~4 videos/day, 30 videos = ~7 days of history.
+    # A perfectly even channel uses each category ~2 times in 30 videos.
+    # freq_score: 0 recent uses → +30 bonus; 5+ uses → −25 penalty.
+    # This 55-point swing overwhelms the ±10 performance weight difference,
+    # so categories unseen for a week rise to the top regardless of weight.
+    def _score(c: str) -> float:
+        perf     = weights.get(c, 50.0)           # 0-100 retention %
+        cb       = boost.get(c, 0) * 5            # viewer request boost
+        freq_pen = min(recent_counts.get(c, 0), 5) * 11  # 0-55 penalty
+        freq_bon = 30 if recent_counts.get(c, 0) == 0 else 0  # never used bonus
+        return perf + cb - freq_pen + freq_bon
+
+    # Shuffle BEFORE sorting so categories with equal scores get random order.
+    # Without this, Python's stable sort always places SPACE first (it's first
+    # in CATEGORIES), causing SPACE to dominate whenever performance weights tie.
+    random.shuffle(available)
+    available.sort(key=_score, reverse=True)
     return available
 
 
