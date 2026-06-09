@@ -2,10 +2,14 @@ name: MindBlownFacts Video Pipeline
 
 on:
   schedule:
-    - cron: '0 10 * * *'   # 10:00 UTC (3:00 PM PKT)  — Standard — news trigger ONLY
-    - cron: '0 13 * * *'   # 13:00 UTC (6:00 PM PKT)  — Shorts  — peak global traffic
-    - cron: '0 17 * * *'   # 17:00 UTC (10:00 PM PKT) — Standard/Long — US prime time
-    - cron: '0 20 * * *'   # 20:00 UTC (1:00 AM PKT)  — Shorts  — US evening peak
+    # ── Video uploads — PAUSED (uncomment all 5 lines below to resume) ─────────
+    # 5 Shorts/day at peak global traffic times (PKT = UTC+5, IST = UTC+5:30):
+    # - cron: '0 3 * * *'   # 03:00 UTC │ 8:00 AM PKT │ 8:30 AM IST │  3:00 AM UK  — Asia morning scroll peak
+    # - cron: '0 8 * * *'   # 08:00 UTC │ 1:00 PM PKT │ 1:30 PM IST │  8:00 AM UK  — UK morning + Asia lunch peak
+    # - cron: '0 13 * * *'  # 13:00 UTC │ 6:00 PM PKT │ 6:30 PM IST │  8:00 AM EST — US morning + Asia evening PEAK
+    # - cron: '0 17 * * *'  # 17:00 UTC │10:00 PM PKT │10:30 PM IST │ 12:00 PM EST — US midday + UK evening PEAK
+    # - cron: '0 21 * * *'  # 21:00 UTC │ 2:00 AM PKT │ 2:30 AM IST │  4:00 PM EST — US after-work PEAK (highest US traffic)
+    # ── Background tasks — always running ──────────────────────────────────────
     - cron: '0 * * * *'    # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
     inputs:
@@ -24,10 +28,11 @@ jobs:
     timeout-minutes: 120
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.schedule == '0 10 * * *' ||
+      github.event.schedule == '0 3 * * *'  ||
+      github.event.schedule == '0 8 * * *'  ||
       github.event.schedule == '0 13 * * *' ||
       github.event.schedule == '0 17 * * *' ||
-      github.event.schedule == '0 20 * * *'
+      github.event.schedule == '0 21 * * *'
 
     steps:
       - name: Checkout
@@ -62,33 +67,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "format=${{ github.event.inputs.video_format || 'shorts' }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.schedule }}" = "0 10 * * *" ]; then
-            # 10:00 UTC — news slot: only run if trigger exists, else skip
-            if [ -f pipeline/logs/news_trigger.json ]; then
-              USED=$(python3 -c "import json; d=json.load(open('pipeline/logs/news_trigger.json')); print(d.get('used','false'))" 2>/dev/null || echo "true")
-              if [ "$USED" = "False" ] || [ "$USED" = "false" ]; then
-                echo "format=standard" >> $GITHUB_OUTPUT
-                echo "has_trigger=true" >> $GITHUB_OUTPUT
-              else
-                echo "format=skip" >> $GITHUB_OUTPUT
-              fi
-            else
-              echo "format=skip" >> $GITHUB_OUTPUT
-            fi
-          elif [ "${{ github.event.schedule }}" = "0 17 * * *" ]; then
-            echo "format=standard" >> $GITHUB_OUTPUT
           else
+            # All 5 scheduled slots produce Shorts
             echo "format=shorts" >> $GITHUB_OUTPUT
           fi
 
-      - name: Skip if no news trigger at 10:00
-        if: steps.fmt.outputs.format == 'skip'
-        run: |
-          echo "No news trigger available — skipping 10:00 UTC run"
-          exit 0
-
       - name: Run Video Pipeline
-        if: steps.fmt.outputs.format != 'skip'
         env:
           VIDEO_FORMAT:          ${{ steps.fmt.outputs.format }}
           INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override }}
