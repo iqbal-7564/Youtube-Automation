@@ -20,9 +20,25 @@ Returns the highest-scoring (title, headline) pair.
 """
 
 import logging
+import random
 import re
 
 log = logging.getLogger(__name__)
+
+# Diverse fallback title patterns — rotated randomly so no two consecutive
+# videos share the same title format. {topic} is replaced with the stripped topic phrase.
+_FALLBACK_TITLE_PATTERNS = [
+    "The Real Reason {topic} Works The Way It Does",
+    "What {topic} Actually Does To Your Body",
+    "Scientists Just Found Something Wild About {topic}",
+    "How {topic} Works — And Why It Changes Everything",
+    "This Is What Really Happens Inside {topic}",
+    "Why {topic} Is Nothing Like You Were Taught",
+    "What Happens To Your Brain When {topic}",
+    "{topic}: The Hidden Side Nobody Talks About",
+    "The Disturbing Science Behind {topic}",
+    "How {topic} Is Quietly Changing Your Life Right Now",
+]
 
 # Words that indicate curiosity-gap psychology is already present
 _CURIOSITY_WORDS = {
@@ -156,13 +172,14 @@ def _generate_title_variants(title: str, hook_text: str) -> list[str]:
         elif len(title.split()) <= 6:
             variants.append(f"How Does {base} Actually Work?")
 
-    # Variant 3: "Nobody told you" framing — strong curiosity gap
+    # Variant 3: diverse curiosity-gap fallback — pick randomly so no two videos
+    # look the same. Only fires when the base title lacks power words.
     has_power = any(w in title_lower for w in _POWER_WORDS)
     if not has_power:
-        # Strip question starters + auxiliaries to get the topic noun phrase
         _strip = r"^(why |how |what |where |when |who |does |do |did |is |are |was |were |can |will |should |the |a |an )+"
-        core_phrase = re.sub(_strip, "", title_lower, flags=re.I).rstrip(".!?")
-        variants.append(f"Nobody Told You The Truth About {core_phrase.title()}")
+        core_phrase = re.sub(_strip, "", title_lower, flags=re.I).rstrip(".!?").title()
+        pattern = random.choice(_FALLBACK_TITLE_PATTERNS)
+        variants.append(pattern.format(topic=core_phrase))
 
     # Variant 4: hook-sentence trimmed to title length (often strongest)
     hook_words = hook_text.split()[:14]

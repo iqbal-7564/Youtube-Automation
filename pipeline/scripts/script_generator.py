@@ -320,31 +320,36 @@ CLOSE   ({close_time}): {close_rule}
 
 TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
 
-TITLE RULES (SEO + curiosity-gap + attractive):
-  Rule 0: MOST IMPORTANT — The title MUST be about the exact same subject as the TOPIC given in the user prompt. Never invent a new subject.
-  Rule 1: Reframe the topic as a question people actually type into YouTube search.
-  Rule 2: Add emotional payoff after the question — what they will FEEL or LEARN.
-  Rule 3: Use power words: real, actual, hidden, never, finally, proof, inside, truth.
-  Rule 4: Include a number or specific detail when possible — specificity = credibility.
-  Rule 5: Max 70 characters — short titles get more clicks on mobile.
-  Rule 6: NO overused words: shocking/unbelievable/amazing/mind-blowing/incredible.
+TITLE RULES — YouTube Shorts optimised (follow ALL rules every time):
+  Rule 0: MUST match the exact topic. Never change the subject.
+  Rule 1: FRONT-LOAD the keyword — first 40 characters must contain the main topic word(s).
+          Shorts feed truncates at ~40 chars. The topic must be readable before the "…"
+  Rule 2: Under 70 characters total. No excessive ALL CAPS (max 1 word in caps if any).
+  Rule 3: End with exactly 1 emoji relevant to the topic. Never 0, never 2+.
+  Rule 4: Include a specific number OR a strong qualifier (real, actual, hidden, why, how) when it fits naturally.
+  Rule 5: BANNED overused words: shocking / unbelievable / amazing / mind-blowing / incredible / nobody told you / the truth nobody / what they don't.
+  Rule 6: VARY THE FORMAT every video — pick ONE format from the pool below. Never repeat the same format twice in a row.
 
-  QUESTION FORMATS (most searchable + attractive):
-  "Why Does [X]? The Answer Will Change How You See [Y]"
-  "How Does [X] Actually Work? Scientists Finally Have Proof"
-  "What Really Happened To [X]? The Truth Was Hidden For [N] Years"
-  "Why Can't [X]? The Real Reason Nobody Talks About"
-  "How Did [X] Survive? The Answer Defies Everything We Know"
-  "What Is Inside [X]? The Discovery That Changes Everything"
+  FORMAT POOL (rotate — each video uses a different one):
+  A. Question + payoff:    "Why Do [TOPIC] [SURPRISING FACT]? 🤯"
+  B. Real reason:          "[TOPIC]: The Real Reason [CLAIM] 🔬"
+  C. Personal impact:      "What [TOPIC] Does To Your Body Right Now 🧠"
+  D. Scale fact:           "[TOPIC] Is [SCALE COMPARISON] — And It Changes Everything 🌌"
+  E. Discovery framing:    "Scientists Just Found [TOPIC] [SURPRISING DETAIL] 🔭"
+  F. Reversal/subversion:  "How [TOPIC] Actually Works (You've Been Lied To) ⚡"
+  G. Number-led:           "[NUMBER] [TOPIC] Facts That [EMOTIONAL PAYOFF] 🫀"
+  H. Identity challenge:   "Your [BODY PART/SELF] Is [IMPOSSIBLE CLAIM] About [TOPIC] 👁️"
+  I. Conflict framing:     "[TOPIC] vs [OPPOSING IDEA] — Only One Can Be True 🚨"
+  J. Time urgency:         "Every [TIME UNIT], [TOPIC] Does Something [CLAIM] ⏱️"
 
-  GOOD: "Why Does The Ocean Glow? The Truth Nobody Told You"
-  GOOD: "How Black Holes Actually Work — Scientists Got It Wrong"
-  GOOD: "Why Did Rome Really Fall? Hidden For 1,500 Years"
-  GOOD: "What Lives 11km Deep? The Answer Will Terrify You"
-  GOOD: "How Did Tardigrades Survive 5 Mass Extinctions?"
-  BAD:  "The Impossible Thing Hiding Inside Every Human Cell" (not a question)
-  BAD:  "Amazing Facts About DNA" (too vague, no emotion)
-  BAD:  "Ocean Facts That Will Blow Your Mind" (overused pattern)
+  GOOD: "Why Does The Ocean Glow At Night? 🌊"          ← A, front-loaded, emoji, <70 chars
+  GOOD: "Black Holes: The Real Reason Light Can't Escape 🌌" ← B, front-loaded
+  GOOD: "What Lava Actually Does To Human Bone 🔥"       ← C, personal + specific
+  GOOD: "Scientists Just Found Life 11km Under The Ocean 🐙" ← E, discovery
+  GOOD: "How Your Brain Deletes Memories While You Sleep 🧠" ← F, personal + specific
+  BAD:  "The Truth Nobody Told You About Black Holes"    ← overused pattern (Rule 5)
+  BAD:  "Amazing Facts About DNA That Will Blow Your Mind" ← banned words (Rule 5)
+  BAD:  "Why Nobody Talks About This Ocean Secret"       ← overused + no emoji (Rule 5)
 
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON.
@@ -379,7 +384,7 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Reframe '{title}' as a curiosity-gap question. MUST keep the exact same subject as the topic above — do not change the subject. Start with Why/How/What/Where if it fits naturally. Max 70 chars. Power words: real/hidden/actual/finally/proof/never. NO overused words: shocking/unbelievable/amazing/mind-blowing.",
+    "title": "Write a YouTube Shorts title for '{title}'. RULES: (1) First 40 chars must contain the main topic keyword — front-load it. (2) Pick ONE format from the FORMAT POOL in the system prompt — vary it, never reuse 'Nobody Told You' or 'Truth Nobody'. (3) Under 70 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS words. (6) Must describe the exact same topic as '{title}' — no subject changes.",
     "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this topic, then a compelling sentence. Front-load the keyword — YouTube indexes first words most heavily. Example: 'Black holes are regions...' / 'Octopuses have three hearts...' / 'The real reason Rome collapsed...'\nLine 2: The single most shocking specific fact from the script — include a real number or a scale comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords people actually search (e.g. 'Scientists recently discovered...', 'Most people never learn that...', 'The truth about X is...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad ones: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
     "tags": {tags_instruction},
     "engagement_question": "One question about '{title}' that sparks debate or invites personal stories from viewers"
@@ -425,7 +430,7 @@ Return EXACTLY this JSON (no extra keys, no markdown):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Reframe '{title}' as a curiosity-gap question. Max 70 chars. Start with Why/How/What. Power words: real/hidden/actual/finally/proof/never. NO: shocking/unbelievable/amazing/mind-blowing.",
+    "title": "Write a YouTube title for '{title}'. RULES: (1) Front-load the main topic keyword in first 40 chars. (2) Pick ONE format from the FORMAT POOL — vary it every video. (3) Under 70 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS. (6) Must stay on topic '{title}'.",
     "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this overarching theme, then a compelling sentence. Front-load the keyword.\nLine 2: The single most surprising connection across all topics — include a real number or comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords (e.g. 'Scientists recently discovered...', 'Most people never learn that...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
     "tags": {tags_instruction},
     "engagement_question": "One question about '{title}' that sparks debate or personal stories"
