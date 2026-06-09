@@ -4,11 +4,11 @@ on:
   schedule:
     # ── Video uploads — PAUSED (uncomment all 5 lines below to resume) ─────────
     # 5 Shorts/day at peak global traffic times (PKT = UTC+5, IST = UTC+5:30):
-    # - cron: '0 3 * * *'   # 03:00 UTC │ 8:00 AM PKT │ 8:30 AM IST │  3:00 AM UK  — Asia morning scroll peak
-    # - cron: '0 8 * * *'   # 08:00 UTC │ 1:00 PM PKT │ 1:30 PM IST │  8:00 AM UK  — UK morning + Asia lunch peak
-    # - cron: '0 13 * * *'  # 13:00 UTC │ 6:00 PM PKT │ 6:30 PM IST │  8:00 AM EST — US morning + Asia evening PEAK
-    # - cron: '0 17 * * *'  # 17:00 UTC │10:00 PM PKT │10:30 PM IST │ 12:00 PM EST — US midday + UK evening PEAK
-    # - cron: '0 21 * * *'  # 21:00 UTC │ 2:00 AM PKT │ 2:30 AM IST │  4:00 PM EST — US after-work PEAK (highest US traffic)
+    - cron: '0 3 * * *'   # 03:00 UTC │ 8:00 AM PKT │ 8:30 AM IST │  3:00 AM UK  — Asia morning scroll peak
+    - cron: '0 8 * * *'   # 08:00 UTC │ 1:00 PM PKT │ 1:30 PM IST │  8:00 AM UK  — UK morning + Asia lunch peak
+    - cron: '0 13 * * *'  # 13:00 UTC │ 6:00 PM PKT │ 6:30 PM IST │  8:00 AM EST — US morning + Asia evening PEAK
+    - cron: '0 17 * * *'  # 17:00 UTC │10:00 PM PKT │10:30 PM IST │ 12:00 PM EST — US midday + UK evening PEAK
+    - cron: '0 21 * * *'  # 21:00 UTC │ 2:00 AM PKT │ 2:30 AM IST │  4:00 PM EST — US after-work PEAK (highest US traffic)
     # ── Background tasks — always running ──────────────────────────────────────
     - cron: '0 * * * *'    # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
