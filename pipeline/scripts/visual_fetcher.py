@@ -204,6 +204,27 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         qh = _prompt_hash(query)
         used_registry.append(qh)
 
+        # ── Shorts scenes 2+: try video clip first — video holds attention much
+        # better than static images; 60-70% swipe-away on images vs ~30% on clips.
+        # Use the same scene query so the clip matches the script content.
+        if is_shorts:
+            video_out = visuals_dir / f"scene_{scene_id}_visual.mp4"
+            video_ok  = _pexels_video_fetch(query, video_out, _known_images())
+            if video_ok:
+                vh = _img_hash(video_out)
+                if vh:
+                    session_img_hashes.add(vh)
+                sc.update(
+                    visual_file       = video_out.name,
+                    clip_type         = "video",
+                    clip_score        = 1.0,
+                    extra_visual_files= [],
+                    retry_count       = 0,
+                )
+                log.info("Scene %d: Pexels video clip → %s", scene_id, video_out.name)
+                continue   # skip image fetch entirely for this scene
+            log.debug("Scene %d: Pexels video failed — falling back to image", scene_id)
+
         # Step 2 — Fetch primary image: HuggingFace → Pexels → Pixabay → black clip
         success = _huggingface_fetch(query, out_path, _known_images())
 

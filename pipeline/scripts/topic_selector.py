@@ -306,7 +306,10 @@ def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
     produced_today = _load_produced_today(logs_dir)
     used_categories = {v.get("intent", "") for v in produced_today}
 
-    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights, logs_dir)
+    trending_seeds = _fetch_trending_seeds(logs_dir)
+    ordered = _prioritise_categories(
+        CATEGORIES, used_categories, perf_weights, logs_dir, trending_seeds
+    )
 
     for cat in ordered:
         cluster = _build_topic_cluster(cat, n, full_history)
@@ -507,7 +510,9 @@ def select_topic(logs_dir: Path) -> dict | None:
     # AI-generated angle hints (used to enrich Groq topic expansion)
     trending_hints = _fetch_trending_hints()
 
-    ordered = _prioritise_categories(CATEGORIES, used_categories, perf_weights, logs_dir)
+    ordered = _prioritise_categories(
+        CATEGORIES, used_categories, perf_weights, logs_dir, trending_seeds
+    )
 
     for cat in ordered:
         candidates = _rank_seeds(
@@ -811,29 +816,35 @@ def _prioritise_categories(
     used_today: set[str],
     weights: dict[str, float],
     logs_dir: Path | None = None,
+    trending_seeds: dict | None = None,
 ) -> list[str]:
     available = [c for c in cats if c not in used_today]
     if not available:
         available = list(cats)
 
-    boost        = _load_comment_boost()
+    boost         = _load_comment_boost()
     recent_counts = _recent_category_counts(logs_dir, n=30) if logs_dir else {}
 
-    # With 15 categories and ~4 videos/day, 30 videos = ~7 days of history.
-    # A perfectly even channel uses each category ~2 times in 30 videos.
-    # freq_score: 0 recent uses → +30 bonus; 5+ uses → −25 penalty.
-    # This 55-point swing overwhelms the ±10 performance weight difference,
-    # so categories unseen for a week rise to the top regardless of weight.
-    def _score(c: str) -> float:
-        perf     = weights.get(c, 50.0)           # 0-100 retention %
-        cb       = boost.get(c, 0) * 5            # viewer request boost
-        freq_pen = min(recent_counts.get(c, 0), 5) * 11  # 0-55 penalty
-        freq_bon = 30 if recent_counts.get(c, 0) == 0 else 0  # never used bonus
-        return perf + cb - freq_pen + freq_bon
+    # Trending bonus: categories with active Google Trends hits get a +0 to +65
+    # score boost so they rise above frequency-penalised categories.
+    # Raw trend scores are 95-185 (95 base + 45/extra market); normalise to 0-65.
+    trend_bonus: dict[str, float] = {}
+    if trending_seeds:
+        for cat, seeds in trending_seeds.items():
+            if seeds:
+                top = max(s for _, s in seeds[:3])      # best of top 3
+                trend_bonus[cat] = min((top - 95) / 2, 65)  # normalised 0-65
 
-    # Shuffle BEFORE sorting so categories with equal scores get random order.
-    # Without this, Python's stable sort always places SPACE first (it's first
-    # in CATEGORIES), causing SPACE to dominate whenever performance weights tie.
+    def _score(c: str) -> float:
+        perf     = weights.get(c, 50.0)                      # 0-100 retention %
+        cb       = boost.get(c, 0) * 5                       # viewer request boost
+        freq_pen = min(recent_counts.get(c, 0), 5) * 11      # 0-55 penalty
+        freq_bon = 30 if recent_counts.get(c, 0) == 0 else 0 # never-used bonus
+        trend    = trend_bonus.get(c, 0)                     # 0-65 trending bonus
+        return perf + cb - freq_pen + freq_bon + trend
+
+    # Shuffle BEFORE sorting so equal-score categories get random order rather
+    # than always putting SPACE first (SPACE is first in the CATEGORIES list).
     random.shuffle(available)
     available.sort(key=_score, reverse=True)
     return available
