@@ -108,6 +108,135 @@ _RIBBON_POWER = [
     "LEAKED", "LIED", "BANNED", "UNTOLD", "CONFIRMED", "FORBIDDEN",
 ]
 
+# ── Pollinations.ai visual styles per category ────────────────────────────────
+_INTENT_THUMB_STYLE: dict[str, str] = {
+    "SPACE":       "deep space nebula explosion, glowing galaxy, cosmic black hole, dramatic starfield",
+    "SCIENCE":     "dramatic laboratory experiment, glowing particles, DNA helix, scientific explosion",
+    "HISTORY":     "ancient ruins dramatic lighting, mysterious civilization, epic historical scene",
+    "ANIMALS":     "extreme close-up wildlife, powerful predator, dramatic animal portrait, intense eyes",
+    "NATURE":      "dramatic lightning storm, volcanic eruption, epic natural disaster, extreme weather",
+    "GEOGRAPHY":   "dramatic aerial canyon, alien landscape, extreme mountain, volcanic lava field",
+    "OCEAN":       "deep ocean bioluminescent creature, dramatic underwater abyss, sea monster encounter",
+    "CULTURE":     "ancient mysterious temple, dramatic archaeological discovery, lost civilization",
+    "TECHNOLOGY":  "futuristic AI visualization, glowing circuit neural network, dramatic neon cybertech",
+    "PSYCHOLOGY":  "dramatic human mind concept, glowing brain visualization, psychological illusion",
+    "MYTHOLOGY":   "epic mythological battle, ancient gods, dramatic fantasy epic scene, divine power",
+    "MEDICINE":    "dramatic microscopic cellular world, glowing virus visualization, medical breakthrough",
+    "MATHEMATICS": "dramatic fractal geometry, abstract mathematical dimension, impossible structure",
+    "ECONOMICS":   "dramatic financial collapse visualization, glowing global market data, crisis scene",
+    "PHYSICS":     "particle accelerator explosion, quantum visualization, dramatic energy wave",
+}
+
+
+# ── Pollinations.ai AI background generation ──────────────────────────────────
+
+def _build_pollinations_prompt(title: str, intent: str) -> tuple[str, int]:
+    """Build a cinematic, shocking image prompt for Pollinations.ai."""
+    style = _INTENT_THUMB_STYLE.get(intent.upper(), "dramatic cinematic scene, extreme lighting")
+    stop  = {
+        "the","a","an","of","that","is","are","was","were","and","or","in","on",
+        "at","to","for","with","by","from","it","its","this","these","those",
+        "be","been","being","have","has","had","will","would","can","could",
+        "why","how","what","where","when","who","which","never","ever",
+    }
+    keywords = [
+        w.strip(".,!?:;\"'|").replace("|", "")
+        for w in title.split()
+        if w.lower().strip(".,!?:;\"'|") not in stop
+        and len(w.strip(".,!?:;\"'|")) > 2
+    ][:5]
+    kw_str = " ".join(keywords)
+    seed   = abs(hash(title)) % 999983
+
+    return (
+        f"ultra-photorealistic cinematic YouTube thumbnail background, {kw_str}, "
+        f"{style}, dramatic extreme lighting, ultra high contrast, 8K hyper-detail, "
+        f"cinematic color grading, award-winning photography, jaw-dropping shocking visual, "
+        f"no text, no watermark, no UI elements, no letters, professional studio quality, "
+        f"volumetric rays, depth of field bokeh, epic dramatic atmosphere"
+    ), seed
+
+
+def _fetch_ai_bg(title: str, intent: str, cache_dir: Path) -> "Path | None":
+    """
+    Generate a cinematic thumbnail background using HuggingFace Inference API.
+    Falls back to Pollinations.ai if HF keys are unavailable.
+    Uses SDXL (1344×768) — best free photorealistic model on HF.
+    """
+    import os, urllib.parse, time
+    try:
+        import requests as _req
+    except ImportError:
+        return None
+
+    prompt, seed = _build_pollinations_prompt(title, intent)
+    cache_path   = cache_dir / f"thumb_ai_{seed % 10000}.jpg"
+    if cache_path.exists() and cache_path.stat().st_size > 20_000:
+        return cache_path  # reuse same video's cached AI image
+
+    # ── Option A: HuggingFace Inference API (user's keys, higher quality) ──────
+    hf_keys = [
+        os.getenv(f"HUGGINGFACE_API_KEY_{i}", "").strip() for i in range(1, 6)
+    ]
+    hf_keys = [k for k in hf_keys if k]
+
+    if hf_keys:
+        log.info("  Generating AI thumbnail via HuggingFace SDXL ...")
+        hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+        for key in hf_keys:
+            for attempt in range(2):
+                try:
+                    r = _req.post(
+                        hf_url,
+                        headers={"Authorization": f"Bearer {key}"},
+                        json={
+                            "inputs": prompt,
+                            "parameters": {
+                                "width":               1344,
+                                "height":              768,
+                                "num_inference_steps": 25,
+                                "guidance_scale":      7.5,
+                                "seed":                seed,
+                            },
+                        },
+                        timeout=90,
+                    )
+                    if r.status_code == 200 and len(r.content) > 20_000:
+                        cache_path.write_bytes(r.content)
+                        log.info("  HF SDXL AI background ready (%d KB)", len(r.content) // 1024)
+                        return cache_path
+                    if r.status_code == 503:
+                        # Model loading — wait and retry once
+                        log.debug("HF model loading, waiting 20s ...")
+                        time.sleep(20)
+                    else:
+                        log.debug("HF attempt %d key[%s]: status=%d", attempt + 1, key[:8], r.status_code)
+                        break
+                except Exception as exc:
+                    log.debug("HF attempt %d failed: %s", attempt + 1, exc)
+
+    # ── Option B: Pollinations.ai (free, no key, works on non-shared IPs) ──────
+    log.info("  Trying Pollinations.ai as fallback ...")
+    encoded = urllib.parse.quote(prompt)
+    pol_url = (
+        f"https://image.pollinations.ai/prompt/{encoded}"
+        f"?width=1280&height=720&enhance=true&nologo=true&seed={seed}"
+    )
+    for attempt in range(2):
+        try:
+            r = _req.get(pol_url, timeout=55)
+            if r.status_code == 200 and len(r.content) > 15_000:
+                cache_path.write_bytes(r.content)
+                log.info("  Pollinations AI background ready (%d KB)", len(r.content) // 1024)
+                return cache_path
+        except Exception as exc:
+            log.debug("Pollinations attempt %d failed: %s", attempt + 1, exc)
+        if attempt < 1:
+            time.sleep(4)
+
+    log.warning("  AI background generation failed — falling back to Pexels image")
+    return None
+
 
 # ── Main entry ────────────────────────────────────────────────────────────────
 
@@ -145,7 +274,7 @@ def generate_thumbnail(
     else:
         layout = _LAYOUTS[abs(hash(title)) % (len(_LAYOUTS) - 1)]  # exclude number_hero
 
-    bg = _load_background(visuals_dir, timeline, intent)
+    bg = _load_background(visuals_dir, timeline, intent, title)
 
     if layout == "left":
         bg = _overlay_left(bg)
@@ -290,48 +419,48 @@ def generate_thumbnail(
 # ── Overlay builders ──────────────────────────────────────────────────────────
 
 def _overlay_left(bg: "Image.Image") -> "Image.Image":
-    """Dark gradient left → transparent right."""
+    """Dark gradient left → transparent right — lightened so AI background shows."""
     from PIL import Image, ImageDraw
     grad = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 0))
     d    = ImageDraw.Draw(grad)
     for x in range(_TW):
-        alpha = int(215 * max(0.0, 1.0 - x / (_TW * 0.72)))
+        alpha = int(185 * max(0.0, 1.0 - x / (_TW * 0.72)))
         d.line([(x, 0), (x, _TH)], fill=(0, 0, 0, alpha))
     return Image.alpha_composite(bg.convert("RGBA"), grad).convert("RGB")
 
 
 def _overlay_center(bg: "Image.Image") -> "Image.Image":
-    """Uniform semi-dark overlay — text readable anywhere."""
+    """Light semi-dark overlay — AI background visible, text still readable."""
     from PIL import Image
-    overlay = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 155))
+    overlay = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 120))
     return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
 
 
 def _overlay_bottom_band(bg: "Image.Image", intent: str) -> "Image.Image":
-    """Solid dark band at bottom 37% — image visible top."""
+    """Solid dark band at bottom 37% — AI image fully visible top."""
     from PIL import Image, ImageDraw
     band_y  = int(_TH * 0.63)
     overlay = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 0))
     d       = ImageDraw.Draw(overlay)
     base    = _INTENT_BG.get(intent, (10, 10, 40))
-    d.rectangle([0, band_y, _TW, _TH], fill=(*base, 230))
-    # Thin gradient blend at top of band
-    for y in range(band_y, min(band_y + 40, _TH)):
-        alpha = int(230 * (y - band_y) / 40)
+    d.rectangle([0, band_y, _TW, _TH], fill=(*base, 215))
+    # Gradient blend at top of band
+    for y in range(band_y, min(band_y + 50, _TH)):
+        alpha = int(215 * (y - band_y) / 50)
         d.line([(0, y), (_TW, y)], fill=(*base, alpha))
     return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
 
 
 def _overlay_top_split(bg: "Image.Image", intent: str) -> "Image.Image":
-    """Solid dark band at top 38% — image visible bottom."""
+    """Solid dark band at top 38% — AI image fully visible bottom."""
     from PIL import Image, ImageDraw
     band_h  = int(_TH * 0.38)
     overlay = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 0))
     d       = ImageDraw.Draw(overlay)
     base    = _INTENT_BG.get(intent, (10, 10, 40))
-    d.rectangle([0, 0, _TW, band_h], fill=(*base, 235))
-    for y in range(band_h, min(band_h + 40, _TH)):
-        alpha = int(235 * (1 - (y - band_h) / 40))
+    d.rectangle([0, 0, _TW, band_h], fill=(*base, 218))
+    for y in range(band_h, min(band_h + 50, _TH)):
+        alpha = int(218 * (1 - (y - band_h) / 50))
         d.line([(0, y), (_TW, y)], fill=(*base, alpha))
     return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
 
@@ -476,10 +605,21 @@ def _drama_score(img_path: Path) -> float:
         return 0.0
 
 
-def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.Image":
+def _load_background(visuals_dir: Path, timeline: dict, intent: str,
+                     title: str = "") -> "Image.Image":
     from PIL import Image
 
-    # Priority 1: dedicated thumbnail background image (shocking query, purpose-built)
+    # Priority 1: AI-generated cinematic background (Pollinations.ai — best visual impact)
+    if title:
+        ai_path = _fetch_ai_bg(title, intent, visuals_dir)
+        if ai_path:
+            try:
+                img = Image.open(ai_path).convert("RGB")
+                return img.resize((_TW, _TH), Image.LANCZOS)
+            except Exception as exc:
+                log.debug("AI background load failed: %s", exc)
+
+    # Priority 2: dedicated thumbnail background image (shocking query, purpose-built)
     thumb_bg = visuals_dir / "thumbnail_bg.png"
     if thumb_bg.exists() and thumb_bg.stat().st_size > 5_000:
         try:
@@ -488,7 +628,7 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str) -> "Image.I
         except Exception as exc:
             log.debug("thumbnail_bg.png load failed: %s", exc)
 
-    # Priority 2: most visually dramatic scene image (highest contrast + saturation)
+    # Priority 3: most visually dramatic scene image (highest contrast + saturation)
     best_file  = None
     best_score = -1.0
     for sc in timeline.get("scenes", []):
