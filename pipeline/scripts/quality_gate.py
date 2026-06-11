@@ -25,7 +25,7 @@ Checks and weights:
   3.  resolution     — exact match to profile spec + 30 fps            (10 pts)
   4.  duration       — within ± 2.5 s of timeline total                (15 pts)
   5.  audio_sync     — A/V track length within ± 0.3 s                 (15 pts)
-  6.  audio_level    — integrated loudness −14 LUFS ± 2                (10 pts)
+  6.  audio_level    — integrated loudness −12 LUFS ± 2                (10 pts)
   7.  subtitles      — no entry < 300 ms                                (5 pts)
   8.  freeze_frame   — no freeze > 2000 ms (freezedetect filter)        (10 pts)
   9.  voice_quality  — WARNING if gTTS/silence used (partial: 3/5 pts)  (5 pts)
@@ -222,7 +222,7 @@ def _audio_level(path: Path, timeout: int = 90):
     try:
         r = subprocess.run(
             ["ffmpeg", "-i", str(path),
-             "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+             "-af", "loudnorm=I=-12:TP=-1.5:LRA=11:print_format=json",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=timeout,
         )
@@ -234,9 +234,9 @@ def _audio_level(path: Path, timeout: int = 90):
             lufs_str = data.get("input_i", "")
             if lufs_str and lufs_str not in ("-inf", "inf"):
                 lufs = float(lufs_str)
-                ok   = -16.0 <= lufs <= -12.0
+                ok   = -14.0 <= lufs <= -10.0
                 msg  = f"{lufs:.1f} LUFS"
-                return ok, msg if ok else f"{msg} (target -14±2)"
+                return ok, msg if ok else f"{msg} (target -12±2)"
     except Exception as exc:
         log.debug("Audio level check: %s", exc)
     return True, "level check skipped (loudnorm parse failed)"

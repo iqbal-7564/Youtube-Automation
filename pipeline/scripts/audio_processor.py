@@ -44,13 +44,12 @@ def _auto_loudnorm_target() -> int:
     try:
         p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
         if p.exists():
-            val = int(json.loads(p.read_text()).get("loudnorm_target", -14))
-            # Clamp: quality gate accepts -16 to -12 LUFS. A stored value of -18
-            # (from past viewer complaints) would make the gate fail every time.
-            return max(val, -16)
+            val = int(json.loads(p.read_text()).get("loudnorm_target", -12))
+            # Clamp: -16 floor (quality gate fails below), -10 ceiling (too loud).
+            return max(min(val, -10), -16)
     except Exception:
         pass
-    return -14
+    return -12  # -12 LUFS — louder default for ChristopherNeural narration voice
 
 def detect_audio_gaps(path: Path, max_gap_s: float = 2.0) -> list[float]:
     r = subprocess.run([

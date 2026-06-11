@@ -163,10 +163,10 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
     i_label = _INTENT_LABEL.get(i_upper, "FACTS")
     i_color = _INTENT_COLOR.get(i_upper, "0x0055AA")
 
-    # First-frame hook text — shown on scene 1 for Shorts to stop the scroll
+    # Scene 1 of Shorts is a pure shocking video clip — no text overlay.
+    # Viewers see raw footage first; text-free opening removes the "ad feel"
+    # that triggers instant swipe-away. Text is only added from scene 2 onward.
     hook_text = ""
-    if is_shorts and timeline["scenes"]:
-        hook_text = timeline["scenes"][0].get("script_text", "")
 
     scene_outputs: list[tuple[Path, dict]] = []
 
@@ -193,7 +193,8 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                         sc["segment_label"], i_label, i_color, focus,
                         motion_emotion=sc.get("motion_emotion", "neutral"),
                         scene_id=sc["scene_id"],
-                        hook_text=hook_text if sc["scene_id"] == 1 else "",
+                        hook_text="",
+                        is_shorts=is_shorts,
                     )
                 else:
                     _render_scene(vis, out, W, H, dur_s, clip_type,
@@ -201,7 +202,8 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                                   i_label, i_color, focus,
                                   motion_emotion=sc.get("motion_emotion", "neutral"),
                                   scene_id=sc["scene_id"],
-                                  hook_text=hook_text if sc["scene_id"] == 1 else "")
+                                  hook_text="",
+                                  is_shorts=is_shorts)
         except Exception as exc:
             log.warning("Scene %d render error: %s — fallback", sc["scene_id"], exc)
             _branded_fill(out, W, H, dur_s, i_label, i_color)
@@ -240,7 +242,8 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
                   i_label: str, i_color: str, focus: str,
                   motion_emotion: str = "neutral",
                   scene_id: int = 1,
-                  hook_text: str = "") -> None:
+                  hook_text: str = "",
+                  is_shorts: bool = False) -> None:
 
     # Video clips with missing visual produce a static lavfi color frame (no
     # zoompan is applied for clip_type="video"), which triggers freeze detection.
@@ -274,17 +277,16 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
     if motion_emotion in ("dramatic", "mysterious"):
         vf_parts.append("vignette=PI/4")
 
-    # Brand overlays — intent pill top-right only (channel name removed per design update)
-    # Logo image (top-left) is added via filter_complex overlay below.
-    vf_parts.append(
-        f"drawtext=text=' {i_label} ':fontfile='{_FONT_BOLD}':"
-        f"fontcolor=white:fontsize=24:"
-        f"box=1:boxcolor={i_color}@0.92:boxborderw=10:x=w-tw-50:y=42"
-    )
+    # Scene 1 of Shorts = pure unobstructed clip — no overlays of any kind.
+    # Text on the opening shot triggers swipe-away; let the footage speak first.
+    if not (is_shorts and scene_id == 1):
+        vf_parts.append(
+            f"drawtext=text=' {i_label} ':fontfile='{_FONT_BOLD}':"
+            f"fontcolor=white:fontsize=24:"
+            f"box=1:boxcolor={i_color}@0.92:boxborderw=10:x=w-tw-50:y=42"
+        )
 
-    # First-frame hook text — large impactful overlay for scene 1 (Shorts only)
-    # Two-line layout, ~98px font, strong border — stops the scroll in <1 second
-    if hook_text and scene_id == 1:
+    if hook_text and scene_id == 1 and not is_shorts:
         hook_vf = _hook_text_vf(hook_text, W, H, dur_s)
         if hook_vf:
             vf_parts.append(hook_vf)
@@ -460,6 +462,7 @@ def _render_slideshow(
     seg_label: str, i_label: str, i_color: str, focus: str,
     motion_emotion: str, scene_id: int,
     hook_text: str = "",
+    is_shorts: bool = False,
 ) -> None:
     """Render 2-3 images as a Ken-Burns slideshow with crossfade transitions."""
     n      = len(vis_list)
@@ -476,7 +479,8 @@ def _render_slideshow(
             _render_scene(vis, sub_out, W, H, per_img, "image", seg_label,
                           i_label, i_color, focus,
                           motion_emotion=emo, scene_id=scene_id * 100 + idx,
-                          hook_text=hook_text if idx == 0 else "")
+                          hook_text=hook_text if idx == 0 else "",
+                          is_shorts=is_shorts)
         except Exception as exc:
             log.warning("Slideshow sub-render %d failed: %s — fallback", idx, exc)
             _branded_fill(sub_out, W, H, per_img, i_label, i_color)

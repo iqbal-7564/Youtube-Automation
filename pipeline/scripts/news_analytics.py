@@ -212,7 +212,7 @@ def _fetch_stats(video_id: str, token: str) -> dict:
                 "ids":        "channel==MINE",
                 "dimensions": "video",
                 "filters":    f"video=={video_id}",
-                "metrics":    "views,averageViewDuration,averageViewPercentage,likes",
+                "metrics":    "views,averageViewDuration,averageViewPercentage,likes,impressions,impressionClickThroughRate",
                 "startDate":  "2020-01-01",
                 "endDate":    today,
             },
@@ -223,9 +223,11 @@ def _fetch_stats(video_id: str, token: str) -> dict:
             if rows:
                 row = rows[0]
                 return {
-                    "views_48h":    int(row[1]) if len(row) > 1 else 0,
+                    "views_48h":    int(row[1])   if len(row) > 1 else 0,
                     "avg_view_pct": float(row[3]) if len(row) > 3 else 0.0,
-                    "likes":        int(row[4]) if len(row) > 4 else 0,
+                    "likes":        int(row[4])   if len(row) > 4 else 0,
+                    "impressions":  int(row[5])   if len(row) > 5 else 0,
+                    "ctr":          float(row[6]) if len(row) > 6 else 0.0,
                 }
     except Exception as exc:
         log.debug("Analytics fetch %s: %s", video_id, exc)
@@ -749,3 +751,127 @@ def _token() -> str | None:
         return r.json().get("access_token")
     except Exception:
         return None
+
+
+# ── Auto-improve low CTR videos ───────────────────────────────────────────────
+
+def auto_improve_low_ctr(logs_dir: Path) -> None:
+    """
+    Checks every tracked video for low CTR.
+    If impressions > 200 and CTR < 3%, generates a new | format title via Groq
+    and updates the video on YouTube. Runs max once per video.
+    """
+    results_path = logs_dir / "video_results.json"
+    if not results_path.exists():
+        return
+
+    results = json.loads(results_path.read_text())
+    token   = _token()
+    if not token:
+        return
+
+    changed = False
+    for entry in results:
+        if entry.get("ctr_improved"):
+            continue
+        impressions = entry.get("impressions", 0)
+        ctr         = entry.get("ctr", 0.0)
+        video_id    = entry.get("video_id")
+        if not video_id or impressions < 200 or ctr >= 0.03:
+            continue
+
+        old_title = entry.get("title", "")
+        intent    = entry.get("intent", "SCIENCE")
+        log.info("Low CTR detected: '%s' — %.1f%% CTR on %d impressions",
+                 old_title[:50], ctr * 100, impressions)
+
+        new_title = _generate_improved_title(old_title, intent)
+        if not new_title or new_title == old_title:
+            continue
+
+        if _update_video_title(video_id, new_title, token):
+            entry["ctr_improved"]   = True
+            entry["old_title"]      = old_title
+            entry["improved_title"] = new_title
+            entry["improved_at"]    = datetime.utcnow().isoformat()
+            log.info("Title updated: '%s' → '%s'", old_title[:45], new_title[:45])
+            changed = True
+
+    if changed:
+        results_path.write_text(json.dumps(results[-200:], indent=2, ensure_ascii=False))
+
+
+def _generate_improved_title(old_title: str, intent: str) -> str:
+    """Uses Groq to rewrite a low-CTR title using the | SEO format."""
+    keys = [os.environ.get("GROQ_API_KEY_1", "").strip(),
+            os.environ.get("GROQ_API_KEY_2", "").strip()]
+    for key in keys:
+        if not key:
+            continue
+        try:
+            r = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}",
+                         "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{
+                        "role": "system",
+                        "content": (
+                            "You rewrite YouTube titles to increase click-through rate. "
+                            "Use the | separator format: 'Hook phrase | Search category 🔬'. "
+                            "Before |: short curiosity hook (what people CLICK). "
+                            "After |: 2-3 word category phrase (what people SEARCH). "
+                            "Rules: under 70 chars, end with 1 emoji, no 'shocking/amazing/nobody told you'. "
+                            "Return ONLY the new title, nothing else."
+                        ),
+                    }, {
+                        "role": "user",
+                        "content": (
+                            f"Category: {intent}\n"
+                            f"Low-CTR title to improve: {old_title}\n"
+                            "Rewrite this title to get more clicks."
+                        ),
+                    }],
+                    "temperature": 0.8,
+                    "max_tokens":  80,
+                },
+                timeout=15,
+            )
+            if r.ok:
+                title = r.json()["choices"][0]["message"]["content"].strip().strip('"')
+                if title and len(title) < 100:
+                    return title
+        except Exception as exc:
+            log.debug("Title improve: %s", exc)
+    return ""
+
+
+def _update_video_title(video_id: str, new_title: str, token: str) -> bool:
+    """Updates the YouTube video title via Data API v3 videos.update."""
+    try:
+        # First fetch current snippet to preserve description/category/tags
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"part": "snippet", "id": video_id},
+            timeout=15,
+        )
+        if not r.ok or not r.json().get("items"):
+            return False
+
+        snippet = r.json()["items"][0]["snippet"]
+        snippet["title"] = new_title[:100]
+
+        up = requests.put(
+            "https://www.googleapis.com/youtube/v3/videos",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type": "application/json"},
+            params={"part": "snippet"},
+            json={"id": video_id, "snippet": snippet},
+            timeout=15,
+        )
+        return up.ok
+    except Exception as exc:
+        log.warning("Title update failed for %s: %s", video_id, exc)
+        return False

@@ -112,10 +112,12 @@ jobs:
             git commit -m "bot: update pipeline logs [skip ci]"
           git push 2>/dev/null || true
 
-  # ── News monitor (runs every hour — saves trigger for bonus video) ──────────
+  # ── News monitor (runs every hour — saves trigger + fires bonus video) ───────
   news-monitor:
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      actions: write   # needed to dispatch bonus video workflow
 
     steps:
       - uses: actions/checkout@v4
@@ -125,6 +127,7 @@ jobs:
       - run: pip install requests
 
       - name: Check trending news
+        id: monitor
         continue-on-error: true
         env:
           GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
@@ -132,11 +135,24 @@ jobs:
         run: |
           mkdir -p pipeline/logs
           python -c "
-          import sys
+          import sys, json
+          from pathlib import Path
           sys.path.insert(0, 'pipeline/scripts')
           from news_monitor import run_news_monitor
           triggered = run_news_monitor()
           print('Triggered:', triggered)
+          # Output trigger score for next step
+          tp = Path('pipeline/logs/news_trigger.json')
+          if tp.exists():
+              d = json.loads(tp.read_text())
+              score = d.get('topic', {}).get('news_score', 0)
+              used  = d.get('used', False)
+              print(f'TRIGGER_SCORE={score}')
+              print(f'TRIGGER_USED={used}')
+              import os; out = os.environ.get('GITHUB_OUTPUT','')
+              with open(out, 'a') as f:
+                  f.write(f'trigger_score={score}\n')
+                  f.write(f'trigger_used={used}\n')
           "
 
       - name: Save news trigger and queue
@@ -149,6 +165,20 @@ jobs:
           git diff --staged --quiet || \
             git commit -m "bot: news trigger [skip ci]"
           git push 2>/dev/null || true
+
+      - name: Dispatch bonus video upload
+        # Fire an extra pipeline run when news score ≥ 70 and not yet used today
+        if: |
+          steps.monitor.outputs.trigger_score != '' &&
+          fromJSON(steps.monitor.outputs.trigger_score) >= 70 &&
+          steps.monitor.outputs.trigger_used == 'False'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "High-value news trigger (score=${{ steps.monitor.outputs.trigger_score }}) — dispatching bonus standard video"
+          gh workflow run news_video.yml \
+            --ref main \
+            --field video_format=standard
 
   # ── Comment auto-responder (runs every hour independently) ──────────────────
   comment-responder:
@@ -220,7 +250,7 @@ jobs:
           import sys
           from pathlib import Path
           sys.path.insert(0, 'pipeline/scripts')
-          from news_analytics import fetch_analytics_feedback, fetch_peak_hours, update_velocity_queue, apply_adaptive_learning
+          from news_analytics import fetch_analytics_feedback, fetch_peak_hours, update_velocity_queue, apply_adaptive_learning, auto_improve_low_ctr
           logs = Path('pipeline/logs')
           hints = fetch_analytics_feedback(logs)
           print('Feedback hints:', hints)
@@ -229,6 +259,8 @@ jobs:
               print('Adaptive learning applied:', hints.get('retention_signal'))
           fetch_peak_hours(logs)
           update_velocity_queue(logs)
+          auto_improve_low_ctr(logs)
+          print('CTR improvement check complete')
           "
 
       - name: Save analytics data
@@ -236,7 +268,8 @@ jobs:
         run: |
           git config user.name  "VisionaryMinds Bot"
           git config user.email "bot@visionaryminds.com"
-          git add pipeline/logs/analytics_data.json 2>/dev/null || true
+          git add pipeline/logs/analytics_data.json \
+                  pipeline/logs/video_results.json 2>/dev/null || true
           git diff --staged --quiet || \
             git commit -m "bot: update analytics data [skip ci]"
           git push 2>/dev/null || true

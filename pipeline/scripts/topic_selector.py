@@ -306,15 +306,40 @@ def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
     produced_today = _load_produced_today(logs_dir)
     used_categories = {v.get("intent", "") for v in produced_today}
 
-    trending_seeds = _fetch_trending_seeds(logs_dir)
-    ordered = _prioritise_categories(
-        CATEGORIES, used_categories, perf_weights, logs_dir, trending_seeds
-    )
+    # Pick the category from the top YouTube trending topic — no rotation.
+    yt_trending = _fetch_youtube_trending()
+    all_yt: list[tuple[str, str, float]] = []
+    for cat, items in yt_trending.items():
+        for seed, score in items:
+            all_yt.append((cat, seed, score))
+    all_yt.sort(key=lambda x: x[2], reverse=True)
 
-    for cat in ordered:
+    tried_cats: set[str] = set()
+    for cat, _seed, _ in all_yt[:15]:
+        if cat in tried_cats:
+            continue
+        tried_cats.add(cat)
         cluster = _build_topic_cluster(cat, n, full_history)
         if cluster:
-            log.info("Cluster [%s] '%s' — %d related topics",
+            log.info("Cluster(YT) [%s] '%s' — %d related topics",
+                     cat, cluster["title"][:60], len(cluster["topics"]))
+            return cluster
+
+    # Fallback: try RSS-sourced categories
+    trending_seeds = _fetch_trending_seeds(logs_dir)
+    all_rss: list[tuple[str, str, float]] = []
+    for cat, items in trending_seeds.items():
+        for seed, score in items:
+            all_rss.append((cat, seed, score))
+    all_rss.sort(key=lambda x: x[2], reverse=True)
+
+    for cat, _seed, _ in all_rss[:15]:
+        if cat in tried_cats:
+            continue
+        tried_cats.add(cat)
+        cluster = _build_topic_cluster(cat, n, full_history)
+        if cluster:
+            log.info("Cluster(RSS) [%s] '%s' — %d related topics",
                      cat, cluster["title"][:60], len(cluster["topics"]))
             return cluster
 
@@ -503,28 +528,39 @@ def select_topic(logs_dir: Path) -> dict | None:
     if cluster_topic:
         return cluster_topic
 
-    # Priority 2: Google Trends (multi-market) + YouTube Autocomplete dynamic seeds
-    trending_seeds     = _fetch_trending_seeds(logs_dir)
-    autocomplete_seeds = _fetch_autocomplete_seeds()
+    # Priority 2: YouTube Top-50 Trending — pick rank-1 topic that maps to a category
+    # No category rotation or frequency scoring — always follow what YouTube shows right now.
+    yt_trending = _fetch_youtube_trending()
+    all_yt: list[tuple[str, str, float]] = []   # (cat, seed, score)
+    for cat, items in yt_trending.items():
+        for seed, score in items:
+            all_yt.append((cat, seed, score))
+    all_yt.sort(key=lambda x: x[2], reverse=True)  # rank 1 first
 
-    # AI-generated angle hints (used to enrich Groq topic expansion)
+    for cat, seed, _ in all_yt[:25]:
+        topic = _build_topic(cat, seed, full_history, "")
+        if topic:
+            topic["source"] = "YouTubeTrending"
+            log.info("YouTube Trending [%s]: %s", cat, topic["title"][:80])
+            return topic
+
+    # Priority 3: Current facts RSS (science/discovery feeds) as fallback
+    trending_seeds = _fetch_trending_seeds(logs_dir)
     trending_hints = _fetch_trending_hints()
 
-    ordered = _prioritise_categories(
-        CATEGORIES, used_categories, perf_weights, logs_dir, trending_seeds
-    )
+    # Flatten RSS topics sorted by score, try directly without category rotation
+    all_rss: list[tuple[str, str, float]] = []
+    for cat, items in trending_seeds.items():
+        for seed, score in items:
+            all_rss.append((cat, seed, score))
+    all_rss.sort(key=lambda x: x[2], reverse=True)
 
-    for cat in ordered:
-        candidates = _rank_seeds(
-            cat,
-            trending_seeds.get(cat, []),
-            autocomplete_seeds.get(cat, []),
-        )
-        for seed in candidates[:6]:  # max 6 attempts per category
-            topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
-            if topic:
-                log.info("Selected [%s]: %s", cat, topic["title"][:80])
-                return topic
+    for cat, seed, _ in all_rss[:20]:
+        topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
+        if topic:
+            topic["source"] = "FactsRSS"
+            log.info("Facts RSS [%s]: %s", cat, topic["title"][:80])
+            return topic
 
     # All categories exhausted — last resort, bypass all filters
     log.info("All categories exhausted — generating fresh angle (filters bypassed)")
@@ -560,63 +596,75 @@ def select_topic(logs_dir: Path) -> dict | None:
 
 def _fetch_trending_seeds(logs_dir: Path) -> dict[str, list[tuple[str, float]]]:
     """
-    Returns {category: [(rising_topic, trend_score), ...]} using Google Trends
-    daily RSS feeds — no library, no API key, works from GitHub Actions.
-
-    Fetches 4 English-speaking markets (US, GB, AU, IN), maps each trending
-    topic to a category via keywords, scores by cross-market frequency.
+    Returns {category: [(fact_topic, score), ...]} from current science/facts RSS feeds.
+    Replaces Google Trends (celebrity/sports noise) with real educational fact sources:
+    NASA, ScienceDaily, LiveScience, Space.com, BBC Science, PhysOrg, etc.
     Results cached for _TREND_CACHE_TTL_HOURS to avoid repeat fetches.
     """
     cached = _load_trend_cache(logs_dir)
     if cached:
-        log.info("Trend cache hit — skipping Google Trends fetch")
+        log.info("Trend cache hit — skipping facts RSS fetch")
         return {cat: [tuple(x) for x in v] for cat, v in cached.items()}
 
     results: dict[str, list[tuple[str, float]]] = {cat: [] for cat in CATEGORIES}
 
-    # Daily trending RSS — free, no auth, works from any IP including CI runners
-    _RSS_MARKETS = [
-        ("US", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=US"),
-        ("GB", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=GB"),
-        ("AU", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=AU"),
-        ("IN", "https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN"),
+    # Current science/facts RSS feeds — free, no auth, always educational content
+    _FACTS_RSS = [
+        ("NASA",        "https://www.nasa.gov/rss/dyn/breaking_news.rss"),
+        ("ScienceDaily","https://www.sciencedaily.com/rss/all.xml"),
+        ("LiveScience", "https://www.livescience.com/feeds/all"),
+        ("Space",       "https://www.space.com/feeds/all"),
+        ("PhysOrg",     "https://phys.org/rss-feed/"),
+        ("BBCSci",      "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"),
+        ("NewSci",      "https://www.newscientist.com/feed/home/"),
+        ("EarthSky",    "https://earthsky.org/feed"),
+        ("NatGeo",      "https://www.nationalgeographic.com/pages/topic/rss"),
+        ("Smithsonian", "https://www.smithsonianmag.com/rss/latest_articles/"),
     ]
 
     import xml.etree.ElementTree as ET
-    market_counts: dict[str, int] = {}
+    seen_titles: dict[str, int]   = {}   # title → feed count (cross-feed = stronger)
+    best_position: dict[str, int] = {}   # title → lowest (best) position seen
 
-    for geo, url in _RSS_MARKETS:
+    for feed_name, url in _FACTS_RSS:
         try:
             r = requests.get(url, timeout=12,
                              headers={"User-Agent": "Mozilla/5.0"})
             if not r.ok:
-                log.debug("Trends RSS [%s]: HTTP %d", geo, r.status_code)
+                log.debug("Facts RSS [%s]: HTTP %d", feed_name, r.status_code)
                 continue
-            root   = ET.fromstring(r.content)
-            topics = [item.findtext("title", "").strip().lower()
-                      for item in root.findall(".//item")][:30]
-            for topic in topics:
-                if topic:
-                    market_counts[topic] = market_counts.get(topic, 0) + 1
-            log.debug("Trends RSS [%s]: %d topics", geo, len(topics))
+            root  = ET.fromstring(r.content)
+            items = root.findall(".//item")[:20]
+            for pos, item in enumerate(items):
+                title = (item.findtext("title") or "").strip().lower()
+                desc  = (item.findtext("description") or "")[:200].lower()
+                text  = f"{title} {desc}"
+                if not title or len(title) < 10:
+                    continue
+                seen_titles[text] = seen_titles.get(text, 0) + 1
+                if text not in best_position or pos < best_position[text]:
+                    best_position[text] = pos
+            log.debug("Facts RSS [%s]: %d items", feed_name, len(items))
         except Exception as exc:
-            log.debug("Trends RSS [%s]: %s", geo, exc)
+            log.debug("Facts RSS [%s]: %s", feed_name, exc)
 
-    # Score: 95 base + 45 per additional market (cross-market = stronger signal)
-    for trend, count in market_counts.items():
-        score = 95.0 + 45.0 * (count - 1)
+    # Score: 95 base + 45 per extra feed + rank bonus (50 → 0 over 20 positions)
+    for text, count in seen_titles.items():
+        pos        = best_position.get(text, 19)
+        rank_bonus = max(0.0, 50.0 * (1.0 - pos / 19.0))
+        score      = 95.0 + 45.0 * (count - 1) + rank_bonus
         for cat, keywords in _CATEGORY_KEYWORDS.items():
-            if any(kw in trend for kw in keywords):
-                results[cat].append((trend, score))
+            if any(kw in text for kw in keywords):
+                results[cat].append((text[:120], score))
                 break
 
-    multi_market = sum(1 for c in market_counts.values() if c > 1)
+    cross_feed = sum(1 for c in seen_titles.values() if c > 1)
     total_mapped = sum(len(v) for v in results.values())
-    log.info("Trending now: %d topics (%d cross-market) mapped across categories",
-             total_mapped, multi_market)
+    log.info("Facts RSS: %d topics (%d cross-feed) mapped across categories",
+             total_mapped, cross_feed)
 
     _save_trend_cache(logs_dir, {cat: list(v) for cat, v in results.items()})
-    log.info("Google Trends: %d rising topics fetched across %d categories",
+    log.info("Current facts RSS: %d topics fetched across %d categories",
              total_mapped, len(CATEGORIES))
 
     return results
@@ -696,6 +744,63 @@ def _fetch_autocomplete_seeds() -> dict[str, list[tuple[str, float]]]:
 
     total = sum(len(v) for v in results.values())
     log.info("Autocomplete: %d live search suggestions fetched", total)
+    return results
+
+
+# ── Algorithm: YouTube Trending Top 50 ───────────────────────────────────────
+
+def _fetch_youtube_trending() -> dict[str, list[tuple[str, float]]]:
+    """
+    Fetches the top 50 currently trending YouTube videos (mostPopular chart).
+    Uses YOUTUBE_API_KEY — 1 quota unit, very cheap.
+
+    Scoring: rank 1 = 100 pts down to rank 50 ≈ 8 pts (linear).
+    Topics mapped to categories via _CATEGORY_KEYWORDS.
+    Returns {category: [(topic_phrase, score), ...]}
+    """
+    api_key = os.getenv("YOUTUBE_API_KEY", "").strip()
+    if not api_key:
+        return {}
+
+    results: dict[str, list[tuple[str, float]]] = {cat: [] for cat in CATEGORIES}
+    try:
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={
+                "key":        api_key,
+                "chart":      "mostPopular",
+                "regionCode": "US",
+                "maxResults": 50,
+                "part":       "snippet",
+            },
+            timeout=12,
+        )
+        if not r.ok:
+            log.debug("YouTube trending: HTTP %d", r.status_code)
+            return {}
+
+        items = r.json().get("items", [])
+        for pos, item in enumerate(items):
+            snippet = item.get("snippet", {})
+            title   = snippet.get("title", "").strip().lower()
+            desc    = snippet.get("description", "")[:200].lower()
+            text    = f"{title} {desc}"
+
+            # rank 1 = 100, rank 50 ≈ 8, linear decay
+            score = max(8.0, 100.0 * (1.0 - pos / max(len(items) - 1, 1)))
+
+            for cat, keywords in _CATEGORY_KEYWORDS.items():
+                if any(kw in text for kw in keywords):
+                    # Use title as seed — it's already a proved viral phrase
+                    results[cat].append((title, score))
+                    break
+
+        mapped = sum(len(v) for v in results.values())
+        log.info("YouTube Trending top-%d: %d videos mapped to categories",
+                 len(items), mapped)
+    except Exception as exc:
+        log.debug("YouTube trending fetch: %s", exc)
+
     return results
 
 
