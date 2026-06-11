@@ -131,7 +131,8 @@ def upload_video(
         token = _token()
     except Exception as exc:
         log.warning("Token re-fetch before thumbnail failed: %s", exc)
-    if thumb_path.exists() and thumb_path.stat().st_size > 0:
+    is_shorts = timeline.get("profile", "") == "shorts"
+    if not is_shorts and thumb_path.exists() and thumb_path.stat().st_size > 0:
         _upload_thumb(video_id, thumb_path, token)
 
     # ── Captions ──────────────────────────────────────────────────────────────

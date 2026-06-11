@@ -549,7 +549,8 @@ def run_pipeline() -> bool:
         # Inject optimised title back into script metadata for uploader
         script.setdefault("metadata", {})["title"] = ctr["title"]
 
-        generate_thumbnail(timeline, script, TEMP_DIR / "visuals", thumb_path)
+        if profile != "shorts":
+            generate_thumbnail(timeline, script, TEMP_DIR / "visuals", thumb_path)
 
         # ── 13: Upload ────────────────────────────────────────────────────────
         log.info("[13/14] Upload")
