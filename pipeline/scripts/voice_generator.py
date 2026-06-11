@@ -24,7 +24,7 @@ import requests
 log = logging.getLogger(__name__)
 
 _EL_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
-_EDGE_VOICE  = "en-US-GuyNeural"
+_EDGE_VOICE  = "en-US-ChristopherNeural"
 
 _EL_SETTINGS: dict[str, dict] = {
     "excited":    {"stability": 0.35, "similarity_boost": 0.90, "style": 0.70, "use_speaker_boost": True},

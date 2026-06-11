@@ -187,7 +187,32 @@ def upload_video(
         _add_to_playlist(token, video_id, master_id)
         log.info("  Added to master playlist: %s", master_name)
 
+    # ── Daily SEO log — human-readable review file ────────────────────────────
+    _write_seo_log(video_id, metadata, profile)
+
     return video_id
+
+
+def _write_seo_log(video_id: str, meta: dict, profile: str) -> None:
+    """Appends a human-readable entry to pipeline/logs/seo_log.txt after each upload."""
+    import datetime
+    try:
+        log_path = _LOGS_DIR / "seo_log.txt"
+        now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        lines = [
+            f"\n{'='*70}",
+            f"  {now}  [{profile.upper()}]  https://youtu.be/{video_id}",
+            f"{'='*70}",
+            f"TITLE : {meta.get('title', '')}",
+            f"TAGS  : {', '.join(meta.get('tags', [])[:15])}",
+            f"DESC  : {meta.get('description', '')[:200].replace(chr(10), ' ')}...",
+            "",
+        ]
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        log.info("  SEO log updated: %s", log_path.name)
+    except Exception as exc:
+        log.debug("SEO log write failed: %s", exc)
 
 
 # ── Token ─────────────────────────────────────────────────────────────────────
@@ -264,15 +289,14 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
         first_line = f"#Shorts {first_line}" if "#Shorts" not in first_line else first_line
 
     # Fix 5: channel link in every description — converts viewers to subscribers
-    channel_link = "🔔 Subscribe for daily mind-blowing facts: https://www.youtube.com/@MindBlownFacts-z8o"
+    channel_link = "🔔 Subscribe for daily science and history facts: https://www.youtube.com/@MindBlownFacts-z8o"
 
     parts: list[str] = [
         first_line,
         "",
         rest_lines if rest_lines else (
-            f"Discover the most mind-blowing facts about {cat.lower()} "
-            f"that most people never learn. Subscribe to MindBlownFacts "
-            f"for new facts every day."
+            f"Discover the real science behind {cat.lower()} — facts most people "
+            f"never learn in school. Subscribe to MindBlownFacts for new facts every day."
         ),
         "",
         channel_link,
@@ -301,11 +325,11 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
     tags = list(dict.fromkeys(
         meta.get("tags", [])
         + [
-            "facts", "did you know", "world facts", "real world facts",
-            "mind blowing facts", "educational", "facts you didn't know",
-            "interesting facts", "amazing facts", "MindBlownFacts",
-            f"{cat_lower} facts", f"{cat_lower} explained", cat_lower,
-            "facts in hindi", "facts about the world", "top facts",
+            "facts", "did you know", "educational", "MindBlownFacts",
+            "facts 2025", "quick facts", "science facts", "real facts",
+            "hidden facts", "unknown facts", "facts explained",
+            f"{cat_lower} facts", f"{cat_lower} explained", f"{cat_lower} science",
+            "facts you didn't know", "world facts", "top facts",
         ]
     ))[:30]
 

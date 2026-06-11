@@ -159,17 +159,19 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         emotion   = sc.get("emotion", "neutral")
         shot_type = sc.get("shot_type", "MEDIUM")
 
-        # ── Scene 1 Shorts: real video clip for maximum hook impact ──────────
+        # ── Scene 1: real video clip for maximum hook impact ─────────────────
         # Real footage stops the swipe far better than any AI-generated image.
         # Groq picks a shocking/dramatic search term from the script text,
         # Pexels returns an actual HD video clip, assembler plays it directly.
-        if scene_id == 1 and is_shorts:
+        # Shorts = portrait (9:16), standard/long = landscape (16:9).
+        if scene_id == 1:
             script_text  = sc.get("script_text", " ".join(kw_list))
             shock_query  = _groq_to_shock_video_query(script_text)
             video_out    = visuals_dir / f"scene_{scene_id}_visual.mp4"
-            log.info("Scene 1 Shorts | shock video query: %s", shock_query)
+            orient       = "portrait" if is_shorts else "landscape"
+            log.info("Scene 1 | shock video query: %s (orient=%s)", shock_query, orient)
 
-            video_ok = _pexels_video_fetch(shock_query, video_out, _known_images())
+            video_ok = _pexels_video_fetch(shock_query, video_out, _known_images(), orientation=orient)
             if video_ok:
                 h = _img_hash(video_out)
                 if h:
@@ -204,26 +206,26 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
         qh = _prompt_hash(query)
         used_registry.append(qh)
 
-        # ── Shorts scenes 2+: try video clip first — video holds attention much
-        # better than static images; 60-70% swipe-away on images vs ~30% on clips.
-        # Use the same scene query so the clip matches the script content.
-        if is_shorts:
-            video_out = visuals_dir / f"scene_{scene_id}_visual.mp4"
-            video_ok  = _pexels_video_fetch(query, video_out, _known_images())
-            if video_ok:
-                vh = _img_hash(video_out)
-                if vh:
-                    session_img_hashes.add(vh)
-                sc.update(
-                    visual_file       = video_out.name,
-                    clip_type         = "video",
-                    clip_score        = 1.0,
-                    extra_visual_files= [],
-                    retry_count       = 0,
-                )
-                log.info("Scene %d: Pexels video clip → %s", scene_id, video_out.name)
-                continue   # skip image fetch entirely for this scene
-            log.debug("Scene %d: Pexels video failed — falling back to image", scene_id)
+        # ── All formats scenes 2+: try video clip first — video holds attention
+        # much better than static images (60-70% swipe-away on images vs ~30% on clips).
+        # Shorts = portrait, standard/long = landscape. Falls back to image if unavailable.
+        orient    = "portrait" if is_shorts else "landscape"
+        video_out = visuals_dir / f"scene_{scene_id}_visual.mp4"
+        video_ok  = _pexels_video_fetch(query, video_out, _known_images(), orientation=orient)
+        if video_ok:
+            vh = _img_hash(video_out)
+            if vh:
+                session_img_hashes.add(vh)
+            sc.update(
+                visual_file       = video_out.name,
+                clip_type         = "video",
+                clip_score        = 1.0,
+                extra_visual_files= [],
+                retry_count       = 0,
+            )
+            log.info("Scene %d: Pexels video clip → %s", scene_id, video_out.name)
+            continue   # skip image fetch entirely for this scene
+        log.debug("Scene %d: Pexels video failed — falling back to image", scene_id)
 
         # Step 2 — Fetch primary image: HuggingFace → Pexels → Pixabay → black clip
         success = _huggingface_fetch(query, out_path, _known_images())
@@ -491,11 +493,11 @@ def _groq_to_shock_video_query(script_text: str) -> str:
 # ── Pexels: real video clip for scene 1 ──────────────────────────────────────
 
 def _pexels_video_fetch(query: str, out_path: Path,
-                        avoid_hashes: set[str] | None = None) -> bool:
+                        avoid_hashes: set[str] | None = None,
+                        orientation: str = "portrait") -> bool:
     """
-    Downloads a real HD portrait video clip from Pexels Videos API.
-    Used for Shorts scene 1 only — gives an immediate shocking visual
-    that static AI images cannot match.
+    Downloads a real HD video clip from Pexels Videos API.
+    orientation: "portrait" for Shorts (9:16), "landscape" for standard/long (16:9).
     Falls back gracefully: returns False if API key missing or no results.
     """
     api_key = os.getenv("PEXELS_API_KEY", "")
@@ -511,7 +513,7 @@ def _pexels_video_fetch(query: str, out_path: Path,
             params={
                 "query":       query,
                 "per_page":    10,
-                "orientation": "portrait",   # vertical = Shorts format
+                "orientation": orientation,  # portrait=Shorts, landscape=standard/long
                 "size":        "medium",     # excludes tiny low-res clips
             },
             timeout=20,
@@ -537,12 +539,13 @@ def _pexels_video_fetch(query: str, out_path: Path,
             if not files:
                 continue
 
-            # Prefer portrait HD, fall back to any HD, then any file
-            portrait = [f for f in files
-                        if f.get("height", 0) > f.get("width", 0)]
-            hd       = [f for f in (portrait or files)
-                        if f.get("quality") in ("hd", "uhd")]
-            pool     = hd or portrait or files
+            # Prefer correctly-oriented HD files, fall back to any HD, then any file
+            if orientation == "portrait":
+                oriented = [f for f in files if f.get("height", 0) > f.get("width", 0)]
+            else:
+                oriented = [f for f in files if f.get("width", 0) >= f.get("height", 0)]
+            hd   = [f for f in (oriented or files) if f.get("quality") in ("hd", "uhd")]
+            pool = hd or oriented or files
 
             best = max(pool, key=lambda f: f.get("width", 0) * f.get("height", 0))
             link = best.get("link")

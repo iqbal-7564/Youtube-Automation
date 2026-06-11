@@ -1192,13 +1192,32 @@ def _build_topic(category: str, seed: str, produced: list[dict],
 def _wikipedia_verify(seed: str) -> str:
     """
     Searches Wikipedia for the seed topic and returns a verified 1-3 sentence
-    summary. Tries full seed first, then simplified (first 2 words) as fallback.
-    Returns empty string only if both attempts fail.
+    summary. Tries 5 fallback levels so trending seeds like "nasa asteroid 2025"
+    still resolve. Returns empty string only if all attempts fail.
     """
-    words = seed.strip().split()
-    attempts = [seed]
+    words = [w for w in seed.strip().split() if w]
+    _stopwords = {"the", "a", "an", "of", "in", "on", "at", "is", "are", "was",
+                  "were", "and", "or", "to", "for", "with", "by", "from", "that"}
+    content_words = [w for w in words if w.lower() not in _stopwords]
+
+    attempts: list[str] = [seed]                       # level 1: full seed
+    if len(words) > 4:
+        attempts.append(" ".join(words[:4]))           # level 2: first 4 words
+    if len(words) > 3:
+        attempts.append(" ".join(words[:3]))           # level 3: first 3 words
     if len(words) > 2:
-        attempts.append(" ".join(words[:2]))
+        attempts.append(" ".join(words[:2]))           # level 4: first 2 words
+    # level 5: most significant single word (longest content word, skip pure numbers)
+    sig = max(content_words, key=lambda w: len(w) if not w.isdigit() else 0, default="")
+    if sig and sig not in attempts:
+        attempts.append(sig)
+
+    # Deduplicate while preserving order
+    seen: list[str] = []
+    for a in attempts:
+        if a and a not in seen:
+            seen.append(a)
+    attempts = seen
 
     for query in attempts:
         try:

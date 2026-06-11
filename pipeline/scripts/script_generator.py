@@ -341,15 +341,23 @@ TITLE RULES — YouTube Shorts optimised (follow ALL rules every time):
   H. Identity challenge:   "Your [BODY PART/SELF] Is [IMPOSSIBLE CLAIM] About [TOPIC] 👁️"
   I. Conflict framing:     "[TOPIC] vs [OPPOSING IDEA] — Only One Can Be True 🚨"
   J. Time urgency:         "Every [TIME UNIT], [TOPIC] Does Something [CLAIM] ⏱️"
+  K. Double keyword (| SEO — HIGHEST PRIORITY format, use often):
+     "[Hook phrase about topic] | [2-3 word search category] 🔬"
+     Before |: short curiosity hook (what people CLICK). After |: what people SEARCH.
+     Example: "Black Holes Eat Light | Space Science Facts 🌌"
+     Example: "Your Brain Deletes Memories | Psychology Facts 🧠"
+     Example: "Ocean Glows In The Dark | Marine Biology 🌊"
 
-  GOOD: "Why Does The Ocean Glow At Night? 🌊"          ← A, front-loaded, emoji, <70 chars
-  GOOD: "Black Holes: The Real Reason Light Can't Escape 🌌" ← B, front-loaded
-  GOOD: "What Lava Actually Does To Human Bone 🔥"       ← C, personal + specific
-  GOOD: "Scientists Just Found Life 11km Under The Ocean 🐙" ← E, discovery
-  GOOD: "How Your Brain Deletes Memories While You Sleep 🧠" ← F, personal + specific
-  BAD:  "The Truth Nobody Told You About Black Holes"    ← overused pattern (Rule 5)
-  BAD:  "Amazing Facts About DNA That Will Blow Your Mind" ← banned words (Rule 5)
-  BAD:  "Why Nobody Talks About This Ocean Secret"       ← overused + no emoji (Rule 5)
+  GOOD: "Why Does The Ocean Glow At Night? 🌊"               ← A, front-loaded, emoji, <70 chars
+  GOOD: "Black Holes: The Real Reason Light Can't Escape 🌌"  ← B, front-loaded
+  GOOD: "What Lava Actually Does To Human Bone 🔥"            ← C, personal + specific
+  GOOD: "Scientists Just Found Life 11km Under The Ocean 🐙"  ← E, discovery
+  GOOD: "How Your Brain Deletes Memories While You Sleep 🧠"  ← F, personal + specific
+  GOOD: "Ocean Glows Blue At Night | Marine Biology Facts 🌊" ← K, SEO double-keyword (BEST for views)
+  GOOD: "Your Brain Deletes Memories | Psychology Science 🧠" ← K, SEO double-keyword (BEST for views)
+  BAD:  "The Truth Nobody Told You About Black Holes"         ← overused pattern (Rule 5)
+  BAD:  "Amazing Facts About DNA That Will Blow Your Mind"    ← banned words (Rule 5)
+  BAD:  "Why Nobody Talks About This Ocean Secret"            ← overused + no emoji (Rule 5)
 
 Writing style: authoritative, fast-paced, conversational.
 Respond ONLY with valid JSON. No text outside the JSON.
@@ -384,7 +392,7 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Write a YouTube Shorts title for '{title}'. RULES: (1) First 40 chars must contain the main topic keyword — front-load it. (2) Pick ONE format from the FORMAT POOL in the system prompt — vary it, never reuse 'Nobody Told You' or 'Truth Nobody'. (3) Under 70 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS words. (6) Must describe the exact same topic as '{title}' — no subject changes.",
+    "title": "Write a YouTube title for '{title}'. RULES: (1) STRONGLY PREFER format K from the FORMAT POOL — use the | separator: 'Hook phrase | Search category 🔬'. This is the highest-performing SEO format. (2) If format K doesn't fit naturally, pick any other format from the pool — vary, never reuse the same format twice. (3) First 40 chars must contain the main topic keyword. (4) Under 70 chars total. (5) End with exactly 1 relevant emoji. (6) No ALL CAPS. (7) Must describe '{title}' exactly — no subject changes. (8) NEVER use: Nobody Told You / Truth Nobody / shocking / amazing.",
     "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this topic, then a compelling sentence. Front-load the keyword — YouTube indexes first words most heavily. Example: 'Black holes are regions...' / 'Octopuses have three hearts...' / 'The real reason Rome collapsed...'\nLine 2: The single most shocking specific fact from the script — include a real number or a scale comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords people actually search (e.g. 'Scientists recently discovered...', 'Most people never learn that...', 'The truth about X is...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad ones: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
     "tags": {tags_instruction},
     "engagement_question": "One question about '{title}' that sparks debate or invites personal stories from viewers"
