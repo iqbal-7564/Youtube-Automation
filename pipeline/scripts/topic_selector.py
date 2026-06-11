@@ -564,7 +564,8 @@ def select_topic(logs_dir: Path) -> dict | None:
 
     # All categories exhausted — last resort, bypass all filters
     log.info("All categories exhausted — generating fresh angle (filters bypassed)")
-    cat  = ordered[0] if ordered else random.choice(CATEGORIES)
+    # Pick top YouTube trending category if available, otherwise random
+    cat = all_yt[0][0] if all_yt else (all_rss[0][0] if all_rss else random.choice(CATEGORIES))
     seed = random.choice(_SEEDS[cat])
 
     # Try Groq first
