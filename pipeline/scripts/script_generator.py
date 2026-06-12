@@ -97,7 +97,7 @@ _FORMAT_PROFILES: dict[str, dict] = {
     },
     "standard": {
         "word_target":   "1400-1700 words total",
-        "duration_hint": "8-10 minutes",
+        "duration_hint": "8-10 minutes (MINIMUM 6 minutes — never shorter)",
         "core_depth":    (
             "35-48 sentences covering 5-6 distinct angles on the topic. "
             "Each angle gets 6-8 sentences: state the surprising fact, explain the mechanism, "
@@ -109,8 +109,8 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "max_tokens":    6000,
     },
     "long": {
-        "word_target":   "900-1344 words total",
-        "duration_hint": "6-8 minutes",
+        "word_target":   "980-1344 words total",
+        "duration_hint": "6-8 minutes (MINIMUM 5 minutes — never shorter)",
         "core_depth":    (
             "28-38 sentences covering 5-6 distinct angles on the topic. "
             "Each angle gets 5-7 sentences: state the fact, explain the mechanism, "
@@ -638,6 +638,16 @@ def generate_script(topic: dict) -> dict:
         f"\nVERIFIED FACTS (Wikipedia — use as ground truth, reflect accurately):\n{wiki_summary}"
         if wiki_summary else ""
     )
+
+    # If topic came from real YouTube search demand, inject the search phrase
+    # so Groq generates a title that matches what people actually type.
+    search_query = topic.get("search_query", "")
+    if search_query:
+        wiki_facts += (
+            f"\nSEARCH DEMAND: People are actively searching '{search_query}' on YouTube right now. "
+            f"The title MUST closely match this search phrase so the video appears in results. "
+            f"Answer EXACTLY what this search query is asking — nothing else."
+        )
 
     log.info("Generating [%s] script, template=%s wiki=%s",
              video_format, template_name, "yes" if wiki_summary else "no")

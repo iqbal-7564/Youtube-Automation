@@ -60,23 +60,24 @@ _SATURATION_MEDIAN_PENALTY = 500_000
 # Trend data is cached to avoid hammering Google Trends on every pipeline run.
 _TREND_CACHE_TTL_HOURS = 6
 
-# Google Trends search terms used to find rising related queries per category.
-_CATEGORY_SEARCH_TERMS: dict[str, str] = {
-    "SPACE":     "space discovery",
-    "SCIENCE":   "science discovery",
-    "HISTORY":   "ancient history facts",
-    "ANIMALS":   "animal facts",
-    "NATURE":    "nature facts",
-    "GEOGRAPHY": "geography facts",
-    "OCEAN":       "ocean discovery",
-    "CULTURE":     "ancient culture facts",
-    "TECHNOLOGY":  "technology innovation facts",
-    "PSYCHOLOGY":  "psychology mind facts",
-    "MYTHOLOGY":   "ancient mythology legends",
-    "MEDICINE":    "medical science facts",
-    "MATHEMATICS": "mathematics facts",
-    "ECONOMICS":   "economics money facts",
-    "PHYSICS":     "physics facts discoveries",
+# Search terms used to query YouTube autocomplete per category.
+# Multiple terms per category — mirrors real user search patterns.
+_CATEGORY_SEARCH_TERMS: dict[str, list[str]] = {
+    "SPACE":       ["mind blowing space facts", "universe facts explained", "space mysteries", "nasa facts"],
+    "SCIENCE":     ["craziest scientific discoveries", "science facts with explanation", "science facts mind blowing", "real science facts"],
+    "HISTORY":     ["ancient mysteries explained", "history facts you didnt know", "ancient civilizations secrets", "lost history facts"],
+    "ANIMALS":     ["most dangerous animals facts", "animal facts mind blowing", "weird animal behaviors", "animal science facts"],
+    "NATURE":      ["nature facts that will blow your mind", "natural phenomena explained", "earth facts surprising", "nature science facts"],
+    "GEOGRAPHY":   ["geography facts mind blowing", "countries facts surprising", "world facts you didnt know", "places on earth facts"],
+    "OCEAN":       ["deep ocean facts scary", "ocean mysteries explained", "deep sea creatures facts", "ocean science facts"],
+    "CULTURE":     ["ancient culture facts", "world traditions explained", "civilization facts surprising", "cultural history facts"],
+    "TECHNOLOGY":  ["technology facts mind blowing", "ai facts explained", "how technology works", "future technology facts"],
+    "PSYCHOLOGY":  ["psychology facts to control mind", "how to change subconscious mind", "the brain that changes itself", "how the brain processes information"],
+    "MYTHOLOGY":   ["ancient mythology explained", "greek mythology facts", "mythology mysteries", "ancient gods facts"],
+    "MEDICINE":    ["human body facts mind blowing", "medical facts surprising", "how the human body works", "biology facts explained"],
+    "MATHEMATICS": ["math facts mind blowing", "mathematics mysteries explained", "number facts surprising", "math science facts"],
+    "ECONOMICS":   ["money facts surprising", "how economy works explained", "financial facts mind blowing", "wealth facts"],
+    "PHYSICS":     ["physics facts mind blowing", "quantum physics explained simply", "how universe works physics", "physics mysteries"],
 }
 
 # Keywords for mapping Google's "trending now" searches to our categories.
@@ -670,7 +671,27 @@ def select_topic(logs_dir: Path) -> dict | None:
     if cluster_topic:
         return cluster_topic
 
-    # Priority 2: YouTube trending tells us WHICH CATEGORY is hot right now,
+    # Priority 2: YouTube Autocomplete — real-time search demand.
+    # These are EXACTLY what people are typing into YouTube right now.
+    # Use the search phrase directly as the topic seed so the title matches
+    # what people search for — highest chance of appearing in search results.
+    autocomplete_seeds = _fetch_autocomplete_seeds()
+    # Flatten and sort all autocomplete results by score
+    all_ac: list[tuple[str, str, float]] = []
+    for cat, items in autocomplete_seeds.items():
+        for phrase, score in items:
+            all_ac.append((cat, phrase, score))
+    all_ac.sort(key=lambda x: x[2], reverse=True)
+
+    for cat, phrase, _ in all_ac[:30]:
+        topic = _build_topic(cat, phrase, full_history, "")
+        if topic:
+            topic["source"]     = "YouTubeSearch"
+            topic["search_query"] = phrase  # pass through for title matching
+            log.info("Search demand [%s]: %s", cat, topic["title"][:80])
+            return topic
+
+    # Priority 3: YouTube trending tells us WHICH CATEGORY is hot right now,
     # but we pick the actual topic from curated broad _SEEDS (not the trending
     # video title itself — those are niche/competitive and already covered by
     # big channels). Broad evergreen seeds get wide reach; trending category
@@ -872,36 +893,45 @@ _AUTOCOMPLETE_URL = "https://suggestqueries.google.com/complete/search"
 
 def _fetch_autocomplete_seeds() -> dict[str, list[tuple[str, float]]]:
     """
-    Queries YouTube's public autocomplete API for each category.
-    No API key needed — free, real-time search demand signal.
+    Queries YouTube's public autocomplete API for each category using multiple
+    search terms per category. Returns real-time search demand — exactly what
+    people are typing into YouTube right now.
 
-    Scoring: position 0 = 90 pts, position 1 = 80, ..., position 8 = 10.
-    High position = YouTube users actively searching this exact phrase right now.
+    Scoring: position 0 = 95 pts, position 1 = 85, ..., decaying by 10 per slot.
+    Multiple queries per category are merged; duplicates deduplicated by keeping
+    the highest score. Results sorted by score descending.
     """
     results: dict[str, list[tuple[str, float]]] = {cat: [] for cat in CATEGORIES}
 
     for cat in CATEGORIES:
-        query = _CATEGORY_SEARCH_TERMS[cat]
-        try:
-            r = requests.get(
-                _AUTOCOMPLETE_URL,
-                params={"ds": "yt", "client": "firefox", "q": query, "hl": "en"},
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
-                timeout=8,
-            )
-            if r.ok:
-                data        = r.json()
-                suggestions = data[1] if len(data) > 1 else []
-                for i, suggestion in enumerate(suggestions[:9]):
-                    score = max(90.0 - i * 10.0, 10.0)
-                    results[cat].append((str(suggestion), score))
-                log.debug("Autocomplete [%s]: %d suggestions", cat, len(results[cat]))
-        except Exception as exc:
-            log.debug("Autocomplete [%s]: %s", cat, exc)
-        time.sleep(0.25)
+        queries   = _CATEGORY_SEARCH_TERMS.get(cat, [])
+        seen: dict[str, float] = {}
+
+        for query in queries:
+            try:
+                r = requests.get(
+                    _AUTOCOMPLETE_URL,
+                    params={"ds": "yt", "client": "firefox", "q": query, "hl": "en"},
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+                    timeout=8,
+                )
+                if r.ok:
+                    data        = r.json()
+                    suggestions = data[1] if len(data) > 1 else []
+                    for i, suggestion in enumerate(suggestions[:9]):
+                        phrase = str(suggestion).strip()
+                        score  = max(95.0 - i * 10.0, 5.0)
+                        if phrase not in seen or seen[phrase] < score:
+                            seen[phrase] = score
+            except Exception as exc:
+                log.debug("Autocomplete [%s] '%s': %s", cat, query[:30], exc)
+            time.sleep(0.2)
+
+        results[cat] = sorted(seen.items(), key=lambda x: x[1], reverse=True)
+        log.debug("Autocomplete [%s]: %d unique suggestions", cat, len(results[cat]))
 
     total = sum(len(v) for v in results.values())
-    log.info("Autocomplete: %d live search suggestions fetched", total)
+    log.info("Autocomplete: %d live search suggestions across all categories", total)
     return results
 
 
