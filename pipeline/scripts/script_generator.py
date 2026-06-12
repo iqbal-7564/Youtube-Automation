@@ -215,28 +215,32 @@ _SHORTS_HOOK_FORMULAS = [
 
 # Shorts-specific boost — injected only for Shorts format
 _SHORTS_SYSTEM_BOOST = """
-SHORTS RETENTION RULES — viewer swipes in 2 seconds if not shocked immediately:
+SHORTS RETENTION RULES — viewer swipes in 2 seconds if hook is off-topic:
 
-HOOK RULES (most critical element — this is the ONLY thing that stops the scroll):
-1. MAX 6 WORDS. Fewer = stronger. 'You are not human.' beats 'Did you know humans have non-human cells?'
-2. FIRST 2 WORDS = MAXIMUM IMPACT. BANNED first words: Did, Have, There, This, In, A, The, Today, Welcome, Here.
-   REQUIRED strong openers: Your / You / Wait / Stop / Dead / Never / a SPECIFIC NUMBER / the shocking subject noun itself.
-3. PRESENT TENSE ONLY. 'Your brain is lying' — not 'Scientists discovered brains lie'. Present tense = happening to the viewer right now.
-4. PERSONAL THREAT or IDENTITY BREAK. The viewer must feel personally affected or intellectually shattered — not just intellectually curious.
-5. ZERO EXPLANATION in the hook. The hook is a cliff edge — do not explain, do not soften. Let it hang.
+HOOK RULES (most critical — a generic hook kills all views):
+1. MAX 6 WORDS. The topic keyword MUST appear in the first 3 words.
+   The viewer clicked the title — confirm you are delivering it IMMEDIATELY.
+   CORRECT: "Black holes stop time." / "Sharks cannot sleep." / "Ocean glows at night."
+   WRONG: "Your brain is lying." / "Wait for this." / "You won't believe this."
+   Generic openers cause instant swipes because they don't match what the viewer clicked.
+2. PRESENT TENSE. State the fact as happening now — not "scientists discovered" but "this exists."
+3. ZERO EXPLANATION in hook. State the fact. Stop. Let curiosity pull them forward.
+4. NO filler openers: Did / Have / There / This / In / A / The / Today / Welcome / Here / Wait / Stop.
+   Start with the TOPIC NOUN or a shocking number related to it.
 
 TENSION:
-6. First sentence of TENSION must DEEPEN the personal threat — do not answer the hook, make it feel more real and unavoidable.
+5. First sentence of TENSION names the topic again and deepens the mystery — do NOT switch subjects.
 
 PAYOFF:
-7. End PAYOFF with exactly ONE like CTA: 'Tap like if this broke your brain.' / 'Like if you never knew this.' / 'Double tap if this surprised you.' Natural, short.
+6. End PAYOFF with ONE engagement line: 'Like if this changed how you see it.' Natural, short.
 
 CLOSE:
-8. CLOSE must echo a specific word or phrase from the HOOK — creates a loop sensation. Hook: 'You are not human' → Close: 'and you have never been fully human.'
+7. Echo a word from the HOOK to create a rewatch loop.
+   Hook: "Black holes stop time." → Close ends: "...and time has never been the same."
 
 EVERY SENTENCE:
-9. Delete filler transitions: never 'So', 'Basically', 'In other words', 'To summarize', 'Essentially'.
-10. Every sentence raises stakes OR delivers a fact. Nothing else earns its place.
+8. No filler: never 'So', 'Basically', 'In other words', 'To summarize', 'Essentially'.
+9. Every sentence = a fact or a stakes-raise. Nothing else.
 """
 
 # Director Brain — global story state injected into every Groq system prompt.
@@ -374,12 +378,20 @@ DETAILS  : {description}
 CATEGORY : {intent}
 TEMPLATE : {template_name}{wiki_facts}
 
-CRITICAL CONTENT RULES:
-1. Every single segment (HOOK, TENSION, CORE, PAYOFF, CLOSE) MUST be directly about "{title}". Do NOT drift to related or similar topics.
-2. The HOOK must reference the specific subject from "{title}" — not a generic fact.
-3. The CORE must deliver real, specific facts about "{title}" as stated in DETAILS above.
-4. If VERIFIED FACTS are provided above, build the script around those exact facts.
-5. NEVER write a generic script. The viewer clicked because of "{title}" — deliver exactly that.
+CRITICAL CONTENT RULES — SWIPE PREVENTION (most important rules in this entire prompt):
+1. The HOOK must contain the EXACT topic keyword from "{title}" — within the first 3 words.
+   BANNED hooks: anything generic like "Your brain is lying", "Wait for this", "You won't believe",
+   "This will shock you", "Nobody knows this" — these are off-topic and cause immediate swipes.
+   REQUIRED: Hook names the topic directly. Examples:
+     Title "Black Holes Eat Time" → Hook: "Black holes literally stop time."
+     Title "Ocean Glows At Night" → Hook: "The ocean glows. Here's why."
+     Title "Sharks Never Sleep" → Hook: "Sharks cannot sleep. Ever."
+   Viewer clicked for THIS topic — confirm it in word 1-3 or they swipe.
+2. TENSION must stay on the same topic — deepen it, do NOT switch subjects.
+3. CORE must answer exactly what the title and hook promised — no detours.
+4. PAYOFF must resolve the specific question raised by the hook — not a different fact.
+5. If VERIFIED FACTS are provided above, build the script around those exact facts.
+6. NEVER write a generic script. The viewer clicked "{title}" — every sentence must be about "{title}".
 
 Return EXACTLY this JSON (no extra keys, no markdown fences):
 {{
