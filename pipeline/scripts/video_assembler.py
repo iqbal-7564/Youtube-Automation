@@ -254,10 +254,14 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
 
     vf_parts: list[str] = []
 
-    vf_parts.append(
-        f"scale={W}:{H}:force_original_aspect_ratio=increase,"
-        f"crop={W}:{H},setsar=1"
-    )
+    if is_shorts and clip_type == "video":
+        # Rapid sinusoidal pan — simulates a cut every 2.5s, keeps AVD high
+        vf_parts.append(_shorts_rapid_motion_vf(W, H))
+    else:
+        vf_parts.append(
+            f"scale={W}:{H}:force_original_aspect_ratio=increase,"
+            f"crop={W}:{H},setsar=1"
+        )
 
     if clip_type == "image":
         frames = max(int(dur_s * 30), 30)
@@ -634,6 +638,28 @@ def _xfade(a: Path, b: Path, dur: float, xf_type: str, out: Path) -> None:
     )
 
 
+# ── Shorts rapid motion — simulates cuts every 2.5s ─────────────────────────
+
+def _shorts_rapid_motion_vf(W: int, H: int) -> str:
+    """
+    For Shorts video clips: scale up 10% then crop with a sinusoidal pan.
+    The crop window drifts left-right every 2.5s and up-down every 3.7s,
+    creating the feel of a camera cut without needing a second clip.
+    Viewers perceive it as fast editing — AVD stays high.
+    """
+    sw = int(W * 1.10)
+    sh = int(H * 1.10)
+    px = (sw - W) // 2   # max horizontal drift in pixels
+    py = (sh - H) // 2   # max vertical drift in pixels
+    return (
+        f"scale={sw}:{sh}:force_original_aspect_ratio=increase,"
+        f"crop={W}:{H}:"
+        f"x='{px}+{px}*sin(2*PI*t/2.5)':"
+        f"y='{py}+{py}*cos(2*PI*t/3.7)',"
+        f"setsar=1"
+    )
+
+
 # ── Motion presets ────────────────────────────────────────────────────────────
 # Each preset is (zoom_expr, x_expr, y_expr) for zoompan filter.
 # Varied presets prevent the "same zoom every video" audience fatigue.
@@ -786,9 +812,10 @@ def _ken_burns_expr(focus: str, seg_label: str,
                     scene_id: int = 1,
                     frames: int = 0) -> tuple[str, str, str]:
     """Select a motion preset based on emotion and scene_id for variety."""
-    # Scene 1 of Shorts must grab attention instantly — use the most aggressive zoom
-    if scene_id == 1 and os.getenv("VIDEO_FORMAT", "").lower() == "shorts":
-        z, x, y = _MOTION_PRESETS["fast_push"]
+    # Shorts images: always use aggressive fast presets — slow Ken Burns kills AVD
+    if os.getenv("VIDEO_FORMAT", "").lower() == "shorts":
+        aggressive = ["fast_push", "impact_zoom", "push_in", "fast_push"]
+        z, x, y = _MOTION_PRESETS[aggressive[scene_id % len(aggressive)]]
         return z, x, y
 
     presets = _PRESET_BY_EMOTION.get(motion_emotion, _PRESET_BY_EMOTION["neutral"])
