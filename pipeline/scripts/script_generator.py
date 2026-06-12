@@ -38,17 +38,19 @@ _MODEL = "llama-3.3-70b-versatile"
 # ── Narrative templates ───────────────────────────────────────────────────────
 
 _CLOSE_RULE = (
-    "ONE short sentence only — a subscribe CTA. "
-    "Examples: 'Follow MindBlownFacts for more mind-blowing facts every day.' "
-    "/ 'Subscribe to MindBlownFacts — a new mind-blowing fact drops every day.' "
-    "/ 'Follow for more facts that will change how you see the world.' "
-    "Vary the exact wording each time. NEVER say 'Like and subscribe' or 'Hit the bell'."
+    "TWO parts: (1) Echo a specific word or phrase from the HOOK — this creates a loop "
+    "that makes viewers rewatch. Hook: 'Your brain is lying' → Close starts: 'Your brain never stops lying.' "
+    "Hook: 'Dead. Still moving.' → Close starts: 'It was never really dead.' "
+    "(2) Then ONE subscribe CTA sentence. Vary wording: "
+    "'Follow MindBlownFacts — a new fact drops every day.' "
+    "/ 'Subscribe for more facts that shatter what you think you know.' "
+    "NEVER say 'Like and subscribe' or 'Hit the bell'."
 )
 
 _NARRATIVE_VARIANTS: dict[str, dict] = {
     "classic": {
         "description": "Classic curiosity-gap structure: hook teases → tension builds mystery → core delivers facts → payoff resolves → close subscribe CTA",
-        "hook_rule":    "ONE sentence, max 12 words. State something astonishing WITHOUT explaining it. Pure curiosity gap.",
+        "hook_rule":    "ONE sentence, MAX 6 WORDS for Shorts. State something astonishing WITHOUT explaining it. Pure curiosity gap. No filler words.",
         "tension_rule": "2-3 sentences. Raise MORE questions. Make it feel like forbidden knowledge they were never taught.",
         "core_rule":    "4-6 short sentences. Most surprising fact FIRST. One fact per sentence. Vary rhythm: short. Longer context. Short again. Mark your single most shocking sentence with [WOW].",
         "payoff_rule":  "Max 2 sentences. Deliver the satisfying answer that resolves the hook.",
@@ -56,7 +58,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
     },
     "mystery": {
         "description": "Unsolved mystery structure: open with an ancient or scientific mystery — answer is withheld until the very last moment",
-        "hook_rule":    "ONE sentence, max 12 words. Open with a mysterious question that has no obvious answer.",
+        "hook_rule":    "ONE sentence, MAX 6 WORDS for Shorts. Open with a mysterious question that has no obvious answer. No explanation.",
         "tension_rule": "2-3 sentences. Deepen the mystery. Add conflicting evidence. Make it feel completely unsolvable.",
         "core_rule":    "4-6 sentences. Present evidence step by step — do NOT reveal the answer yet. Escalate the puzzle. Mark the most paradoxical fact with [WOW].",
         "payoff_rule":  "Max 2 sentences. Finally reveal the surprising answer. Make it feel worth the wait.",
@@ -64,7 +66,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
     },
     "shock_first": {
         "description": "Lead with the most impossible-sounding fact as if it is obvious, then spend the rest of the video proving it",
-        "hook_rule":    "ONE sentence, max 12 words. State the single most impossible-sounding fact as cold hard fact.",
+        "hook_rule":    "ONE sentence, MAX 6 WORDS for Shorts. State the single most impossible-sounding fact as cold hard fact. No hedging.",
         "tension_rule": "2-3 sentences. Immediately challenge the viewer's disbelief. 'This sounds impossible. Here is exactly why it is real.'",
         "core_rule":    "4-6 sentences. Prove the shocking claim with layered evidence. Each sentence escalates the proof. Mark the most undeniable evidence with [WOW].",
         "payoff_rule":  "Max 2 sentences. Show the real-world implication — why this changes how we see everything.",
@@ -72,7 +74,7 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
     },
     "reverse": {
         "description": "Reverse storytelling: start at the unbelievable outcome, work backward to reveal the hidden cause",
-        "hook_rule":    "ONE sentence, max 12 words. Describe the unbelievable END RESULT as already established fact.",
+        "hook_rule":    "ONE sentence, MAX 6 WORDS for Shorts. Describe the unbelievable END RESULT as cold established fact.",
         "tension_rule": "2-3 sentences. Ask how this is even possible. Begin tracing backward through the chain of cause.",
         "core_rule":    "4-6 sentences. Unpack the hidden chain of causes in reverse order. Mark the most surprising cause with [WOW].",
         "payoff_rule":  "Max 2 sentences. Reveal the original tiny hidden cause that triggered the entire chain.",
@@ -88,9 +90,9 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
 
 _FORMAT_PROFILES: dict[str, dict] = {
     "shorts": {
-        "word_target":   "95-115 words total",
-        "duration_hint": "~50 seconds",
-        "core_depth":    "3-4 short sentences. One fact per sentence. Every word counts.",
+        "word_target":   "75-90 words total",
+        "duration_hint": "~40 seconds",
+        "core_depth":    "3 short punchy sentences MAX. One fact per sentence. Cut every word that doesn't shock.",
         "max_tokens":    1200,
     },
     "standard": {
@@ -126,8 +128,8 @@ _FORMAT_PROFILES: dict[str, dict] = {
 
 _FORMAT_TIMING: dict[str, dict] = {
     "shorts": {
-        "video_label":   "YouTube Shorts (MUST be under 60 seconds total)",
-        "hook_time":     "0-3s",
+        "video_label":   "YouTube Shorts (MUST be under 50 seconds total)",
+        "hook_time":     "0-2s",
         "tension_time":  "3-12s",
         "core_time":     "12-34s",
         "payoff_time":   "34-44s",

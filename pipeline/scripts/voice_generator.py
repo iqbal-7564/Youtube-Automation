@@ -34,10 +34,10 @@ _EL_SETTINGS: dict[str, dict] = {
 }
 
 _EDGE_RATE: dict[str, str] = {
-    "excited":    "+5%",
-    "mysterious": "-10%",
-    "dramatic":   "-5%",
-    "neutral":    "-5%",
+    "excited":    "+18%",
+    "mysterious": "+5%",
+    "dramatic":   "+10%",
+    "neutral":    "+12%",
 }
 
 def _auto_tts_rate_adjust() -> int:
