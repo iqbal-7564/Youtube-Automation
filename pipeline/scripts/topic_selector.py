@@ -1475,7 +1475,7 @@ def _load_full_history(logs_dir: Path) -> list[dict]:
         if not path.exists():
             return []
         from datetime import timedelta
-        cutoff = (datetime.utcnow() - timedelta(days=365)).isoformat()
+        cutoff = (datetime.utcnow() - timedelta(days=45)).isoformat()
         return [r for r in json.loads(path.read_text())
                 if r.get("uploaded_at", "") >= cutoff]
     except Exception:
