@@ -528,8 +528,11 @@ def select_topic(logs_dir: Path) -> dict | None:
     if cluster_topic:
         return cluster_topic
 
-    # Priority 2: YouTube Top-50 Trending — pick rank-1 topic that maps to a category
-    # No category rotation or frequency scoring — always follow what YouTube shows right now.
+    # Priority 2: YouTube trending tells us WHICH CATEGORY is hot right now,
+    # but we pick the actual topic from curated broad _SEEDS (not the trending
+    # video title itself — those are niche/competitive and already covered by
+    # big channels). Broad evergreen seeds get wide reach; trending category
+    # gives us the timing signal.
     yt_trending = _fetch_youtube_trending()
     all_yt: list[tuple[str, str, float]] = []   # (cat, seed, score)
     for cat, items in yt_trending.items():
@@ -537,30 +540,42 @@ def select_topic(logs_dir: Path) -> dict | None:
             all_yt.append((cat, seed, score))
     all_yt.sort(key=lambda x: x[2], reverse=True)  # rank 1 first
 
-    for cat, seed, _ in all_yt[:25]:
-        topic = _build_topic(cat, seed, full_history, "")
-        if topic:
-            topic["source"] = "YouTubeTrending"
-            log.info("YouTube Trending [%s]: %s", cat, topic["title"][:80])
-            return topic
+    # Dedupe to top category order (highest total trending score per category)
+    seen_cats: list[str] = []
+    for cat, _, _ in all_yt:
+        if cat not in seen_cats:
+            seen_cats.append(cat)
 
-    # Priority 3: Current facts RSS (science/discovery feeds) as fallback
+    for cat in seen_cats[:8]:
+        # Use broad curated seeds — not the trending niche title
+        broad_seeds = list(_SEEDS.get(cat, []))
+        random.shuffle(broad_seeds)
+        for seed in broad_seeds[:10]:
+            topic = _build_topic(cat, seed, full_history, "")
+            if topic:
+                topic["source"] = "YouTubeTrending+BroadSeed"
+                log.info("Broad topic [%s]: %s", cat, topic["title"][:80])
+                return topic
+
+    # Priority 3: Facts RSS category signal + broad seeds fallback
     trending_seeds = _fetch_trending_seeds(logs_dir)
     trending_hints = _fetch_trending_hints()
 
-    # Flatten RSS topics sorted by score, try directly without category rotation
-    all_rss: list[tuple[str, str, float]] = []
+    # Use RSS to find hot categories, then pick broad seeds from those categories
+    rss_cat_scores: dict[str, float] = {}
     for cat, items in trending_seeds.items():
-        for seed, score in items:
-            all_rss.append((cat, seed, score))
-    all_rss.sort(key=lambda x: x[2], reverse=True)
+        rss_cat_scores[cat] = sum(score for _, score in items)
+    rss_cats = sorted(rss_cat_scores, key=rss_cat_scores.get, reverse=True)
 
-    for cat, seed, _ in all_rss[:20]:
-        topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
-        if topic:
-            topic["source"] = "FactsRSS"
-            log.info("Facts RSS [%s]: %s", cat, topic["title"][:80])
-            return topic
+    for cat in rss_cats[:8]:
+        broad_seeds = list(_SEEDS.get(cat, []))
+        random.shuffle(broad_seeds)
+        for seed in broad_seeds[:8]:
+            topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
+            if topic:
+                topic["source"] = "FactsRSS+BroadSeed"
+                log.info("RSS broad topic [%s]: %s", cat, topic["title"][:80])
+                return topic
 
     # All categories exhausted — last resort, bypass all filters
     log.info("All categories exhausted — generating fresh angle (filters bypassed)")
