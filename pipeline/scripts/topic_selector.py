@@ -295,52 +295,68 @@ _GROQ_MODEL = "llama-3.3-70b-versatile"
 
 def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
     """
-    For standard/long videos: pick a category, then select n seeds from that
-    category that all connect to ONE central angle. Returns a topic dict with an
-    extra 'topics' key — a list of sub-topics the script will cover in sequence.
-
-    Falls back to select_topic() if clustering fails (e.g. Groq unavailable).
+    For standard/long videos:
+    - If YouTube trending has 3+ topics in the same category → use ALL of them
+      as seeds (trending multi-topic video — highest relevance).
+    - If only 1-2 trending topics in a category → single topic video from that seed.
+    - Falls back to broad _SEEDS if no trending content maps to categories.
     """
-    full_history   = _load_full_history(logs_dir)
-    perf_weights   = _load_performance_weights(logs_dir)
-    produced_today = _load_produced_today(logs_dir)
+    full_history    = _load_full_history(logs_dir)
+    produced_today  = _load_produced_today(logs_dir)
     used_categories = {v.get("intent", "") for v in produced_today}
 
-    # Pick the category from the top YouTube trending topic — no rotation.
-    yt_trending = _fetch_youtube_trending()
-    all_yt: list[tuple[str, str, float]] = []
+    # ── Step 1: Get YouTube Top-50 trending, group by category ───────────────
+    yt_trending = _fetch_youtube_trending()   # {cat: [(seed, score), ...]}
+
+    # Sort each category's seeds by score, build category ranking by total score
+    cat_scores: dict[str, float] = {}
     for cat, items in yt_trending.items():
-        for seed, score in items:
-            all_yt.append((cat, seed, score))
-    all_yt.sort(key=lambda x: x[2], reverse=True)
+        cat_scores[cat] = sum(score for _, score in items)
+    ranked_cats = sorted(cat_scores, key=cat_scores.get, reverse=True)
 
     tried_cats: set[str] = set()
-    for cat, _seed, _ in all_yt[:15]:
+
+    # ── Step 2: Categories with 3+ trending topics → multi-topic cluster ─────
+    for cat in ranked_cats:
         if cat in tried_cats:
             continue
-        tried_cats.add(cat)
-        cluster = _build_topic_cluster(cat, n, full_history)
-        if cluster:
-            log.info("Cluster(YT) [%s] '%s' — %d related topics",
-                     cat, cluster["title"][:60], len(cluster["topics"]))
-            return cluster
+        seeds_in_cat = [seed for seed, _ in yt_trending.get(cat, [])]
+        if len(seeds_in_cat) >= 3:
+            tried_cats.add(cat)
+            use_n = min(n, len(seeds_in_cat))
+            cluster = _groq_build_cluster(cat, seeds_in_cat[:use_n + 2], use_n)
+            if cluster and not _is_duplicate(cluster["title"], full_history):
+                cluster["source"] = "YT-MultiTrend"
+                log.info("Multi-trend cluster [%s] '%s' (%d trending topics)",
+                         cat, cluster["title"][:60], use_n)
+                return cluster
 
-    # Fallback: try RSS-sourced categories
+    # ── Step 3: Categories with 1-2 trending topics → single trending topic ──
+    for cat in ranked_cats:
+        if cat in tried_cats:
+            continue
+        seeds_in_cat = [seed for seed, _ in yt_trending.get(cat, [])]
+        if seeds_in_cat:
+            tried_cats.add(cat)
+            topic = _build_topic(cat, seeds_in_cat[0], full_history, "")
+            if topic:
+                topic["source"] = "YT-SingleTrend"
+                log.info("Single trend topic [%s]: %s", cat, topic["title"][:80])
+                return topic
+
+    # ── Step 4: No trending → broad _SEEDS cluster (RSS category signal) ─────
     trending_seeds = _fetch_trending_seeds(logs_dir)
-    all_rss: list[tuple[str, str, float]] = []
-    for cat, items in trending_seeds.items():
-        for seed, score in items:
-            all_rss.append((cat, seed, score))
-    all_rss.sort(key=lambda x: x[2], reverse=True)
-
-    for cat, _seed, _ in all_rss[:15]:
+    rss_cats = sorted(
+        trending_seeds, key=lambda c: sum(s for _, s in trending_seeds[c]), reverse=True
+    )
+    for cat in rss_cats:
         if cat in tried_cats:
             continue
         tried_cats.add(cat)
         cluster = _build_topic_cluster(cat, n, full_history)
         if cluster:
-            log.info("Cluster(RSS) [%s] '%s' — %d related topics",
-                     cat, cluster["title"][:60], len(cluster["topics"]))
+            cluster["source"] = "RSS-BroadCluster"
+            log.info("RSS broad cluster [%s] '%s'", cat, cluster["title"][:60])
             return cluster
 
     log.warning("Cluster selection failed — falling back to single topic")
