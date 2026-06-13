@@ -133,13 +133,13 @@ _FORMAT_TIMING: dict[str, dict] = {
         "tension_time":  "3-12s",
         "core_time":     "12-34s",
         "payoff_time":   "34-44s",
-        "close_time":    "44-50s",
+        "close_time":    "N/A",
         "hook_dur":      3,
         "tension_dur":   9,
-        "core_dur":      22,
-        "payoff_dur":    10,
-        "close_dur":     6,
-        "total_est":     50,
+        "core_dur":      24,
+        "payoff_dur":    12,
+        "close_dur":     0,
+        "total_est":     48,
     },
     "standard": {
         "video_label":   "YouTube educational video (target 8-10 minutes)",
@@ -233,10 +233,11 @@ TENSION:
 
 PAYOFF:
 6. End PAYOFF with ONE engagement line: 'Like if this changed how you see it.' Natural, short.
+   PAYOFF is the LAST segment — no CLOSE scene follows for Shorts.
 
-CLOSE:
-7. Echo a word from the HOOK to create a rewatch loop.
-   Hook: "Black holes stop time." → Close ends: "...and time has never been the same."
+NO CLOSE SEGMENT FOR SHORTS:
+7. Shorts has EXACTLY 4 segments: HOOK, TENSION, CORE, PAYOFF.
+   Do NOT write a CLOSE segment (id=5). End at PAYOFF. Omit the CLOSE entry from the JSON array.
 
 EVERY SENTENCE:
 8. No filler: never 'So', 'Basically', 'In other words', 'To summarize', 'Essentially'.
@@ -710,12 +711,19 @@ def generate_script(topic: dict) -> dict:
                     else:
                         log.info("Fact-check passed")
                     script["video_format"] = video_format
+                    if video_format == "shorts":
+                        script["segments"] = [
+                            s for s in script["segments"] if s.get("label") != "CLOSE"
+                        ]
                     return script
             except Exception as exc:
                 log.warning("Groq attempt %d: %s", attempt + 1, exc)
 
     log.warning("LLM unavailable — using fallback script")
-    return _fallback(topic)
+    fb = _fallback(topic)
+    if video_format == "shorts":
+        fb["segments"] = [s for s in fb["segments"] if s.get("label") != "CLOSE"]
+    return fb
 
 
 def _parse(raw: str) -> dict | None:
@@ -728,7 +736,7 @@ def _parse(raw: str) -> dict | None:
         try:
             data = json.loads(text)
             segs = data.get("segments", [])
-            if len(segs) == 5 and data.get("full_script"):
+            if len(segs) >= 4 and data.get("full_script"):
                 _defaults = [
                     ("HOOK",    "excited",    "simple"),
                     ("TENSION", "mysterious", "moderate"),
