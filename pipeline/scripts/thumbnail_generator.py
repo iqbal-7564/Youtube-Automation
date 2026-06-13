@@ -77,7 +77,8 @@ _INTENT_ACCENT: dict[str, tuple[int, int, int]] = {
     "PHYSICS":     (255, 140,  50),
 }
 
-_LAYOUTS = ["left", "center", "bottom_band", "top_split", "diagonal", "number_hero"]
+_LAYOUTS = ["claim_left", "claim_left", "claim_left", "left", "center", "bottom_band", "top_split", "diagonal", "number_hero"]
+# claim_left appears 3× so it is selected ~33% of the time — it's the highest-CTR layout
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "that", "could", "was", "is", "are", "were",
@@ -238,6 +239,58 @@ def _fetch_ai_bg(title: str, intent: str, cache_dir: Path) -> "Path | None":
     return None
 
 
+# ── Hook → thumbnail claim converter ─────────────────────────────────────────
+
+_HOOK_FILLER_STARTS = {
+    "did", "do", "does", "have", "has", "there", "this", "in", "a", "an", "the",
+    "today", "welcome", "here", "wait", "stop", "so", "now", "well", "basically",
+    "imagine", "consider", "think", "let", "what", "if",
+}
+
+def _hook_to_thumb_lines(hook_text: str, title: str) -> tuple[str, str]:
+    """
+    Convert the hook sentence into 2 punchy thumbnail lines.
+    Line 1 (BIG, ~3 words): The shocking claim/subject
+    Line 2 (smaller, ~3-4 words): The implication or object
+
+    Examples:
+      "Black holes literally stop time." → ("BLACK HOLES", "STOP TIME")
+      "99.9999% of space is nothing." → ("99.9999%", "IS NOTHING.")
+      "The ocean glows blue at night." → ("OCEAN GLOWS", "BLUE AT NIGHT")
+    """
+    # Take first sentence of hook
+    first = re.split(r"[.!?]", hook_text)[0].strip()
+    words = [w.strip(".,!?:;\"'()") for w in first.split() if w.strip(".,!?:;\"'()")]
+
+    # Drop generic filler starters
+    while words and words[0].lower() in _HOOK_FILLER_STARTS:
+        words.pop(0)
+
+    if len(words) < 2:
+        # Fall back to title-based extraction
+        return _extract_keyword_and_subtitle(title)
+
+    # Smart 2-line split:
+    # - Prefer natural clause breaks (verb boundary at word 2-3)
+    # - Line 1: 2-3 words; Line 2: 2-4 words
+    total = len(words)
+    split = 2 if total <= 5 else 3
+
+    line1_words = words[:split]
+    line2_words = [w for w in words[split:split + 5] if w.lower() not in _STOP_WORDS]
+
+    line1 = " ".join(line1_words).upper()
+    line2 = " ".join(line2_words[:4]).upper() if line2_words else ""
+
+    # If line2 is empty, use title's last 2 meaningful words
+    if not line2:
+        title_words = [w.strip(".,!?:;\"'|") for w in title.split()
+                       if w.lower().strip(".,!?:;\"'|") not in _STOP_WORDS]
+        line2 = " ".join(title_words[-2:]).upper() if len(title_words) >= 2 else ""
+
+    return line1, line2
+
+
 # ── Main entry ────────────────────────────────────────────────────────────────
 
 def generate_thumbnail(
@@ -263,7 +316,19 @@ def generate_thumbnail(
     if not title:
         title = "The Fact That Changes Everything"
 
-    keyword, subtitle = _extract_keyword_and_subtitle(title)
+    # Extract hook sentence from scenes for a more impactful thumbnail claim
+    hook_text = next(
+        (sc.get("script_text", "") for sc in timeline.get("scenes", [])
+         if sc.get("segment_label") == "HOOK"),
+        "",
+    )
+
+    # Use hook-based claim for thumbnail text; fall back to title keywords
+    if hook_text and len(hook_text.split()) >= 3:
+        keyword, subtitle = _hook_to_thumb_lines(hook_text, title)
+    else:
+        keyword, subtitle = _extract_keyword_and_subtitle(title)
+
     accent     = _INTENT_ACCENT.get(intent, (255, 220, 50))
     pill_color = _INTENT_PILL_COLOR.get(intent, (0, 85, 170))
 
@@ -276,7 +341,9 @@ def generate_thumbnail(
 
     bg = _load_background(visuals_dir, timeline, intent, title)
 
-    if layout == "left":
+    if layout == "claim_left":
+        bg = _overlay_claim_left(bg)
+    elif layout == "left":
         bg = _overlay_left(bg)
     elif layout == "center":
         bg = _overlay_center(bg)
@@ -298,7 +365,38 @@ def generate_thumbnail(
 
     pad = 55
 
-    if layout == "left":
+    if layout == "claim_left":
+        # ── Viral claim layout: 2 large lines left-aligned, image visible right ──
+        # Modeled after top-performing thumbnails: "DISTANCE IS / AN ILLUSION",
+        # "WHAT MOVED / INSIDE THE SUN?", "99.9999% / IS NOTHING."
+        # Line 1 = accent color (category color), very large
+        # Line 2 = white, slightly smaller but still bold
+        zone_w   = int(_TW * 0.60)
+        x_start  = pad
+        line1_sz = 146 if kw_words <= 2 else 118
+        line2_sz = 96  if kw_words <= 2 else 82
+
+        font_l1  = _load_font(line1_sz)
+        font_l2  = _load_font(line2_sz)
+
+        # Wrap each line independently (kept to 2 display lines max)
+        l1_disp  = textwrap.wrap(keyword,  width=max(4, int(zone_w / (line1_sz * 0.55))))[:2]
+        l2_disp  = textwrap.wrap(subtitle, width=max(5, int(zone_w / (line2_sz * 0.55))))[:2] if subtitle else []
+
+        total_h  = (len(l1_disp) * (line1_sz + 8)
+                    + (14 + len(l2_disp) * (line2_sz + 6) if l2_disp else 0))
+        y = (_TH - total_h) // 2
+
+        for i, line in enumerate(l1_disp):
+            _draw_glow_text(draw, (x_start, y + i * (line1_sz + 8)), line, font_l1, accent, accent)
+
+        if l2_disp:
+            y2 = y + len(l1_disp) * (line1_sz + 8) + 14
+            for i, line in enumerate(l2_disp):
+                draw.text((x_start, y2 + i * (line2_sz + 6)), line, font=font_l2,
+                          fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
+
+    elif layout == "left":
         zone_w  = int(_TW * 0.62)
         x_start = pad
         kw_lines  = textwrap.wrap(keyword,  width=max(5,  int(zone_w / (kw_font_size * 0.56))))[:2]
@@ -417,6 +515,28 @@ def generate_thumbnail(
 
 
 # ── Overlay builders ──────────────────────────────────────────────────────────
+
+def _overlay_claim_left(bg: "Image.Image") -> "Image.Image":
+    """
+    Strong dark gradient on left 60% — image fully visible on right 40%.
+    Modeled after viral thumbnails: left = bold text claim, right = dramatic visual.
+    Slightly darker than the 'left' layout to maximize text contrast.
+    """
+    from PIL import Image, ImageDraw
+    grad = Image.new("RGBA", (_TW, _TH), (0, 0, 0, 0))
+    d    = ImageDraw.Draw(grad)
+    for x in range(_TW):
+        # Solid dark until 45%, then fade out to 0 by 70%
+        if x < int(_TW * 0.45):
+            alpha = 210
+        elif x < int(_TW * 0.70):
+            ratio = (x - _TW * 0.45) / (_TW * 0.25)
+            alpha = int(210 * (1.0 - ratio))
+        else:
+            alpha = 0
+        d.line([(x, 0), (x, _TH)], fill=(0, 0, 0, alpha))
+    return Image.alpha_composite(bg.convert("RGBA"), grad).convert("RGB")
+
 
 def _overlay_left(bg: "Image.Image") -> "Image.Image":
     """Dark gradient left → transparent right — lightened so AI background shows."""
