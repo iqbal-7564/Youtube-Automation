@@ -47,13 +47,24 @@ def log_result(
         "",
     )
 
+    # Save first sentence of HOOK, CORE, PAYOFF so the script generator
+    # can avoid repeating those fact angles in future videos.
+    key_sents: list[str] = []
+    for label in ("HOOK", "CORE", "PAYOFF"):
+        sc = next((s for s in timeline["scenes"] if s.get("segment_label") == label), None)
+        if sc:
+            first_sent = sc.get("script_text", "").split(".")[0].strip()
+            if len(first_sent) > 15:
+                key_sents.append(first_sent[:140])
+
     engines = list({sc.get("tts_engine", "") for sc in timeline["scenes"]} - {""})
 
     results.append({
         "video_id":               video_id,
         "intent":                 topic["intent"],
         "title":                  topic["title"][:100],
-        "hook_text":              hook_text[:120],
+        "hook_text":              hook_text[:140],
+        "script_key_sents":       key_sents,
         "total_duration_seconds": timeline["total_duration_seconds"],
         "scene_count":            len(timeline["scenes"]),
         "avg_clip_score":         avg_clip,

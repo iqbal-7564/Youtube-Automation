@@ -383,7 +383,7 @@ def run_pipeline() -> bool:
 
         # ── 2: Script Generation ─────────────────────────────────────────────
         log.info("[2/14] Script Generation")
-        script = generate_script(topic)
+        script = generate_script(topic, LOGS_DIR)
         log.info("  Segments: %d  Est. %ds",
                  len(script["segments"]), script["total_estimated_seconds"])
 

@@ -23,6 +23,7 @@ import logging
 import os
 import random
 import re
+from pathlib import Path
 
 import requests
 
@@ -590,7 +591,48 @@ def _fact_check(text: str, key: str) -> dict:
         return {"has_issues": False, "reason": None}
 
 
-def generate_script(topic: dict) -> dict:
+def _load_banned_phrases(logs_dir: Path | None, n: int = 18) -> list[str]:
+    """Return hook + key sentences from the last n videos to prevent repetition."""
+    if logs_dir is None:
+        return []
+    try:
+        path = Path(logs_dir) / "video_results.json"
+        if not path.exists():
+            return []
+        results = json.loads(path.read_text())
+        phrases: list[str] = []
+        for r in results[-n:]:
+            hook = r.get("hook_text", "").strip()
+            if hook:
+                phrases.append(hook[:140])
+            for sent in r.get("script_key_sents", []):
+                if sent and len(sent) > 15:
+                    phrases.append(sent[:140])
+        return phrases
+    except Exception:
+        return []
+
+
+def _sim_score(a: str, b: str) -> float:
+    """Rough token-overlap similarity between two strings (0-1)."""
+    ta = set(a.lower().split())
+    tb = set(b.lower().split())
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / min(len(ta), len(tb))
+
+
+def _is_script_repeat(script: dict, banned: list[str], threshold: float = 0.60) -> bool:
+    """Return True if the new script's hook is too similar to any recent hook."""
+    segs = script.get("segments", [])
+    hook_seg = next((s for s in segs if s.get("label") == "HOOK"), None)
+    if not hook_seg:
+        return False
+    hook_text = hook_seg.get("text", "")
+    return any(_sim_score(hook_text, b) > threshold for b in banned)
+
+
+def generate_script(topic: dict, logs_dir: Path | None = None) -> dict:
     import os
     video_format = os.getenv("VIDEO_FORMAT", "shorts").lower()
     if video_format not in _FORMAT_PROFILES:
@@ -634,6 +676,19 @@ def generate_script(topic: dict) -> dict:
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
     ) + _load_viewer_note() + (_SHORTS_SYSTEM_BOOST if video_format == "shorts" else "")
 
+    # ── Inject banned phrases from recent videos to prevent repetition ────────
+    banned = _load_banned_phrases(logs_dir, n=18)
+    if banned:
+        banned_block = (
+            "\n\nSCRIPT UNIQUENESS — NON-NEGOTIABLE:\n"
+            "The following sentences were ALREADY USED in recent videos on this channel.\n"
+            "Do NOT reuse, paraphrase, or echo ANY of these openings or fact statements.\n"
+            "Write completely original sentences that this channel has NEVER said:\n"
+            + "\n".join(f'- "{p}"' for p in banned[:15])
+            + "\nEvery sentence must feel like a NEW discovery viewers have never heard."
+        )
+        system_prompt += banned_block
+
     wiki_summary = topic.get("wiki_summary", "")
     wiki_facts = (
         f"\nVERIFIED FACTS (Wikipedia — use as ground truth, reflect accurately):\n{wiki_summary}"
@@ -656,15 +711,27 @@ def generate_script(topic: dict) -> dict:
     for key in _GROQ_KEYS:
         if not key:
             continue
-        for attempt in range(3):  # extra attempt reserved for fact-check retry
+        for attempt in range(3):  # extra attempt reserved for fact-check / repeat retry
             try:
+                # On retry after repeat detection: raise temperature for more variety
+                temperature = 0.85 if attempt > 0 else 0.75
+
+                # Build explicit question directive from title
+                title_str = topic["title"]
+                question_directive = (
+                    f"\nTHIS VIDEO MUST ANSWER EXACTLY: \"{title_str}\"\n"
+                    "The CORE segment must contain the direct, specific answer to this title's "
+                    "implied question. Do not answer a different or broader question. "
+                    "If a viewer watches and the title is not answered by the end, the script fails."
+                )
+
                 filled_prompt = _USER_TMPL.format(
                     video_label      = fmt_timing["video_label"],
                     title            = topic["title"],
                     description      = topic["description"][:400],
                     intent           = topic["intent"],
                     template_name    = template_name,
-                    wiki_facts       = wiki_facts,
+                    wiki_facts       = wiki_facts + question_directive,
                     hook_dur         = fmt_timing["hook_dur"],
                     tension_dur      = fmt_timing["tension_dur"],
                     core_dur         = fmt_timing["core_dur"],
@@ -685,7 +752,7 @@ def generate_script(topic: dict) -> dict:
                             {"role": "system", "content": system_prompt},
                             {"role": "user",   "content": filled_prompt},
                         ],
-                        "temperature": 0.75,
+                        "temperature": temperature,
                         "max_tokens":  fmt_profile["max_tokens"],
                     },
                     timeout=60,
@@ -697,6 +764,13 @@ def generate_script(topic: dict) -> dict:
                 raw    = r.json()["choices"][0]["message"]["content"].strip()
                 script = _parse(raw)
                 if script:
+                    # Detect repeat: if hook is too similar to a recent video, retry
+                    if banned and _is_script_repeat(script, banned):
+                        log.warning("Script repeat detected (attempt %d) — retrying with higher temperature",
+                                    attempt + 1)
+                        if attempt < 2:
+                            continue
+
                     words = len(script["full_script"].split())
                     log.info("Script OK — %d words via Groq [%s/%s/hook:%s]",
                              words, video_format, template_name,
