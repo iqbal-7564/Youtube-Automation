@@ -65,7 +65,7 @@ logging.basicConfig(
 )
 log = logging.getLogger("pipeline.main")
 
-from topic_selector      import select_topic, select_topic_cluster
+from topic_selector      import select_topic, select_topic_cluster, select_bonus_topic
 from script_generator    import generate_script
 from timeline_builder    import build_timeline
 from voice_generator     import generate_voices
@@ -359,8 +359,12 @@ def run_pipeline() -> bool:
     try:
         # ── 1: Topic Selection ───────────────────────────────────────────────
         log.info("[1/14] Topic Selection")
-        _vfmt = os.getenv("VIDEO_FORMAT", "shorts").lower()
-        if _vfmt in ("standard", "long"):
+        _vfmt        = os.getenv("VIDEO_FORMAT", "shorts").lower()
+        _topic_src   = os.getenv("TOPIC_SOURCE", "").lower()
+        if _topic_src == "rss":
+            # Bonus video — RSS / news-trigger driven, never YouTube search
+            topic = select_bonus_topic(LOGS_DIR)
+        elif _vfmt in ("standard", "long"):
             # Standard/long: pick a cluster of related topics so the video
             # covers one central angle from multiple connected angles
             topic = select_topic_cluster(LOGS_DIR)

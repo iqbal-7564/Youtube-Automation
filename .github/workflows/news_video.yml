@@ -3,11 +3,13 @@ name: MindBlownFacts Video Pipeline
 on:
   schedule:
     # ── Video uploads: 3 Shorts/day + 1 standard/day ───────────────────────────
-    # (PKT = UTC+5, IST = UTC+5:30)
+    # (PKT = UTC+5)
     - cron: '0 3 * * *'   # 03:00 UTC │ 8:00 AM PKT │ SHORTS  — Asia morning scroll peak
     - cron: '0 8 * * *'   # 08:00 UTC │ 1:00 PM PKT │ STANDARD — UK morning + Asia lunch peak
     - cron: '0 13 * * *'  # 13:00 UTC │ 6:00 PM PKT │ SHORTS  — US morning + Asia evening PEAK
     - cron: '0 21 * * *'  # 21:00 UTC │ 2:00 AM PKT │ SHORTS  — US after-work PEAK (highest US traffic)
+    # ── Bonus video — RSS/news-trigger driven, uploads daily at 9 AM PKT ───────
+    - cron: '0 4 * * *'   # 04:00 UTC │ 9:00 AM PKT │ BONUS standard — RSS topic, runs only if trigger pending
     # ── Background tasks — always running ──────────────────────────────────────
     - cron: '0 * * * *'    # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
@@ -114,12 +116,10 @@ jobs:
             git commit -m "bot: update pipeline logs [skip ci]"
           git push 2>/dev/null || true
 
-  # ── News monitor (runs every hour — saves trigger + fires bonus video) ───────
+  # ── News monitor (runs every hour — saves trigger to file; bonus-video job picks it up at 9 AM PKT) ──
   news-monitor:
     runs-on: ubuntu-latest
     if: always()
-    permissions:
-      actions: write   # needed to dispatch bonus video workflow
 
     steps:
       - uses: actions/checkout@v4
@@ -169,20 +169,6 @@ jobs:
           git diff --staged --quiet || \
             git commit -m "bot: news trigger [skip ci]"
           git push 2>/dev/null || true
-
-      - name: Dispatch bonus video upload
-        # Fire an extra pipeline run when news score ≥ 70 and not yet used today
-        if: |
-          steps.monitor.outputs.trigger_score != '' &&
-          fromJSON(steps.monitor.outputs.trigger_score) >= 70 &&
-          steps.monitor.outputs.trigger_used == 'False'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "High-value news trigger (score=${{ steps.monitor.outputs.trigger_score }}) — dispatching bonus standard video"
-          gh workflow run news_video.yml \
-            --ref main \
-            --field video_format=standard
 
   # ── Comment auto-responder (runs every hour independently) ──────────────────
   comment-responder:
@@ -280,4 +266,106 @@ jobs:
                   pipeline/logs/video_results.json 2>/dev/null || true
           git diff --staged --quiet || \
             git commit -m "bot: update analytics data [skip ci]"
+          git push 2>/dev/null || true
+
+  # ── Bonus video — RSS/news-trigger driven, uploads every day at 9 AM PKT ─────
+  # Runs only when '0 4 * * *' schedule fires (04:00 UTC = 09:00 PKT).
+  # Only produces a video if news_trigger.json has an unused trigger (score ≥ 70).
+  # Topic comes exclusively from RSS feeds / news monitor — never YouTube search.
+  bonus-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: github.event.schedule == '0 4 * * *'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for pending news trigger
+        id: trigger
+        run: |
+          python3 -c "
+          import json, sys
+          from pathlib import Path
+          tp = Path('pipeline/logs/news_trigger.json')
+          if not tp.exists():
+              print('no_trigger=true')
+              sys.exit(0)
+          d = json.loads(tp.read_text())
+          used  = d.get('used', True)
+          score = d.get('topic', {}).get('news_score', 0)
+          pending = (not used) and (score >= 70)
+          print('pending=true' if pending else 'pending=false')
+          import os; out = os.environ.get('GITHUB_OUTPUT','')
+          with open(out,'a') as f:
+              f.write(f'pending={str(pending).lower()}\n')
+          "
+
+      - name: Setup Python 3.11
+        if: steps.trigger.outputs.pending == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        if: steps.trigger.outputs.pending == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-dejavu fonts-liberation libass-dev
+
+      - name: Install Python dependencies
+        if: steps.trigger.outputs.pending == 'true'
+        run: pip install requests gtts edge-tts rapidfuzz Pillow pytrends
+
+      - name: Create runtime directories
+        if: steps.trigger.outputs.pending == 'true'
+        run: |
+          mkdir -p pipeline/temp/voice     \
+                   pipeline/temp/visuals   \
+                   pipeline/temp/subtitles \
+                   pipeline/temp/scenes    \
+                   pipeline/output         \
+                   pipeline/logs
+
+      - name: Run Bonus Video Pipeline (RSS topic)
+        if: steps.trigger.outputs.pending == 'true'
+        env:
+          VIDEO_FORMAT:          standard
+          TOPIC_SOURCE:          rss
+          GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
+          GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
+          ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_API_KEY_2:  ${{ secrets.ELEVENLABS_API_KEY_2 }}
+          PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
+          YOUTUBE_API_KEY:       ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          GMAIL_SENDER:            ${{ secrets.GMAIL_SENDER }}
+          GMAIL_APP_PASSWORD:      ${{ secrets.GMAIL_APP_PASSWORD }}
+          HUGGINGFACE_API_KEY_1:   ${{ secrets.HUGGINGFACE_API_KEY_1 }}
+          HUGGINGFACE_API_KEY_2:   ${{ secrets.HUGGINGFACE_API_KEY_2 }}
+          HUGGINGFACE_API_KEY_3:   ${{ secrets.HUGGINGFACE_API_KEY_3 }}
+          HUGGINGFACE_API_KEY_4:   ${{ secrets.HUGGINGFACE_API_KEY_4 }}
+          HUGGINGFACE_API_KEY_5:   ${{ secrets.HUGGINGFACE_API_KEY_5 }}
+        run: |
+          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 9 AM PKT ==="
+          python pipeline/main.py
+          echo ""
+          echo "=== Output files ==="
+          ls -lh pipeline/output/ 2>/dev/null || echo "(no output files)"
+
+      - name: Save logs to repository
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.name  "VisionaryMinds Bot"
+          git config user.email "bot@visionaryminds.com"
+          git add pipeline/logs/ 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "bot: bonus video logs [skip ci]"
           git push 2>/dev/null || true

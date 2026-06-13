@@ -471,21 +471,6 @@ def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
                 log.info("Single trend topic [%s]: %s", cat, topic["title"][:80])
                 return topic
 
-    # ── Step 4: No trending → broad _SEEDS cluster (RSS category signal) ─────
-    trending_seeds = _fetch_trending_seeds(logs_dir)
-    rss_cats = sorted(
-        trending_seeds, key=lambda c: sum(s for _, s in trending_seeds[c]), reverse=True
-    )
-    for cat in rss_cats:
-        if cat in tried_cats:
-            continue
-        tried_cats.add(cat)
-        cluster = _build_topic_cluster(cat, n, full_history)
-        if cluster:
-            cluster["source"] = "RSS-BroadCluster"
-            log.info("RSS broad cluster [%s] '%s'", cat, cluster["title"][:60])
-            return cluster
-
     log.warning("Cluster selection failed — falling back to single topic")
     return select_topic(logs_dir)
 
@@ -614,16 +599,63 @@ def _check_news_trigger(logs_dir: Path) -> dict | None:
     return None
 
 
+def select_bonus_topic(logs_dir: Path) -> dict | None:
+    """
+    Topic selector for bonus videos (uploads at 9 AM PKT daily).
+    Uses RSS / news trigger exclusively — never touches YouTube trending or autocomplete.
+    """
+    full_history   = _load_full_history(logs_dir)
+    trending_seeds = _fetch_trending_seeds(logs_dir)
+    trending_hints = _fetch_trending_hints()
+
+    # Priority 1: News trigger saved by news_monitor
+    news_topic = _check_news_trigger(logs_dir)
+    if news_topic:
+        log.info("Bonus: news trigger → %s", news_topic["title"][:70])
+        return news_topic
+
+    # Priority 2: RSS category signal + broad seeds
+    rss_cat_scores: dict[str, float] = {}
+    for cat, items in trending_seeds.items():
+        rss_cat_scores[cat] = sum(score for _, score in items)
+    rss_cats = sorted(rss_cat_scores, key=rss_cat_scores.get, reverse=True)
+
+    for cat in rss_cats[:10]:
+        broad_seeds = list(_SEEDS.get(cat, []))
+        random.shuffle(broad_seeds)
+        for seed in broad_seeds[:8]:
+            topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
+            if topic:
+                topic["source"] = "RSS-BonusVideo"
+                log.info("Bonus RSS topic [%s]: %s", cat, topic["title"][:80])
+                return topic
+
+    # Fallback: bypass duplicate filters, use top RSS category
+    if rss_cats:
+        cat  = rss_cats[0]
+        seed = random.choice(_SEEDS.get(cat, ["facts"]))
+        title, description = _groq_expand(cat, seed, trending_hints.get(cat, ""))
+        if title:
+            return {
+                "title": title[:200], "description": description[:500],
+                "intent": cat, "source": "RSS-BonusFallback",
+                "published_at": datetime.utcnow().isoformat(),
+                "article_url": "", "seed": seed, "trend_hint": "",
+                "novelty_score": 50, "curiosity_score": 0,
+                "saturation": "pass", "viral_score": 0.0,
+                "performance_score": 50.0,
+            }
+
+    # Ultimate fallback — regular topic selection
+    log.warning("Bonus topic selection: no RSS signal — using regular selector")
+    return select_topic(logs_dir)
+
+
 def select_topic(logs_dir: Path) -> dict | None:
     produced_today  = _load_produced_today(logs_dir)
     full_history    = _load_full_history(logs_dir)
     used_categories = {v.get("intent", "") for v in produced_today}
     perf_weights    = _load_performance_weights(logs_dir)
-
-    # Priority -1: News trigger — breaking news facts angle
-    news_topic = _check_news_trigger(logs_dir)
-    if news_topic:
-        return news_topic
 
     # Priority 0: INTENT_OVERRIDE env var — forces a specific category
     override = os.getenv("INTENT_OVERRIDE", "").strip().upper()
@@ -720,30 +752,9 @@ def select_topic(logs_dir: Path) -> dict | None:
                 log.info("Broad topic [%s]: %s", cat, topic["title"][:80])
                 return topic
 
-    # Priority 3: Facts RSS category signal + broad seeds fallback
-    trending_seeds = _fetch_trending_seeds(logs_dir)
-    trending_hints = _fetch_trending_hints()
-
-    # Use RSS to find hot categories, then pick broad seeds from those categories
-    rss_cat_scores: dict[str, float] = {}
-    for cat, items in trending_seeds.items():
-        rss_cat_scores[cat] = sum(score for _, score in items)
-    rss_cats = sorted(rss_cat_scores, key=rss_cat_scores.get, reverse=True)
-
-    for cat in rss_cats[:8]:
-        broad_seeds = list(_SEEDS.get(cat, []))
-        random.shuffle(broad_seeds)
-        for seed in broad_seeds[:8]:
-            topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
-            if topic:
-                topic["source"] = "FactsRSS+BroadSeed"
-                log.info("RSS broad topic [%s]: %s", cat, topic["title"][:80])
-                return topic
-
     # All categories exhausted — last resort, bypass all filters
     log.info("All categories exhausted — generating fresh angle (filters bypassed)")
-    # Pick top YouTube trending category if available, otherwise random
-    cat = all_yt[0][0] if all_yt else (all_rss[0][0] if all_rss else random.choice(CATEGORIES))
+    cat = all_yt[0][0] if all_yt else random.choice(CATEGORIES)
     seed = random.choice(_SEEDS[cat])
 
     # Try Groq first
