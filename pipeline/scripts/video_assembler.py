@@ -182,12 +182,25 @@ def assemble_video(timeline: dict, temp_dir: Path, intent: str) -> Path:
                 vis = visuals_dir / sc.get("visual_file", "_missing")
                 clip_type = sc.get("clip_type", "video")
 
-                # Use multi-image slideshow when extra images were fetched
+                # Use multi-image slideshow when extra images were fetched;
+                # use micro-cuts when extra video clips were fetched.
                 extra_names = sc.get("extra_visual_files", [])
                 extras = [visuals_dir / n for n in extra_names
                           if (visuals_dir / n).exists()]
-                if clip_type == "image" and extras and vis.exists():
-                    vis_list = [vis] + extras
+                video_extras = [e for e in extras if e.suffix == ".mp4"]
+                image_extras = [e for e in extras if e.suffix != ".mp4"]
+
+                if clip_type == "video" and video_extras and vis.exists() and dur_s >= 2.0:
+                    _render_video_microcuts(
+                        vis, video_extras[0], out, W, H, dur_s,
+                        sc["segment_label"], i_label, i_color, focus,
+                        motion_emotion=sc.get("motion_emotion", "neutral"),
+                        scene_id=sc["scene_id"],
+                        hook_text="",
+                        is_shorts=is_shorts,
+                    )
+                elif clip_type == "image" and image_extras and vis.exists():
+                    vis_list = [vis] + image_extras
                     _render_slideshow(
                         vis_list, out, W, H, dur_s,
                         sc["segment_label"], i_label, i_color, focus,
@@ -327,6 +340,37 @@ def _render_scene(vis: Path, out: Path, W: int, H: int,
         ]
 
     _run(cmd, f"scene→{out.name}")
+
+
+def _render_video_microcuts(vis: Path, extra: Path, out: Path, W: int, H: int,
+                             dur_s: float, seg_label: str, i_label: str, i_color: str,
+                             focus: str, motion_emotion: str, scene_id: int,
+                             hook_text: str, is_shorts: bool) -> None:
+    """Split one scene into two micro-cut clips for a more dynamic feel."""
+    half = dur_s / 2.0
+    tmp1 = out.parent / f"_mc_{out.stem}_a.mp4"
+    tmp2 = out.parent / f"_mc_{out.stem}_b.mp4"
+
+    _render_scene(vis,   tmp1, W, H, half, "video", seg_label, i_label, i_color,
+                  focus, motion_emotion, scene_id, hook_text, is_shorts)
+    _render_scene(extra, tmp2, W, H, half, "video", seg_label, i_label, i_color,
+                  focus, motion_emotion, scene_id, hook_text, is_shorts)
+
+    if not (tmp1.exists() and tmp1.stat().st_size > 500):
+        # Fall back to single-clip render if first half failed
+        shutil.copy(str(vis), str(out)) if vis.exists() else None
+        return
+
+    lst = out.parent / f"_mc_{out.stem}_list.txt"
+    lst.write_text(f"file '{tmp1}'\nfile '{tmp2}'\n")
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(lst),
+        "-c", "copy", str(out),
+    ], capture_output=True, timeout=60)
+
+    tmp1.unlink(missing_ok=True)
+    tmp2.unlink(missing_ok=True)
+    lst.unlink(missing_ok=True)
 
 
 def _render_close(sc: dict, out: Path, W: int, H: int, dur_s: float) -> None:

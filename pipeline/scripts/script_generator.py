@@ -84,19 +84,19 @@ _NARRATIVE_VARIANTS: dict[str, dict] = {
 
 # ── Format profiles ──────────────────────────────────────────────────────────
 # VIDEO_FORMAT env var controls target length.
-# shorts   → 130-180 words  (~60s)
-# standard → 680-840 words  (~4-5 min)
-# long     → 900-1344 words (~6-8 min)
+# shorts   → 95-115 words  (~40s at fast pace)
+# standard → 1650-1950 words  (~8-10 min at fast pace)
+# long     → 1200-1500 words (~6-8 min at fast pace)
 
 _FORMAT_PROFILES: dict[str, dict] = {
     "shorts": {
-        "word_target":   "75-90 words total",
+        "word_target":   "95-115 words total",
         "duration_hint": "~40 seconds",
         "core_depth":    "3 short punchy sentences MAX. One fact per sentence. Cut every word that doesn't shock.",
         "max_tokens":    1200,
     },
     "standard": {
-        "word_target":   "1400-1700 words total",
+        "word_target":   "1650-1950 words total",
         "duration_hint": "8-10 minutes (MINIMUM 6 minutes — never shorter)",
         "core_depth":    (
             "35-48 sentences covering 5-6 distinct angles on the topic. "
@@ -109,7 +109,7 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "max_tokens":    6000,
     },
     "long": {
-        "word_target":   "980-1344 words total",
+        "word_target":   "1200-1500 words total",
         "duration_hint": "6-8 minutes (MINIMUM 5 minutes — never shorter)",
         "core_depth":    (
             "28-38 sentences covering 5-6 distinct angles on the topic. "
@@ -324,7 +324,7 @@ PAYOFF  ({payoff_time}): {payoff_rule}
 CLOSE   ({close_time}): {close_rule}
                   NEVER say "Like and subscribe".
 
-TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 2.8 words/second.
+TARGET: {word_target}. Duration hint: {duration_hint}. Pace = 3.3 words/second (fast voice — write complete sentences, never cut off mid-thought).
 
 TITLE RULES — YouTube Shorts optimised (follow ALL rules every time):
   Rule 0: MUST match the exact topic. Never change the subject.

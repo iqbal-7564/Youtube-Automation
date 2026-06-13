@@ -34,10 +34,17 @@ _EL_SETTINGS: dict[str, dict] = {
 }
 
 _EDGE_RATE: dict[str, str] = {
-    "excited":    "+18%",
-    "mysterious": "+5%",
-    "dramatic":   "+10%",
-    "neutral":    "+12%",
+    "excited":    "+24%",
+    "mysterious": "+14%",
+    "dramatic":   "+20%",
+    "neutral":    "+22%",
+}
+
+_EDGE_PITCH: dict[str, str] = {
+    "excited":    "+3Hz",
+    "mysterious": "+0Hz",
+    "dramatic":   "+2Hz",
+    "neutral":    "+2Hz",
 }
 
 def _auto_tts_rate_adjust() -> int:
@@ -164,14 +171,15 @@ def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3
 
 
 def _edge_tts(text: str, out: Path, emotion: str) -> bool:
-    base = int(_EDGE_RATE.get(emotion, "-5%").replace("%", ""))
-    adjusted = max(-30, min(20, base + _auto_tts_rate_adjust()))
-    rate = f"{adjusted:+d}%"
+    base = int(_EDGE_RATE.get(emotion, "+0%").replace("%", ""))
+    adjusted = max(-30, min(30, base + _auto_tts_rate_adjust()))
+    rate  = f"{adjusted:+d}%"
+    pitch = _EDGE_PITCH.get(emotion, "+0Hz")
     for attempt in range(2):
         try:
             async def _run():
                 import edge_tts
-                comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate)
+                comm = edge_tts.Communicate(text, voice=_EDGE_VOICE, rate=rate, pitch=pitch)
                 await comm.save(str(out))
             # Use get_event_loop instead of asyncio.run() to avoid nested loop crash
             try:

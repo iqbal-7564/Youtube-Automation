@@ -176,11 +176,19 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
                 h = _img_hash(video_out)
                 if h:
                     session_img_hashes.add(h)
-                sc["visual_file"]       = video_out.name
-                sc["clip_type"]         = "video"
-                sc["clip_score"]        = 1.0
-                sc["extra_visual_files"] = []
+                sc["visual_file"]  = video_out.name
+                sc["clip_type"]    = "video"
+                sc["clip_score"]   = 1.0
                 log.info("Scene 1: real Pexels video → %s", video_out.name)
+
+                # Fetch a second clip for micro-cuts
+                extra_vids: list[str] = []
+                alt_vq   = shock_query + " close up detail"
+                alt_vout = visuals_dir / f"scene_{scene_id}_visual_b.mp4"
+                if _pexels_video_fetch(alt_vq, alt_vout, _known_images(), orientation=orient):
+                    extra_vids.append(alt_vout.name)
+                    log.info("Scene 1: extra video clip → %s", alt_vout.name)
+                sc["extra_visual_files"] = extra_vids
                 continue   # skip image fetch for scene 1
             else:
                 log.warning("Scene 1: Pexels video failed — falling back to image")
@@ -216,11 +224,20 @@ def fetch_visuals(timeline: dict, visuals_dir: Path) -> dict:
             vh = _img_hash(video_out)
             if vh:
                 session_img_hashes.add(vh)
+
+            # Fetch a second clip for micro-cuts
+            extra_vids2: list[str] = []
+            alt_vq2    = query + " detail view"
+            alt_vout2  = visuals_dir / f"scene_{scene_id}_visual_b.mp4"
+            if _pexels_video_fetch(alt_vq2, alt_vout2, _known_images(), orientation=orient):
+                extra_vids2.append(alt_vout2.name)
+                log.info("Scene %d: extra video clip → %s", scene_id, alt_vout2.name)
+
             sc.update(
                 visual_file       = video_out.name,
                 clip_type         = "video",
                 clip_score        = 1.0,
-                extra_visual_files= [],
+                extra_visual_files= extra_vids2,
                 retry_count       = 0,
             )
             log.info("Scene %d: Pexels video clip → %s", scene_id, video_out.name)
