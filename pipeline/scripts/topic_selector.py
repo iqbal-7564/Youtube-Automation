@@ -61,23 +61,160 @@ _SATURATION_MEDIAN_PENALTY = 500_000
 _TREND_CACHE_TTL_HOURS = 6
 
 # Search terms used to query YouTube autocomplete per category.
-# Multiple terms per category — mirrors real user search patterns.
+# These are question-format queries that match how real viewers actually search —
+# not optimised marketing phrases. Autocomplete returns what people COMPLETE after
+# typing these, giving us the highest-demand titles in each category.
 _CATEGORY_SEARCH_TERMS: dict[str, list[str]] = {
-    "SPACE":       ["mind blowing space facts", "universe facts explained", "space mysteries", "nasa facts"],
-    "SCIENCE":     ["craziest scientific discoveries", "science facts with explanation", "science facts mind blowing", "real science facts"],
-    "HISTORY":     ["ancient mysteries explained", "history facts you didnt know", "ancient civilizations secrets", "lost history facts"],
-    "ANIMALS":     ["most dangerous animals facts", "animal facts mind blowing", "weird animal behaviors", "animal science facts"],
-    "NATURE":      ["nature facts that will blow your mind", "natural phenomena explained", "earth facts surprising", "nature science facts"],
-    "GEOGRAPHY":   ["geography facts mind blowing", "countries facts surprising", "world facts you didnt know", "places on earth facts"],
-    "OCEAN":       ["deep ocean facts scary", "ocean mysteries explained", "deep sea creatures facts", "ocean science facts"],
-    "CULTURE":     ["ancient culture facts", "world traditions explained", "civilization facts surprising", "cultural history facts"],
-    "TECHNOLOGY":  ["technology facts mind blowing", "ai facts explained", "how technology works", "future technology facts"],
-    "PSYCHOLOGY":  ["psychology facts to control mind", "how to change subconscious mind", "the brain that changes itself", "how the brain processes information"],
-    "MYTHOLOGY":   ["ancient mythology explained", "greek mythology facts", "mythology mysteries", "ancient gods facts"],
-    "MEDICINE":    ["human body facts mind blowing", "medical facts surprising", "how the human body works", "biology facts explained"],
-    "MATHEMATICS": ["math facts mind blowing", "mathematics mysteries explained", "number facts surprising", "math science facts"],
-    "ECONOMICS":   ["money facts surprising", "how economy works explained", "financial facts mind blowing", "wealth facts"],
-    "PHYSICS":     ["physics facts mind blowing", "quantum physics explained simply", "how universe works physics", "physics mysteries"],
+    "SPACE": [
+        "what would happen if the sun disappeared",
+        "how big is the universe really",
+        "why do black holes exist",
+        "what is at the center of a black hole",
+        "how far away is the nearest star",
+        "why cant anything escape a black hole",
+        "what is dark matter made of",
+        "space facts that will blow your mind",
+    ],
+    "SCIENCE": [
+        "why do we dream explained",
+        "how does evolution actually work",
+        "what is consciousness made of",
+        "what happens inside an atom",
+        "why do humans age science explained",
+        "craziest scientific discoveries explained",
+        "what is inside a proton",
+        "how small can something get",
+    ],
+    "HISTORY": [
+        "why did the roman empire fall",
+        "what really happened to ancient egypt",
+        "who actually built the pyramids",
+        "what was life really like in ancient rome",
+        "ancient mysteries science cannot explain",
+        "what happened to the lost city of atlantis",
+        "why did ancient civilizations disappear",
+        "history facts nobody taught you",
+    ],
+    "ANIMALS": [
+        "why are sharks afraid of dolphins",
+        "how do octopuses see the world",
+        "what animal is actually immortal",
+        "why do cats purr science explained",
+        "how do animals survive extreme cold",
+        "most dangerous animals in the world facts",
+        "why do dogs wag their tails science",
+        "what animals can feel emotions",
+    ],
+    "NATURE": [
+        "what would happen if all trees disappeared",
+        "how are diamonds actually formed",
+        "why do volcanoes erupt explained",
+        "what is inside the earth right now",
+        "how lightning actually works science",
+        "why is the sky blue really explained",
+        "what causes earthquakes science",
+        "what happens when a star dies",
+    ],
+    "GEOGRAPHY": [
+        "why is the dead sea so salty",
+        "what is hidden under antarctica ice",
+        "deepest place on earth explained",
+        "why is the bermuda triangle dangerous",
+        "what is at the bottom of the mariana trench",
+        "why do some countries have no rain",
+        "how deep do caves actually go",
+        "what is the most isolated place on earth",
+    ],
+    "OCEAN": [
+        "how deep is the ocean really",
+        "what lives at the bottom of the ocean",
+        "deepest sea creatures ever discovered",
+        "why is the ocean so dark explained",
+        "what is in the mariana trench really",
+        "why is the ocean salty science",
+        "how does bioluminescence work in ocean",
+        "scariest deep sea facts",
+    ],
+    "CULTURE": [
+        "why do humans need religion explained",
+        "ancient rituals science cannot explain",
+        "what ancient civilizations got right",
+        "why do all cultures have the same myths",
+        "lost civilizations that nobody can explain",
+        "ancient practices that still work today",
+        "why humans create art science",
+        "what ancient egyptians actually believed",
+    ],
+    "TECHNOLOGY": [
+        "how does artificial intelligence actually work",
+        "what will the world look like in 100 years",
+        "how does the internet physically work",
+        "why computers will never be truly conscious",
+        "how does gps really work explained",
+        "what is quantum computing explained simply",
+        "how do microchips actually work",
+        "what happens to deleted data",
+    ],
+    "PSYCHOLOGY": [
+        "why do humans feel lonely science",
+        "how to stop overthinking brain science",
+        "why does your brain lie to you",
+        "what happens in your brain when you sleep",
+        "why do humans get anxious explained",
+        "how does memory actually work brain",
+        "why do we feel fear science explained",
+        "what makes humans different from animals brain",
+    ],
+    "MYTHOLOGY": [
+        "were the greek gods based on real people",
+        "why did ancient people believe in gods",
+        "what actually inspired greek mythology",
+        "mythology mysteries science cannot explain",
+        "why all ancient cultures share the same myths",
+        "ancient gods that may have been real",
+        "what did ancient egyptians really believe",
+        "mythology facts nobody taught you",
+    ],
+    "MEDICINE": [
+        "why do we get sick explained science",
+        "how does the immune system actually work",
+        "what happens to your body when you die",
+        "why do humans age and can we stop it",
+        "how does cancer actually start in the body",
+        "why do we feel pain science explained",
+        "how do vaccines actually work",
+        "what happens to your brain when you drink",
+    ],
+    "MATHEMATICS": [
+        "why is math so hard for the human brain",
+        "what is infinity really explained",
+        "unsolved math problems that broke mathematicians",
+        "why do numbers never end explained",
+        "what is zero actually explained",
+        "math patterns found in nature explained",
+        "why 1 plus 1 is more complicated than you think",
+        "impossible math problems explained simply",
+    ],
+    "ECONOMICS": [
+        "why are some countries rich and others poor",
+        "how does money actually work explained",
+        "why does inflation happen explained",
+        "what caused the great depression really",
+        "how banks create money from nothing",
+        "why do stock markets crash explained",
+        "what would happen if everyone stopped spending",
+        "how wealth inequality actually works",
+    ],
+    "PHYSICS": [
+        "why can nothing travel faster than light",
+        "what is dark matter really made of",
+        "how does gravity actually work explained",
+        "what is time really made of physics",
+        "quantum physics explained simply no math",
+        "what happens at absolute zero temperature",
+        "why does the universe exist at all",
+        "what is inside a neutron star",
+    ],
 }
 
 # Keywords for mapping Google's "trending now" searches to our categories.
@@ -716,11 +853,15 @@ def select_topic(logs_dir: Path) -> dict | None:
     all_ac.sort(key=lambda x: x[2], reverse=True)
 
     for cat, phrase, _ in all_ac[:30]:
-        topic = _build_topic(cat, phrase, full_history, "")
+        # is_search_phrase=True → _build_topic uses _groq_title_from_search
+        # which KEEPS the autocomplete keywords in the title so the video
+        # ranks for the exact search that generated this phrase.
+        topic = _build_topic(cat, phrase, full_history, "", is_search_phrase=True)
         if topic:
-            topic["source"]     = "YouTubeSearch"
-            topic["search_query"] = phrase  # pass through for title matching
-            log.info("Search demand [%s]: %s", cat, topic["title"][:80])
+            topic["source"]       = "YouTubeSearch"
+            topic["search_query"] = phrase
+            log.info("Search demand [%s] phrase='%s' → '%s'",
+                     cat, phrase[:50], topic["title"][:60])
             return topic
 
     # Priority 3: YouTube trending tells us WHICH CATEGORY is hot right now,
@@ -1418,8 +1559,81 @@ def _find_best_seo_title(base_title: str, seed: str, category: str) -> tuple[str
     return best_title[:200], best_count
 
 
+def _groq_title_from_search(phrase: str, category: str, wiki_summary: str = "") -> tuple[str, str]:
+    """
+    Take an actual YouTube search phrase a real person typed and turn it into
+    a video title that KEEPS the exact keywords so the video ranks for that search.
+    This is different from _groq_expand which invents a fresh angle — here we
+    honour the search intent and reformat only for CTR.
+    """
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
+    for key in keys:
+        if not key:
+            continue
+        try:
+            r = requests.post(
+                _GROQ_URL,
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                json={
+                    "model": _GROQ_MODEL,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a YouTube SEO title specialist. A real person typed a search "
+                                "phrase into YouTube. Your job is to turn that exact phrase into a "
+                                "compelling video title that ranks for that search.\n\n"
+                                "STRICT RULES:\n"
+                                "1. KEEP the core keywords from the search phrase — do NOT swap them "
+                                "for synonyms or change the main subject. The keywords are what make "
+                                "the video appear in that person's search results.\n"
+                                "2. Reformat for click-through: rephrase the structure if needed, "
+                                "add a specific number or power word ONLY if it fits naturally.\n"
+                                "3. Under 70 characters total. End with exactly 1 relevant emoji.\n"
+                                "4. If phrase is a question (starts with why/how/what/where), keep it "
+                                "as a question — questions get 40% more clicks on YouTube.\n"
+                                "5. No ALL CAPS. No banned phrases: shocking/amazing/mind-blowing/"
+                                "unbelievable/nobody told you/they don't want you to know.\n"
+                                "6. The title must describe something the video can SPECIFICALLY answer.\n"
+                                "7. Front-load the topic keyword in the first 40 characters.\n\n"
+                                "Return ONLY valid JSON (no markdown): "
+                                "{\"title\": \"...\", \"description\": \"one sentence with the "
+                                "most surprising specific fact about this exact topic\"}"
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Search phrase (what a real viewer typed): \"{phrase}\"\n"
+                                f"Category: {category}\n"
+                                + (f"Verified facts to use: {wiki_summary[:280]}\n" if wiki_summary else "")
+                                + "Generate a YouTube title. KEEP the core keywords. Make it specific "
+                                "and clickable. The title must rank for this exact search phrase."
+                            ),
+                        },
+                    ],
+                    "temperature": 0.60,
+                    "max_tokens":  160,
+                },
+                timeout=20,
+            )
+            if r.ok:
+                raw = r.json()["choices"][0]["message"]["content"].strip()
+                m   = re.search(r'\{.*\}', raw, re.DOTALL)
+                if m:
+                    data  = json.loads(m.group())
+                    title = data.get("title", "").strip()
+                    desc  = data.get("description", "").strip()
+                    if title and len(title) >= 10:
+                        log.debug("Search-matched title for '%s': %s", phrase[:40], title[:60])
+                        return title, desc
+        except Exception as exc:
+            log.debug("_groq_title_from_search: %s", exc)
+    return "", ""
+
+
 def _build_topic(category: str, seed: str, produced: list[dict],
-                 trend_hint: str = "") -> dict | None:
+                 trend_hint: str = "", is_search_phrase: bool = False) -> dict | None:
     # Wikipedia verification first — skip topic if no article found
     wiki_summary = _wikipedia_verify(seed)
     if not wiki_summary:
@@ -1427,7 +1641,16 @@ def _build_topic(category: str, seed: str, produced: list[dict],
         return None
     log.debug("Wikipedia verified seed '%s'", seed[:40])
 
-    title, description = _groq_expand(category, seed, trend_hint)
+    # If seed IS a real human search phrase (≥4 words or explicitly flagged),
+    # keep its keywords in the title so the video ranks for that exact search.
+    # _groq_title_from_search preserves the search phrase keywords.
+    # _groq_expand invents a fresh angle — good for seeds, bad for search phrases.
+    if is_search_phrase or len(seed.split()) >= 4:
+        title, description = _groq_title_from_search(seed, category, wiki_summary)
+        if not title:
+            title, description = _groq_expand(category, seed, trend_hint)
+    else:
+        title, description = _groq_expand(category, seed, trend_hint)
 
     if not title:
         title       = f"Incredible Facts About {seed.title()}"
