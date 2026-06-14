@@ -758,7 +758,7 @@ def select_topic(logs_dir: Path) -> dict | None:
     seed = random.choice(_SEEDS[cat])
 
     # Try Groq first
-    title, description = _groq_expand(cat, seed, trending_hints.get(cat, ""))
+    title, description = _groq_expand(cat, seed, "")
     if not title:
         title       = f"The Incredible Truth About {seed.title()}"
         description = f"Fascinating and little-known facts about {seed}."
