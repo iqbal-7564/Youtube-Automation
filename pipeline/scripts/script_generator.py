@@ -48,6 +48,23 @@ _CLOSE_RULE = (
     "NEVER say 'Like and subscribe' or 'Hit the bell'."
 )
 
+# Standard/long-form CLOSE — includes forward momentum to pull viewers into the next video
+_CLOSE_RULE_STANDARD = (
+    "THREE parts: "
+    "(1) Echo ONE specific word or phrase from the HOOK — creates a mental rewatch loop. "
+    "Example: HOOK started 'Black holes stop time' → CLOSE starts 'Time. It was always the answer.' "
+    "(2) Natural subscribe CTA — vary the wording every video: "
+    "'Follow MindBlownFacts — a new fact drops every day.' "
+    "/ 'Subscribe to MindBlownFacts for facts that change how you see the world.' "
+    "/ 'MindBlownFacts — subscribe if this changed how you see it.' "
+    "NEVER say 'Like and subscribe' or 'Hit the bell'. "
+    "(3) Forward momentum sentence — end the video with desire for the next one: "
+    "'The next fact makes this one look ordinary.' "
+    "/ 'Tomorrow's discovery breaks this completely.' "
+    "/ 'What comes next is even harder to believe.' "
+    "End on this forward momentum line — NEVER end with 'Goodbye', 'See you next time', or 'Thanks for watching'."
+)
+
 _NARRATIVE_VARIANTS: dict[str, dict] = {
     "classic": {
         "description": "Classic curiosity-gap structure: hook teases → tension builds mystery → core delivers facts → payoff resolves → close subscribe CTA",
@@ -100,12 +117,14 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "word_target":   "1650-1950 words total",
         "duration_hint": "8-10 minutes (MINIMUM 6 minutes — never shorter)",
         "core_depth":    (
-            "35-48 sentences covering 5-6 distinct angles on the topic. "
-            "Each angle gets 6-8 sentences: state the surprising fact, explain the mechanism, "
-            "give a real-world scale comparison, reveal the counterintuitive implication. "
-            "Include historical context, modern research, and a mind-blowing 'so what' moment. "
-            "Vary sentence rhythm aggressively: short punch. Medium explanation. Short again. Longer story. "
-            "Mark the single most shocking sentence in CORE with [WOW]."
+            "5-6 NAMED CHAPTERS using [CHAPTER: Name] + [BRIDGE] markers (REQUIRED). "
+            "Each chapter: surprising fact (1-2 short sentences) → mechanism (2 sentences) "
+            "→ real-world scale (1 sentence) → counterintuitive implication (1-2 sentences) → [BRIDGE] teaser. "
+            "Pattern interrupt at chapters 2 and 4: direct viewer re-engagement line. "
+            "Chapter 1: historical context or origin. Chapters 2-4: escalating modern science. "
+            "Chapter 5: the 'so what' that changes how the viewer sees the world. "
+            "Vary rhythm: short. medium. LONG cinematic. short. Never three long sentences in a row. "
+            "Mark the single most shocking sentence across all chapters with [WOW]."
         ),
         "max_tokens":    6000,
     },
@@ -113,11 +132,13 @@ _FORMAT_PROFILES: dict[str, dict] = {
         "word_target":   "1200-1500 words total",
         "duration_hint": "6-8 minutes (MINIMUM 5 minutes — never shorter)",
         "core_depth":    (
-            "28-38 sentences covering 5-6 distinct angles on the topic. "
-            "Each angle gets 5-7 sentences: state the fact, explain the mechanism, "
-            "give a real-world comparison, reveal the surprising implication. "
-            "Include historical context, modern research, and a future implication. "
-            "Mark the single most shocking sentence in CORE with [WOW]."
+            "4-5 NAMED CHAPTERS using [CHAPTER: Name] + [BRIDGE] markers (REQUIRED). "
+            "Each chapter: surprising fact → mechanism → real-world comparison → implication → [BRIDGE]. "
+            "Pattern interrupt at chapter 2: direct viewer re-engagement line. "
+            "Chapters escalate in impact: each one more surprising than the last. "
+            "Include historical context in chapter 1, modern research in chapters 2-3, "
+            "future implication in the final chapter. "
+            "Mark the single most shocking sentence with [WOW]."
         ),
         "max_tokens":    6000,
     },
@@ -144,17 +165,17 @@ _FORMAT_TIMING: dict[str, dict] = {
     },
     "standard": {
         "video_label":   "YouTube educational video (target 8-10 minutes)",
-        "hook_time":     "0-20s",
-        "tension_time":  "20-80s",
-        "core_time":     "80-520s",
-        "payoff_time":   "520-570s",
-        "close_time":    "570-590s",
-        "hook_dur":      18,
-        "tension_dur":   60,
-        "core_dur":      440,
-        "payoff_dur":    50,
-        "close_dur":     22,
-        "total_est":     590,
+        "hook_time":     "0-30s",
+        "tension_time":  "30-110s",
+        "core_time":     "110-530s",
+        "payoff_time":   "530-565s",
+        "close_time":    "565-592s",
+        "hook_dur":      30,
+        "tension_dur":   80,
+        "core_dur":      420,
+        "payoff_dur":    35,
+        "close_dur":     27,
+        "total_est":     592,
     },
     "long": {
         "video_label":   "YouTube educational video (target 6-8 minutes)",
@@ -243,6 +264,55 @@ NO CLOSE SEGMENT FOR SHORTS:
 EVERY SENTENCE:
 8. No filler: never 'So', 'Basically', 'In other words', 'To summarize', 'Essentially'.
 9. Every sentence = a fact or a stakes-raise. Nothing else.
+"""
+
+# Standard/long-form retention rules — injected for non-shorts formats
+_STANDARD_SYSTEM_BOOST = """
+STANDARD VIDEO RETENTION RULES — 8-10 minute educational YouTube video:
+
+HOOK (0-30s — 70% of drop-off happens in the first 30 seconds):
+1. 2-3 sentences ONLY. Sentence 1: the single most impossible-sounding fact — state it cold, no softening.
+   Sentence 2: one number or scale comparison that proves it is real.
+   Sentence 3 (optional): "And that's just where it starts."
+2. End HOOK with forward momentum: "Here's what's actually happening — and nobody taught you this."
+3. NEVER start with: "Today we'll learn" / "Welcome back" / "In this video" / "Have you ever wondered".
+   Start directly with the FACT.
+
+TENSION (30s-2 min — viewers decide whether to stay for the whole video):
+4. Build in exactly TWO BEATS:
+   Beat 1 (2-3 sentences): Deepen the mystery. "But it gets stranger." "Scientists spent decades trying to explain this."
+   Beat 2 (2 sentences): Reveal an even bigger implication. "And the real explanation? Nobody saw it coming."
+5. End TENSION with a bridge that creates urgency: "What you're about to find out changes how this looks forever."
+
+CORE (2-9 min — main content, most critical for retention):
+6. DIVIDE INTO 5-6 NAMED CHAPTERS using this exact format:
+      [CHAPTER: Chapter Name]
+      ... 5-7 sentences of content ...
+      [BRIDGE] One teaser sentence pulling into the next chapter.
+   Chapter names must be descriptive and intriguing: "The Impossible Number", "What Scientists Missed", "The Hidden Cause", etc.
+7. Each chapter follows this 4-beat structure:
+   - Surprising fact (1-2 short punchy sentences)
+   - Mechanism explanation (2 sentences — HOW it actually works)
+   - Real-world scale (1 sentence — make the scale incomprehensible)
+   - Counterintuitive implication (1-2 sentences — the "so what" that reframes everything)
+8. PATTERN INTERRUPT at chapters 2 and 4 — direct viewer re-engagement:
+   "Here's where it gets unbelievable." / "Pay attention — this is the part they never tell you."
+   / "Most people miss this entirely." / "Now here's the part that breaks everything you just learned."
+9. Mark the single most shocking sentence across ALL chapters with [WOW].
+10. Vary sentence rhythm dramatically throughout CORE:
+    Short. Medium. LONGER cinematic sentence that builds atmosphere and detail. Short punch again.
+
+PAYOFF:
+11. 2-3 sentences. Directly resolve the HOOK's specific question — not a different question.
+    Final sentence: "The real implication is this:" then the one sentence that reframes EVERYTHING.
+
+CLOSE:
+12. THREE parts as instructed above. End on forward momentum — NEVER on goodbye.
+
+WRITING RULES FOR LONG-FORM:
+13. Every paragraph ends with a FACT or a QUESTION — never a transition phrase.
+14. ZERO filler connectors: "So," / "Basically," / "In other words," / "To summarize," / "Essentially,"
+15. Write as if narrating a high-budget documentary — authoritative, urgent, surprising at every turn.
 """
 
 # Director Brain — global story state injected into every Groq system prompt.
@@ -481,7 +551,7 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         tension_rule   = variant["tension_rule"],
         core_rule      = variant["core_rule"],
         payoff_rule    = variant["payoff_rule"],
-        close_rule     = variant["close_rule"],
+        close_rule     = _CLOSE_RULE_STANDARD,
         word_target    = fmt_profile["word_target"],
         duration_hint  = fmt_profile["duration_hint"],
         core_depth     = fmt_profile["core_depth"],
@@ -491,7 +561,7 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         payoff_time    = fmt_timing["payoff_time"],
         close_time     = fmt_timing["close_time"],
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
-    ) + _load_viewer_note()
+    ) + _load_viewer_note() + _STANDARD_SYSTEM_BOOST
 
     filled_prompt = _CLUSTER_USER_TMPL.format(
         video_label       = fmt_timing["video_label"],
@@ -658,13 +728,16 @@ def generate_script(topic: dict, logs_dir: Path | None = None) -> dict:
 
     fmt_timing = _FORMAT_TIMING.get(video_format, _FORMAT_TIMING["shorts"])
 
+    is_longform = video_format != "shorts"
+    close_rule  = _CLOSE_RULE_STANDARD if is_longform else variant["close_rule"]
+
     system_prompt = _SYSTEM_TMPL.format(
         description    = variant["description"],
         hook_rule      = augmented_hook_rule,
         tension_rule   = variant["tension_rule"],
         core_rule      = variant["core_rule"],
         payoff_rule    = variant["payoff_rule"],
-        close_rule     = variant["close_rule"],
+        close_rule     = close_rule,
         word_target    = fmt_profile["word_target"],
         duration_hint  = fmt_profile["duration_hint"],
         core_depth     = fmt_profile["core_depth"],
@@ -674,7 +747,7 @@ def generate_script(topic: dict, logs_dir: Path | None = None) -> dict:
         payoff_time    = fmt_timing["payoff_time"],
         close_time     = fmt_timing["close_time"],
         director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
-    ) + _load_viewer_note() + (_SHORTS_SYSTEM_BOOST if video_format == "shorts" else "")
+    ) + _load_viewer_note() + (_SHORTS_SYSTEM_BOOST if not is_longform else _STANDARD_SYSTEM_BOOST)
 
     # ── Inject banned phrases from recent videos to prevent repetition ────────
     banned = _load_banned_phrases(logs_dir, n=18)
