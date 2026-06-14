@@ -2,16 +2,15 @@ name: MindBlownFacts Video Pipeline
 
 on:
   schedule:
-    # ── Video uploads: 3 Shorts/day + 1 standard/day ───────────────────────────
+    # ── Video uploads: 3 Shorts/day + 1 standard/day + 1 bonus/day ─────────────
     # (PKT = UTC+5)
-    - cron: '0 3 * * *'   # 03:00 UTC │ 8:00 AM PKT │ SHORTS  — Asia morning scroll peak
-    - cron: '0 8 * * *'   # 08:00 UTC │ 1:00 PM PKT │ STANDARD — UK morning + Asia lunch peak
-    - cron: '0 13 * * *'  # 13:00 UTC │ 6:00 PM PKT │ SHORTS  — US morning + Asia evening PEAK
-    - cron: '0 21 * * *'  # 21:00 UTC │ 2:00 AM PKT │ SHORTS  — US after-work PEAK (highest US traffic)
-    # ── Bonus video — RSS/news-trigger driven, uploads daily at 9 AM PKT ───────
-    - cron: '0 4 * * *'   # 04:00 UTC │ 9:00 AM PKT │ BONUS standard — RSS topic, runs only if trigger pending
+    - cron: '0 7 * * *'   # 07:00 UTC │ 12:00 PM PKT │ SHORT #1  — UK morning + US late night
+    - cron: '0 11 * * *'  # 11:00 UTC │  4:00 PM PKT │ STANDARD  — UK afternoon + US early morning
+    - cron: '0 14 * * *'  # 14:00 UTC │  7:00 PM PKT │ SHORT #2  — UK prime-time + US lunch
+    - cron: '0 17 * * *'  # 17:00 UTC │ 10:00 PM PKT │ BONUS     — UK before bed + US afternoon peak
+    - cron: '0 20 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — US prime-time peak
     # ── Background tasks — always running ──────────────────────────────────────
-    - cron: '0 * * * *'    # Every hour — comment auto-responder + news monitor
+    - cron: '0 * * * *'   # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
     inputs:
       intent_override:
@@ -29,10 +28,10 @@ jobs:
     timeout-minutes: 120
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.schedule == '0 3 * * *'  ||
-      github.event.schedule == '0 8 * * *'  ||
-      github.event.schedule == '0 13 * * *' ||
-      github.event.schedule == '0 21 * * *'
+      github.event.schedule == '0 7 * * *'  ||
+      github.event.schedule == '0 11 * * *' ||
+      github.event.schedule == '0 14 * * *' ||
+      github.event.schedule == '0 20 * * *'
 
     steps:
       - name: Checkout
@@ -69,11 +68,11 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "format=${{ github.event.inputs.video_format || 'shorts' }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.schedule }}" = "0 8 * * *" ]; then
-            # 08:00 UTC daily = standard/long video with landscape video clips
+          elif [ "${{ github.event.schedule }}" = "0 11 * * *" ]; then
+            # 11:00 UTC (4 PM PKT) = standard video
             echo "format=standard" >> $GITHUB_OUTPUT
           else
-            # 03:00, 13:00, 21:00 UTC = Shorts with portrait video clips
+            # 07:00, 14:00, 20:00 UTC = Shorts
             echo "format=shorts" >> $GITHUB_OUTPUT
           fi
 
@@ -219,7 +218,7 @@ jobs:
     if: |
       always() &&
       (
-        github.event.schedule == '0 13 * * *' ||
+        github.event.schedule == '0 14 * * *' ||
         github.event_name == 'workflow_dispatch'
       )
 
@@ -268,14 +267,14 @@ jobs:
             git commit -m "bot: update analytics data [skip ci]"
           git push 2>/dev/null || true
 
-  # ── Bonus video — RSS/news-trigger driven, uploads every day at 9 AM PKT ─────
-  # Runs only when '0 4 * * *' schedule fires (04:00 UTC = 09:00 PKT).
+  # ── Bonus video — RSS/news-trigger driven, uploads every day at 10 PM PKT ────
+  # Runs only when '0 17 * * *' schedule fires (17:00 UTC = 10:00 PM PKT).
   # Only produces a video if news_trigger.json has an unused trigger (score ≥ 70).
   # Topic comes exclusively from RSS feeds / news monitor — never YouTube search.
   bonus-video:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    if: github.event.schedule == '0 4 * * *'
+    if: github.event.schedule == '0 17 * * *'
 
     steps:
       - name: Checkout
@@ -353,7 +352,7 @@ jobs:
           HUGGINGFACE_API_KEY_4:   ${{ secrets.HUGGINGFACE_API_KEY_4 }}
           HUGGINGFACE_API_KEY_5:   ${{ secrets.HUGGINGFACE_API_KEY_5 }}
         run: |
-          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 9 AM PKT ==="
+          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 10 PM PKT ==="
           python pipeline/main.py
           echo ""
           echo "=== Output files ==="
