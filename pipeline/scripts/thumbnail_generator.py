@@ -18,6 +18,8 @@ gets the same layout, but consecutive videos cycle through all 8 styles.
 """
 
 import logging
+import os
+import random
 import re
 import textwrap
 from pathlib import Path
@@ -126,16 +128,20 @@ _RIBBON_POWER = [
     "LEAKED", "LIED", "BANNED", "UNTOLD", "CONFIRMED", "FORBIDDEN",
 ]
 
-# 8 distinct layouts — each looks completely different visually
+# 9 distinct layouts — each looks completely different visually.
+# person_claim appears 3× because it's the #1 CTR format on YouTube
+# (shocked face + text claim matches how top channels structure thumbnails).
 _LAYOUTS = [
-    "claim_left",   # dark left + image right, 2-line huge claim
-    "highlight_box",# bright colored box on image background
-    "bottom_wide",  # full image + solid bottom band
-    "pure_text",    # near-black bg, text IS the visual
-    "full_text",    # heavy overlay, full-frame bold text
-    "split_vs",     # left dark label vs right bright image
-    "top_banner",   # dark top strip + image bottom
-    "number_hero",  # giant number dominates
+    "person_claim",  # shocked face right + 2-line claim left  ← #1 CTR
+    "claim_left",    # dark left gradient + image right
+    "highlight_box", # bright colored box behind text on image
+    "person_claim",  # shocked face (different query, 2nd rotation)
+    "bottom_wide",   # full dramatic image + solid bottom band
+    "pure_text",     # near-black bg, giant centered text
+    "person_claim",  # shocked face (3rd rotation)
+    "split_vs",      # dark left panel vs right image with divider
+    "top_banner",    # dark top strip + image bottom
+    "full_text",     # heavy overlay + accent boxes behind text
 ]
 
 # ── Pollinations.ai visual styles per category ────────────────────────────────
@@ -157,6 +163,43 @@ _INTENT_THUMB_STYLE: dict[str, str] = {
     "PHYSICS":     "particle accelerator explosion, quantum visualization, dramatic energy wave",
 }
 
+
+# Shocked/amazed human face queries — rotated per video for variety.
+# Portrait orientation gives clean face shots for the person_claim layout.
+_FACE_QUERIES = [
+    "shocked person expression face",
+    "amazed man open mouth surprise",
+    "surprised woman wide eyes face",
+    "shocked reaction person closeup",
+    "stunned amazed expression face",
+    "disbelief jaw drop person face",
+    "mind blown expression person",
+    "person pointing shocked face",
+    "young man shocked surprised face",
+    "woman shocked disbelief expression",
+    "man wide eyes amazed face",
+    "person covering mouth shocked",
+]
+
+# Topic-specific Pexels background queries per category.
+# These return real photographs that are visually relevant to the video topic.
+_INTENT_BG_QUERIES: dict[str, str] = {
+    "SPACE":       "space galaxy nebula dramatic stars",
+    "SCIENCE":     "laboratory science experiment glowing",
+    "HISTORY":     "ancient ruins stone temple dramatic light",
+    "ANIMALS":     "wildlife predator dramatic nature animal",
+    "NATURE":      "dramatic storm lightning nature landscape",
+    "GEOGRAPHY":   "canyon landscape aerial dramatic mountain",
+    "OCEAN":       "ocean underwater dramatic blue deep sea",
+    "CULTURE":     "ancient architecture temple city dramatic",
+    "TECHNOLOGY":  "technology neon circuit futuristic glow",
+    "PSYCHOLOGY":  "human brain mind concept dramatic",
+    "MYTHOLOGY":   "epic ancient statue mystery dramatic",
+    "MEDICINE":    "medical science cell microscope dramatic",
+    "MATHEMATICS": "geometric pattern abstract dramatic light",
+    "ECONOMICS":   "financial city architecture wealth dramatic",
+    "PHYSICS":     "energy wave particle physics abstract",
+}
 
 # ── AI background generation ──────────────────────────────────────────────────
 
@@ -256,6 +299,109 @@ def _fetch_ai_bg(title: str, intent: str, cache_dir: Path) -> "Path | None":
     return None
 
 
+# ── Pexels real-photo fetching ────────────────────────────────────────────────
+
+def _fetch_pexels_face(title: str, cache_dir: Path) -> "Path | None":
+    """
+    Fetch a shocked/amazed human face from Pexels for the person_claim layout.
+    Uses portrait orientation so the face fills the right side of the thumbnail.
+    Query rotates based on title hash so consecutive videos show different faces.
+    """
+    api_key = os.getenv("PEXELS_API_KEY", "")
+    if not api_key:
+        return None
+    try:
+        import requests as _req
+    except ImportError:
+        return None
+
+    query      = _FACE_QUERIES[abs(hash(title)) % len(_FACE_QUERIES)]
+    cache_path = cache_dir / f"thumb_face_{abs(hash(title + 'face')) % 99991}.jpg"
+    if cache_path.exists() and cache_path.stat().st_size > 15_000:
+        return cache_path
+
+    try:
+        r = _req.get(
+            "https://api.pexels.com/v1/search",
+            headers={"Authorization": api_key},
+            params={"query": query, "orientation": "portrait",
+                    "per_page": 15, "size": "large"},
+            timeout=15,
+        )
+        if not r.ok:
+            return None
+        photos = r.json().get("photos", [])
+        if not photos:
+            return None
+        photo = photos[abs(hash(title)) % len(photos)]
+        url   = photo.get("src", {}).get("large2x") or photo.get("src", {}).get("large")
+        if not url:
+            return None
+        img_r = _req.get(url, timeout=20)
+        if img_r.ok and len(img_r.content) > 15_000:
+            cache_path.write_bytes(img_r.content)
+            log.info("  Pexels face image ready: %s", query)
+            return cache_path
+    except Exception as exc:
+        log.debug("Pexels face fetch '%s': %s", query, exc)
+    return None
+
+
+def _fetch_pexels_bg(title: str, intent: str, cache_dir: Path) -> "Path | None":
+    """
+    Fetch a topic-matched background from Pexels using title keywords + category style.
+    Falls back gracefully if PEXELS_API_KEY is not set.
+    """
+    api_key = os.getenv("PEXELS_API_KEY", "")
+    if not api_key:
+        return None
+    try:
+        import requests as _req
+    except ImportError:
+        return None
+
+    stop = {
+        "the","a","an","of","is","are","was","were","and","or","in","on","at","to",
+        "for","with","by","from","it","this","that","why","how","what","do","does",
+        "did","can","will","would","could","should","really","actually","ever","never",
+    }
+    kw    = [w.strip(".,!?:;\"'|") for w in title.split()
+             if w.lower().strip(".,!?:;\"'|") not in stop
+             and len(w.strip(".,!?:;\"'|")) > 2][:3]
+    style = _INTENT_BG_QUERIES.get(intent.upper(), "dramatic cinematic scene")
+    query = (" ".join(kw) + " " + style).strip() if kw else style
+
+    cache_path = cache_dir / f"thumb_pexbg_{abs(hash(title + 'bg')) % 99991}.jpg"
+    if cache_path.exists() and cache_path.stat().st_size > 20_000:
+        return cache_path
+
+    try:
+        r = _req.get(
+            "https://api.pexels.com/v1/search",
+            headers={"Authorization": api_key},
+            params={"query": query, "orientation": "landscape",
+                    "per_page": 15, "size": "large"},
+            timeout=15,
+        )
+        if not r.ok:
+            return None
+        photos = r.json().get("photos", [])
+        if not photos:
+            return None
+        photo = photos[abs(hash(title)) % len(photos)]
+        url   = photo.get("src", {}).get("large2x") or photo.get("src", {}).get("large")
+        if not url:
+            return None
+        img_r = _req.get(url, timeout=20)
+        if img_r.ok and len(img_r.content) > 20_000:
+            cache_path.write_bytes(img_r.content)
+            log.info("  Pexels topic bg ready: '%s'", query[:55])
+            return cache_path
+    except Exception as exc:
+        log.debug("Pexels bg fetch '%s': %s", query[:40], exc)
+    return None
+
+
 # ── Hook → thumbnail claim ────────────────────────────────────────────────────
 
 _HOOK_FILLER_STARTS = {
@@ -347,15 +493,28 @@ def generate_thumbnail(
     else:
         layout = _LAYOUTS[abs(hash(title)) % len(_LAYOUTS)]
 
-    bg = _load_background(visuals_dir, timeline, intent, title)
-    draw = ImageDraw.Draw(bg)   # drawing happens AFTER per-layout overlay
+    # Fetch face image for person_claim layout (portrait Pexels photo)
+    face_path = None
+    if layout == "person_claim":
+        face_path = _fetch_pexels_face(title, visuals_dir)
+        if not face_path:
+            # No face available — fall back to claim_left which has the same structure
+            layout = "claim_left"
+            log.debug("Face fetch failed — downgrading person_claim → claim_left")
+
+    bg   = _load_background(visuals_dir, timeline, intent, title)
+    draw = ImageDraw.Draw(bg)
 
     pad        = 50
     font_small = _load_font(30)
 
     # ── Per-layout rendering ──────────────────────────────────────────────────
 
-    if layout == "claim_left":
+    if layout == "person_claim":
+        _render_person_claim(bg, draw, face_path, line1, line2, accent, pad)
+        draw = ImageDraw.Draw(bg)   # redraw after pastes
+
+    elif layout == "claim_left":
         _render_claim_left(bg, draw, line1, line2, accent, pad)
 
     elif layout == "highlight_box":
@@ -743,6 +902,90 @@ def _render_number_hero(bg, draw, number: str, subtitle: str, accent: tuple, pad
                       fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
 
 
+def _render_person_claim(bg, draw, face_path, line1: str, line2: str,
+                         accent: tuple, pad: int):
+    """
+    #1 highest-CTR YouTube thumbnail format — used by every top educational channel:
+    - RIGHT 48%: real shocked/amazed human face (from Pexels portrait photo)
+    - LEFT 55%: dark overlay + large 2-line claim in accent + white
+    - Blended edge where face meets dark side
+
+    Psychology: viewer sees EMOTION on face → reads TEXT → clicks.
+    The human face triggers a mirror-neuron response — viewers feel the shock
+    before they even read the words.
+    """
+    from PIL import Image, ImageDraw as _ID
+    W, H = _TW, _TH
+
+    # Strong dark gradient covering left 50%, fading to transparent at 72%
+    grad = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = _ID.Draw(grad)
+    for x in range(W):
+        if x < int(W * 0.50):
+            alpha = 225
+        elif x < int(W * 0.72):
+            alpha = int(225 * (1.0 - (x - W * 0.50) / (W * 0.22)))
+        else:
+            alpha = 0
+        d.line([(x, 0), (x, H)], fill=(0, 0, 0, alpha))
+    result = Image.alpha_composite(bg.convert("RGBA"), grad).convert("RGB")
+    bg.paste(result)
+
+    # Paste the human face on the right half
+    if face_path:
+        try:
+            face = Image.open(face_path).convert("RGB")
+            fw, fh = face.size
+            target_w = int(W * 0.50)
+            target_h = H
+            scale = max(target_w / fw, target_h / fh)
+            nw, nh = int(fw * scale), int(fh * scale)
+            face = face.resize((nw, nh), Image.LANCZOS)
+            # Center horizontally; bias upward so face (not chest) is visible
+            xo = (nw - target_w) // 2
+            yo = max(0, (nh - target_h) // 5)
+            face_crop = face.crop((xo, yo, xo + target_w, yo + target_h))
+            bg.paste(face_crop, (W - target_w, 0))
+            log.debug("Face pasted (%dx%d crop from %dx%d)", target_w, target_h, nw, nh)
+        except Exception as exc:
+            log.debug("Face paste failed: %s", exc)
+
+    # Blend edge: gradient shadow at the face/text boundary so they merge cleanly
+    edge = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ed = _ID.Draw(edge)
+    blend_start = int(W * 0.47)
+    blend_end   = int(W * 0.58)
+    for x in range(blend_start, blend_end):
+        alpha = int(160 * (1.0 - (x - blend_start) / (blend_end - blend_start)))
+        ed.line([(x, 0), (x, H)], fill=(0, 0, 0, alpha))
+    merged = Image.alpha_composite(bg.convert("RGBA"), edge).convert("RGB")
+    bg.paste(merged)
+
+    # Redraw for ImageDraw after pastes
+    draw._image = bg
+
+    # Text on the left
+    zone_w  = int(W * 0.58)
+    l1_sz   = 148 if len(line1.split()) <= 2 else 112
+    l2_sz   = 94  if len(line1.split()) <= 2 else 76
+    font_l1 = _load_font(l1_sz)
+    font_l2 = _load_font(l2_sz)
+
+    l1_lines = textwrap.wrap(line1, width=max(4, int(zone_w / (l1_sz * 0.55))))[:2]
+    l2_lines = textwrap.wrap(line2, width=max(5, int(zone_w / (l2_sz * 0.55))))[:2] if line2 else []
+
+    total_h = len(l1_lines) * (l1_sz + 10) + (16 + len(l2_lines) * (l2_sz + 8) if l2_lines else 0)
+    y = (H - total_h) // 2
+
+    for i, line in enumerate(l1_lines):
+        _draw_glow_text(draw, (pad, y + i * (l1_sz + 10)), line, font_l1, accent, accent)
+    if l2_lines:
+        y2 = y + len(l1_lines) * (l1_sz + 10) + 16
+        for i, line in enumerate(l2_lines):
+            draw.text((pad, y2 + i * (l2_sz + 8)), line, font=font_l2,
+                      fill=(255, 255, 255), stroke_width=4, stroke_fill=(0, 0, 0))
+
+
 # ── Drawing helpers ───────────────────────────────────────────────────────────
 
 def _draw_glow_text(draw, pos: tuple, text: str, font, fill: tuple, glow: tuple) -> None:
@@ -880,6 +1123,7 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str,
                      title: str = "") -> "Image.Image":
     from PIL import Image
 
+    # 1. AI-generated background (HuggingFace SDXL / Pollinations)
     if title:
         ai_path = _fetch_ai_bg(title, intent, visuals_dir)
         if ai_path:
@@ -888,6 +1132,16 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str,
             except Exception as exc:
                 log.debug("AI background load failed: %s", exc)
 
+    # 2. Pexels topic-matched real photograph (title keywords + category style)
+    if title:
+        pex_path = _fetch_pexels_bg(title, intent, visuals_dir)
+        if pex_path:
+            try:
+                return Image.open(pex_path).convert("RGB").resize((_TW, _TH), Image.LANCZOS)
+            except Exception as exc:
+                log.debug("Pexels bg load failed: %s", exc)
+
+    # 3. Pre-saved thumbnail background from a previous step
     thumb_bg = visuals_dir / "thumbnail_bg.png"
     if thumb_bg.exists() and thumb_bg.stat().st_size > 5_000:
         try:
@@ -895,6 +1149,7 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str,
         except Exception as exc:
             log.debug("thumbnail_bg.png load failed: %s", exc)
 
+    # 4. Most dramatic image from video scenes (already fetched and topic-relevant)
     best_file  = None
     best_score = -1.0
     for sc in timeline.get("scenes", []):
@@ -912,8 +1167,9 @@ def _load_background(visuals_dir: Path, timeline: dict, intent: str,
         try:
             return Image.open(best_file).convert("RGB").resize((_TW, _TH), Image.LANCZOS)
         except Exception as exc:
-            log.debug("Background load failed: %s", exc)
+            log.debug("Video scene background load failed: %s", exc)
 
+    # 5. Solid category colour as last resort
     return Image.new("RGB", (_TW, _TH), _INTENT_BG.get(intent, (10, 10, 40)))
 
 
