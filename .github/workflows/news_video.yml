@@ -4,7 +4,7 @@ on:
   schedule:
     # ── Video uploads: 3 Shorts/day + 1 standard/day + 1 bonus/day ─────────────
     # (PKT = UTC+5)
-    - cron: '0 7 * * *'   # 07:00 UTC │ 12:00 PM PKT │ SHORT #1  — UK morning + US late night
+    - cron: '0 5 * * *'   # 05:00 UTC │ 10:00 AM PKT │ SHORT #1  — US West Coast 10 PM + UK 5 AM early risers
     - cron: '0 11 * * *'  # 11:00 UTC │  4:00 PM PKT │ STANDARD  — UK afternoon + US early morning
     - cron: '0 14 * * *'  # 14:00 UTC │  7:00 PM PKT │ SHORT #2  — UK prime-time + US lunch
     - cron: '0 20 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — UK prime evening (8 PM GMT) + US afternoon
@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 120
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.schedule == '0 7 * * *'  ||
+      github.event.schedule == '0 5 * * *'  ||
       github.event.schedule == '0 11 * * *' ||
       github.event.schedule == '0 14 * * *' ||
       github.event.schedule == '0 20 * * *'
@@ -72,7 +72,7 @@ jobs:
             # 11:00 UTC (4 PM PKT) = standard video
             echo "format=standard" >> $GITHUB_OUTPUT
           else
-            # 07:00, 14:00, 20:00 UTC = Shorts
+            # 05:00, 14:00, 20:00 UTC = Shorts
             echo "format=shorts" >> $GITHUB_OUTPUT
           fi
 
