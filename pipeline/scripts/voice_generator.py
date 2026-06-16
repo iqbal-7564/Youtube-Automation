@@ -204,10 +204,13 @@ def _edge_tts(text: str, out: Path, emotion: str) -> bool:
 
 
 def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
-    # Try account 1 first, fall back to account 2 on quota/rate limit (429/401)
+    # Try all available keys in order — when one hits quota (429/401) move to next.
+    # Add ELEVENLABS_API_KEY_3 / _4 in GitHub secrets to extend monthly quota.
     keys = [
         os.getenv("ELEVENLABS_API_KEY",   "").strip(),
         os.getenv("ELEVENLABS_API_KEY_2", "").strip(),
+        os.getenv("ELEVENLABS_API_KEY_3", "").strip(),
+        os.getenv("ELEVENLABS_API_KEY_4", "").strip(),
     ]
     settings = _EL_SETTINGS.get(emotion, _EL_SETTINGS["neutral"])
 

@@ -82,8 +82,11 @@ jobs:
           INTENT_OVERRIDE:       ${{ github.event.inputs.intent_override }}
           GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_API_KEY_3:        ${{ secrets.GROQ_API_KEY_3 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_API_KEY_2:  ${{ secrets.ELEVENLABS_API_KEY_2 }}
+          ELEVENLABS_API_KEY_3:  ${{ secrets.ELEVENLABS_API_KEY_3 }}
+          ELEVENLABS_API_KEY_4:  ${{ secrets.ELEVENLABS_API_KEY_4 }}
           PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
           YOUTUBE_API_KEY:       ${{ secrets.YOUTUBE_API_KEY }}
@@ -311,8 +314,11 @@ jobs:
           TOPIC_SOURCE:          rss
           GROQ_API_KEY_1:        ${{ secrets.GROQ_API_KEY_1 }}
           GROQ_API_KEY_2:        ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_API_KEY_3:        ${{ secrets.GROQ_API_KEY_3 }}
           ELEVENLABS_API_KEY:    ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_API_KEY_2:  ${{ secrets.ELEVENLABS_API_KEY_2 }}
+          ELEVENLABS_API_KEY_3:  ${{ secrets.ELEVENLABS_API_KEY_3 }}
+          ELEVENLABS_API_KEY_4:  ${{ secrets.ELEVENLABS_API_KEY_4 }}
           PEXELS_API_KEY:        ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
           YOUTUBE_API_KEY:       ${{ secrets.YOUTUBE_API_KEY }}

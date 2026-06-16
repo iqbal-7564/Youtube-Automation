@@ -33,6 +33,7 @@ _GROQ_URL  = "https://api.groq.com/openai/v1/chat/completions"
 _GROQ_KEYS = [
     os.getenv("GROQ_API_KEY_1", "").strip(),
     os.getenv("GROQ_API_KEY_2", "").strip(),
+    os.getenv("GROQ_API_KEY_3", "").strip(),
 ]
 _MODEL = "llama-3.3-70b-versatile"
 

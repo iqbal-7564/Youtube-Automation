@@ -670,6 +670,7 @@ def _groq_build_cluster(category: str, seeds: list[str], n: int) -> dict | None:
     keys = [
         os.getenv("GROQ_API_KEY_1", "").strip(),
         os.getenv("GROQ_API_KEY_2", "").strip(),
+        os.getenv("GROQ_API_KEY_3", "").strip(),
     ]
     seeds_str = "\n".join(f"- {s}" for s in seeds)
 
@@ -1005,7 +1006,8 @@ def select_bonus_topic(logs_dir: Path) -> dict | None:
     full_history = _load_full_history(logs_dir)
     groq_key     = next(
         (k for k in [os.getenv("GROQ_API_KEY_1", "").strip(),
-                     os.getenv("GROQ_API_KEY_2", "").strip()] if k),
+                     os.getenv("GROQ_API_KEY_2", "").strip(),
+                     os.getenv("GROQ_API_KEY_3", "").strip()] if k),
         None,
     )
 
@@ -1559,7 +1561,7 @@ def _prioritise_categories(
 
 def _fetch_trending_hints() -> dict[str, str]:
     """Use Groq to fetch one AI-generated trending angle hint per category."""
-    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip(), os.getenv("GROQ_API_KEY_3", "").strip()]
     for key in keys:
         if not key:
             continue
@@ -1828,7 +1830,7 @@ def _groq_title_from_search(phrase: str, category: str, wiki_summary: str = "") 
     This is different from _groq_expand which invents a fresh angle — here we
     honour the search intent and reformat only for CTR.
     """
-    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip(), os.getenv("GROQ_API_KEY_3", "").strip()]
     for key in keys:
         if not key:
             continue
@@ -2045,7 +2047,7 @@ def _wikipedia_verify(seed: str) -> str:
 
 
 def _groq_expand(category: str, seed: str, trend_hint: str = "") -> tuple[str, str]:
-    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip()]
+    keys = [os.getenv("GROQ_API_KEY_1", "").strip(), os.getenv("GROQ_API_KEY_2", "").strip(), os.getenv("GROQ_API_KEY_3", "").strip()]
     for key in keys:
         if not key:
             continue
