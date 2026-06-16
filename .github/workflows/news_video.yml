@@ -267,10 +267,10 @@ jobs:
             git commit -m "bot: update analytics data [skip ci]"
           git push 2>/dev/null || true
 
-  # ── Bonus video — RSS/news-trigger driven, uploads daily at 5 AM PKT (00:00 UTC) ──
-  # 00:00 UTC = 7 PM ET / 4 PM PT — US prime-time peak (highest YouTube traffic globally).
-  # Only produces a video if news_trigger.json has an unused trigger (score ≥ 70).
-  # Topic comes exclusively from RSS feeds / news monitor — never YouTube search.
+  # ── Bonus video — AI & Technology daily, 00:00 UTC (7 PM ET / 5 AM PKT) ──────
+  # Uploads EVERY DAY — no trigger score threshold required.
+  # Topic = today's real AI/tech news, verified not fake via Groq.
+  # Falls back to Groq-generated AI/tech topic if RSS is unavailable.
   bonus-video:
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -282,45 +282,21 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for pending news trigger
-        id: trigger
-        run: |
-          python3 -c "
-          import json, sys
-          from pathlib import Path
-          tp = Path('pipeline/logs/news_trigger.json')
-          if not tp.exists():
-              print('no_trigger=true')
-              sys.exit(0)
-          d = json.loads(tp.read_text())
-          used  = d.get('used', True)
-          score = d.get('topic', {}).get('news_score', 0)
-          pending = (not used) and (score >= 70)
-          print('pending=true' if pending else 'pending=false')
-          import os; out = os.environ.get('GITHUB_OUTPUT','')
-          with open(out,'a') as f:
-              f.write(f'pending={str(pending).lower()}\n')
-          "
-
       - name: Setup Python 3.11
-        if: steps.trigger.outputs.pending == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install system dependencies
-        if: steps.trigger.outputs.pending == 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg fonts-dejavu fonts-liberation libass-dev
 
       - name: Install Python dependencies
-        if: steps.trigger.outputs.pending == 'true'
         run: pip install requests gtts edge-tts rapidfuzz Pillow pytrends
 
       - name: Create runtime directories
-        if: steps.trigger.outputs.pending == 'true'
         run: |
           mkdir -p pipeline/temp/voice     \
                    pipeline/temp/visuals   \
@@ -329,8 +305,7 @@ jobs:
                    pipeline/output         \
                    pipeline/logs
 
-      - name: Run Bonus Video Pipeline (RSS topic)
-        if: steps.trigger.outputs.pending == 'true'
+      - name: Run AI & Technology Bonus Video Pipeline
         env:
           VIDEO_FORMAT:          standard
           TOPIC_SOURCE:          rss
@@ -352,7 +327,7 @@ jobs:
           HUGGINGFACE_API_KEY_4:   ${{ secrets.HUGGINGFACE_API_KEY_4 }}
           HUGGINGFACE_API_KEY_5:   ${{ secrets.HUGGINGFACE_API_KEY_5 }}
         run: |
-          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 5 AM PKT / 7 PM ET ==="
+          echo "=== MindBlownFacts AI & Technology Bonus — 00:00 UTC / 7 PM ET / 5 AM PKT ==="
           python pipeline/main.py
           echo ""
           echo "=== Output files ==="
@@ -366,5 +341,5 @@ jobs:
           git config user.email "bot@visionaryminds.com"
           git add pipeline/logs/ 2>/dev/null || true
           git diff --staged --quiet || \
-            git commit -m "bot: bonus video logs [skip ci]"
+            git commit -m "bot: AI tech bonus video logs [skip ci]"
           git push 2>/dev/null || true

@@ -736,56 +736,283 @@ def _check_news_trigger(logs_dir: Path) -> dict | None:
     return None
 
 
+# ── AI & Technology bonus video ───────────────────────────────────────────────
+# Reliable AI/tech news RSS feeds — ordered by AI-specificity.
+# The bonus video always covers current AI & Technology news (uploaded daily).
+_AI_TECH_RSS_FEEDS = [
+    "https://techcrunch.com/category/artificial-intelligence/feed/",
+    "https://venturebeat.com/category/ai/feed/",
+    "https://www.technologyreview.com/feed/",
+    "https://www.wired.com/feed/category/artificial-intelligence/latest/rss.xml",
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://www.theverge.com/rss/index.xml",
+    "https://zdnet.com/topic/artificial-intelligence/rss.xml",
+    "https://feeds.feedburner.com/TechCrunch",
+    "https://www.engadget.com/rss.xml",
+    "https://spectrum.ieee.org/feeds/feed.rss",
+]
+
+# Keywords that mark a story as AI/technology (for filtering general tech feeds)
+_AI_KEYWORDS = {
+    "ai", "artificial intelligence", "machine learning", "chatgpt", "gpt", "llm",
+    "openai", "google gemini", "claude", "anthropic", "deepmind", "meta ai",
+    "robot", "automation", "neural", "deep learning", "generative ai", "gen ai",
+    "large language model", "computer vision", "self-driving", "autonomous",
+    "chip", "semiconductor", "nvidia", "quantum", "cybersecurity", "drone",
+    "tech", "software", "algorithm", "data center", "cloud computing", "apple",
+    "microsoft", "google", "samsung", "intel", "amd", "spacex", "tesla",
+}
+
+
+def _strip_html(text: str) -> str:
+    """Remove HTML tags and decode basic entities."""
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+    text = text.replace("&nbsp;", " ").replace("&#39;", "'").replace("&quot;", '"')
+    return " ".join(text.split())
+
+
+def _fetch_ai_tech_news_items() -> list[tuple[str, str, str]]:
+    """
+    Fetch recent AI & Technology headlines from RSS feeds.
+    Returns list of (title, description, link) — most recent first.
+    Filters to items that are genuinely about AI or technology.
+    """
+    import xml.etree.ElementTree as ET
+
+    items: list[tuple[str, str, str]] = []
+
+    for feed_url in _AI_TECH_RSS_FEEDS:
+        try:
+            r = requests.get(
+                feed_url,
+                timeout=10,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; MindBlownFacts/1.0)"},
+            )
+            if not r.ok:
+                continue
+            root = ET.fromstring(r.content)
+
+            # RSS 2.0 format
+            channel = root.find("channel")
+            if channel is not None:
+                for item in channel.findall("item")[:8]:
+                    title = _strip_html(item.findtext("title", "")).strip()
+                    desc  = _strip_html(item.findtext("description", "")).strip()[:400]
+                    link  = item.findtext("link", "").strip()
+                    if title and len(title) > 15:
+                        items.append((title, desc, link))
+                continue
+
+            # Atom format
+            ns = "http://www.w3.org/2005/Atom"
+            for entry in root.findall(f"{{{ns}}}entry")[:8]:
+                title   = _strip_html(entry.findtext(f"{{{ns}}}title", "")).strip()
+                summary = _strip_html(entry.findtext(f"{{{ns}}}summary", "")).strip()[:400]
+                link_el = entry.find(f"{{{ns}}}link")
+                link    = link_el.get("href", "") if link_el is not None else ""
+                if title and len(title) > 15:
+                    items.append((title, summary, link))
+
+        except Exception as exc:
+            log.debug("AI/tech RSS feed '%s': %s", feed_url[:50], exc)
+
+    log.info("Bonus: fetched %d AI/tech news items from %d feeds",
+             len(items), len(_AI_TECH_RSS_FEEDS))
+    return items
+
+
+def _is_real_ai_news(title: str, description: str, key: str) -> bool:
+    """
+    Verify this is real, factual AI/tech news (not opinion, satire, or rumour).
+    Uses a fast Groq call with strict JSON output. Defaults to True if check fails.
+    """
+    title_lower = title.lower()
+
+    # Instant heuristic rejections (no API call needed)
+    skip_signals = [
+        "opinion:", "editorial:", "satire", "parody", "rumor", "allegedly",
+        "unverified", "report:", "exclusive:", "breaking:", "sponsored",
+    ]
+    if any(s in title_lower for s in skip_signals):
+        return False
+
+    # Keep items that mention at least one AI/tech keyword
+    has_kw = any(kw in title_lower or kw in description.lower() for kw in _AI_KEYWORDS)
+    if not has_kw:
+        log.debug("Bonus: no AI/tech keyword in '%s' — skipping", title[:50])
+        return False
+
+    if not key:
+        return True
+
+    try:
+        r = requests.post(
+            _GROQ_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": _GROQ_MODEL,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You verify if a tech news headline describes a real, factual "
+                            "AI or technology development — not pure opinion, satire, or "
+                            "unverified rumour. Respond ONLY with valid JSON: "
+                            "{\"real\": true/false}"
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Title: {title}\nSummary: {description[:200]}",
+                    },
+                ],
+                "temperature": 0,
+                "max_tokens":  20,
+            },
+            timeout=10,
+        )
+        if r.ok:
+            raw = r.json()["choices"][0]["message"]["content"].strip()
+            m   = re.search(r'\{.*\}', raw, re.DOTALL)
+            if m:
+                return json.loads(m.group()).get("real", True)
+    except Exception as exc:
+        log.debug("AI news verify: %s", exc)
+    return True
+
+
+def _ai_news_to_video_topic(news_title: str, news_desc: str, key: str) -> "dict | None":
+    """
+    Convert a real AI/tech news item into a MindBlownFacts YouTube video topic.
+    Focuses on what this means for regular people (not just reporting the headline).
+    """
+    if not key:
+        return None
+    try:
+        r = requests.post(
+            _GROQ_URL,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": _GROQ_MODEL,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You convert real AI & technology news into educational YouTube "
+                            "video topics for MindBlownFacts. The video explains what the "
+                            "development MEANS for regular people — not just the headline. "
+                            "Focus on: what is it, how does it actually work, why does it "
+                            "matter to everyday life, what does it change.\n"
+                            "RULES:\n"
+                            "1. Title under 70 chars, ends with 1 emoji, no banned words "
+                            "(shocking/amazing/unbelievable/nobody told you).\n"
+                            "2. Title must be searchable — use the actual technology name.\n"
+                            "3. Description: 2 sentences, what it does + real-world impact.\n"
+                            "Return ONLY valid JSON (no markdown): "
+                            "{\"title\": \"...\", \"description\": \"...\"}"
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"News headline: {news_title}\n"
+                            f"News summary: {news_desc}\n\n"
+                            "Create a MindBlownFacts YouTube video topic. Use the actual "
+                            "technology/product name in the title. Explain the real impact."
+                        ),
+                    },
+                ],
+                "temperature": 0.70,
+                "max_tokens":  200,
+            },
+            timeout=20,
+        )
+        if r.ok:
+            raw = r.json()["choices"][0]["message"]["content"].strip()
+            m   = re.search(r'\{.*\}', raw, re.DOTALL)
+            if m:
+                data  = json.loads(m.group())
+                title = data.get("title", "").strip()
+                desc  = data.get("description", "").strip()
+                if title and len(title) >= 10:
+                    return {
+                        "title":             title[:200],
+                        "description":       desc[:500],
+                        "intent":            "TECHNOLOGY",
+                        "source":            "AITechRSS",
+                        "published_at":      datetime.utcnow().isoformat(),
+                        "article_url":       "",
+                        "seed":              news_title[:100],
+                        "trend_hint":        "",
+                        "novelty_score":     70,
+                        "curiosity_score":   65,
+                        "saturation":        "pass",
+                        "viral_score":       68.0,
+                        "performance_score": 65.0,
+                    }
+    except Exception as exc:
+        log.debug("_ai_news_to_video_topic: %s", exc)
+    return None
+
+
 def select_bonus_topic(logs_dir: Path) -> dict | None:
     """
-    Topic selector for bonus videos (uploads at 9 AM PKT daily).
-    Uses RSS / news trigger exclusively — never touches YouTube trending or autocomplete.
-    """
-    full_history   = _load_full_history(logs_dir)
-    trending_seeds = _fetch_trending_seeds(logs_dir)
-    trending_hints = _fetch_trending_hints()
+    DAILY bonus video — always AI & Technology current news.
+    Runs every day at 00:00 UTC (7 PM ET). No score threshold.
+    Just verifies the news is real — no trending requirement.
 
-    # Priority 1: News trigger saved by news_monitor
+    Priority:
+      1. Existing news trigger (if already saved by news_monitor today)
+      2. Latest AI/tech RSS headlines — verified real, turned into video topic
+      3. Groq-generated fresh AI/tech topic (when RSS unavailable)
+    """
+    full_history = _load_full_history(logs_dir)
+    groq_key     = next(
+        (k for k in [os.getenv("GROQ_API_KEY_1", "").strip(),
+                     os.getenv("GROQ_API_KEY_2", "").strip()] if k),
+        None,
+    )
+
+    # Priority 1: News trigger saved by the hourly news_monitor (if present today)
     news_topic = _check_news_trigger(logs_dir)
     if news_topic:
-        log.info("Bonus: news trigger → %s", news_topic["title"][:70])
+        log.info("Bonus: existing trigger used → %s", news_topic["title"][:70])
         return news_topic
 
-    # Priority 2: RSS category signal + broad seeds
-    rss_cat_scores: dict[str, float] = {}
-    for cat, items in trending_seeds.items():
-        rss_cat_scores[cat] = sum(score for _, score in items)
-    rss_cats = sorted(rss_cat_scores, key=rss_cat_scores.get, reverse=True)
+    # Priority 2: Fetch today's real AI & Technology news from RSS feeds
+    news_items = _fetch_ai_tech_news_items()
+    for title, description, link in news_items:
+        if _is_duplicate(title, full_history):
+            log.debug("Bonus: duplicate skip '%s'", title[:50])
+            continue
+        if not _is_real_ai_news(title, description, groq_key):
+            log.debug("Bonus: fake/opinion filter '%s'", title[:50])
+            continue
+        topic = _ai_news_to_video_topic(title, description, groq_key)
+        if topic:
+            topic["article_url"] = link
+            log.info("Bonus AI/tech topic from RSS: %s", topic["title"][:70])
+            return topic
 
-    for cat in rss_cats[:10]:
-        broad_seeds = list(_SEEDS.get(cat, []))
-        random.shuffle(broad_seeds)
-        for seed in broad_seeds[:8]:
-            topic = _build_topic(cat, seed, full_history, trending_hints.get(cat, ""))
-            if topic:
-                topic["source"] = "RSS-BonusVideo"
-                log.info("Bonus RSS topic [%s]: %s", cat, topic["title"][:80])
-                return topic
+    # Priority 3: RSS unavailable — Groq generates fresh AI/tech topic
+    log.warning("Bonus: RSS fetch failed — generating fresh AI/tech topic via Groq")
+    ai_seeds = [
+        "artificial intelligence", "large language model", "robotics",
+        "computer vision", "autonomous vehicles", "quantum computing",
+        "cybersecurity", "generative ai", "semiconductor technology",
+        "neural network", "machine learning breakthrough",
+    ]
+    random.shuffle(ai_seeds)
+    for seed in ai_seeds[:6]:
+        topic = _build_topic("TECHNOLOGY", seed, full_history, "latest AI developments")
+        if topic:
+            topic["source"] = "AITechFallback"
+            log.info("Bonus fallback topic: %s", topic["title"][:70])
+            return topic
 
-    # Fallback: bypass duplicate filters, use top RSS category
-    if rss_cats:
-        cat  = rss_cats[0]
-        seed = random.choice(_SEEDS.get(cat, ["facts"]))
-        title, description = _groq_expand(cat, seed, trending_hints.get(cat, ""))
-        if title:
-            return {
-                "title": title[:200], "description": description[:500],
-                "intent": cat, "source": "RSS-BonusFallback",
-                "published_at": datetime.utcnow().isoformat(),
-                "article_url": "", "seed": seed, "trend_hint": "",
-                "novelty_score": 50, "curiosity_score": 0,
-                "saturation": "pass", "viral_score": 0.0,
-                "performance_score": 50.0,
-            }
-
-    # Ultimate fallback — regular topic selection
-    log.warning("Bonus topic selection: no RSS signal — using regular selector")
-    return select_topic(logs_dir)
+    log.error("Bonus: all topic sources failed")
+    return None
 
 
 def select_topic(logs_dir: Path) -> dict | None:
