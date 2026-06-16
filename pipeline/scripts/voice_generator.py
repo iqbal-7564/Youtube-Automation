@@ -5,7 +5,7 @@ Generates one audio file per scene (voice_{scene_id}.mp3).
 Measures ACTUAL duration with ffprobe, then updates the master timeline.
 If actual duration drifts > 500ms from estimate, scene visual duration adjusts.
 
-Engine priority: edge-tts → ElevenLabs → gTTS → silence fallback
+Engine priority: ElevenLabs → edge-tts → gTTS → silence fallback
 ElevenLabs voice settings are tuned per emotion tag.
 
 300 ms of silence is appended ONCE (only when the file is freshly generated).
@@ -157,12 +157,14 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
 def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3.0) -> str:
-    # Each engine gets 2 attempts with 1s backoff before falling to the next.
-    # This prevents a single API glitch from permanently dropping to a lower quality.
-    if _edge_tts(text, out, emotion):
-        return "edge-tts"
+    # ElevenLabs first — it sounds closest to a real human voice.
+    # edge-tts is free but recognisably robotic; viewers can tell immediately
+    # and it reduces watch time and trust. ElevenLabs is used FIRST because
+    # voice quality is the single biggest differentiator vs other channels.
     if _elevenlabs(text, out, emotion):
         return "elevenlabs"
+    if _edge_tts(text, out, emotion):
+        return "edge-tts"
     if _gtts(text, out):
         return "gtts"
     _silence_file(out, max(1.0, fallback_duration_s))

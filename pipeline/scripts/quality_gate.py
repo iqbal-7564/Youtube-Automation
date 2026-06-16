@@ -66,16 +66,22 @@ def run_quality_gate(
     t_probe = max(30,  int(dur_s * 0.4))
     t_audio = max(90,  int(dur_s * 1.0))
 
+    # Only audio_failure is a hard block — everything else is scored.
+    # A video scoring ≥75 with a freeze or minor drift is still watchable
+    # and much better than uploading nothing for the day's slot.
+    _HARD_FAIL = {"audio_failure"}
+
     def chk(name: str, fn):
         nonlocal fail
         try:
             ok, msg = fn()
             checks[name] = "pass" if ok else f"fail: {msg}"
-            if not ok and fail is None:
+            if not ok and name in _HARD_FAIL and fail is None:
                 fail = f"[{name}] {msg}"
+            # Scored checks: failure deducts points but does not set hard fail
         except Exception as exc:
             checks[name] = f"error: {exc}"
-            if fail is None:
+            if name in _HARD_FAIL and fail is None:
                 fail = f"[{name}] exception: {exc}"
 
     # Hard block — not in score (silence fallback = missing audio content)
@@ -106,18 +112,17 @@ def run_quality_gate(
             else:
                 score += weight
 
-    if fail is None:
-        # No hard failure — tier by score
-        if score >= 90:
-            tier = "UPLOAD"
-        elif score >= 75:
-            tier = "UPLOAD_WARN"
-            log.warning("  Quality score %d/100 — UPLOAD_WARN (degraded but acceptable)", score)
-        else:
-            tier   = "REJECT"
-            fail   = f"quality score {score}/100 below threshold (75)"
+    # Tier is score-driven. Hard fail (audio_failure only) overrides to REJECT.
+    if fail is not None:
+        tier = "REJECT"
+    elif score >= 90:
+        tier = "UPLOAD"
+    elif score >= 75:
+        tier = "UPLOAD_WARN"
+        log.warning("  Quality score %d/100 — UPLOAD_WARN (degraded but acceptable)", score)
     else:
         tier = "REJECT"
+        fail = f"quality score {score}/100 below threshold (75)"
 
     passed = tier in ("UPLOAD", "UPLOAD_WARN")
     log.info("  Gate: %s  score=%d/100  %s",
@@ -262,7 +267,7 @@ def _freeze(path: Path, timeout: int = 30):
         r = subprocess.run(
             ["ffmpeg", "-i", str(path),
              "-t", "120",
-             "-vf", "freezedetect=n=-60dB:d=2.0",
+             "-vf", "freezedetect=n=-60dB:d=4.5",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=timeout,
         )

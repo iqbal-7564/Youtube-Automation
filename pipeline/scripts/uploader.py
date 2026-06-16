@@ -115,9 +115,13 @@ def upload_video(
     if is_short and "#Shorts" not in title:
         title = (title[:88] + " #Shorts") if len(title) > 88 else title + " #Shorts"
 
-    # Fix 2: notify subscribers only on first video of the day — prevents
-    # 3 daily notifications which causes subscribers to mute the channel.
-    notify = _should_notify()
+    # Always notify for standard/long videos — subscribers should know about
+    # the main content of the day. For Shorts, only notify once per day to
+    # prevent 3 daily notifications that cause subscribers to mute.
+    if profile == "shorts":
+        notify = _should_notify()
+    else:
+        notify = True
 
     # ── Upload video ──────────────────────────────────────────────────────────
     video_id = _upload(video_path, metadata, token, title, is_short,
@@ -304,18 +308,24 @@ def _build_meta(script: dict, topic: dict, timeline: dict, profile: str) -> dict
         "",
     ]
 
-    # Fix 4: descriptive chapter titles instead of HOOK/TENSION/CORE labels
+    # Chapter markers: use [CHAPTER: Name] from script CORE if present,
+    # otherwise fall back to generic segment labels.
     if timeline["total_duration_seconds"] > 60:
         parts.append("📌 Chapters")
-        t    = 0.0
-        seen = set()
-        for sc in timeline["scenes"]:
-            mm, ss = divmod(int(t), 60)
-            label  = sc["segment_label"]
-            if not label.startswith("_") and label not in seen:
-                seen.add(label)
-                parts.append(f"{mm}:{ss:02d} — {_chapter_label(label)}")
-            t += sc["duration_ms"] / 1000
+        named = _extract_named_chapters(script, timeline)
+        if named:
+            for mm, ss, name in named:
+                parts.append(f"{mm}:{ss:02d} — {name}")
+        else:
+            t    = 0.0
+            seen = set()
+            for sc in timeline["scenes"]:
+                mm, ss = divmod(int(t), 60)
+                label  = sc["segment_label"]
+                if not label.startswith("_") and label not in seen:
+                    seen.add(label)
+                    parts.append(f"{mm}:{ss:02d} — {_chapter_label(label)}")
+                t += sc["duration_ms"] / 1000
         parts.append("")
 
     parts.append(_build_hashtags(cat, meta.get("tags", []), profile))
@@ -402,6 +412,53 @@ _CHAPTER_LABELS: dict[str, str] = {
     "PAYOFF":  "The Shocking Truth",
     "CLOSE":   "Subscribe for More",
 }
+
+
+def _extract_named_chapters(script: dict, timeline: dict) -> list[tuple[int, int, str]]:
+    """
+    Parse [CHAPTER: Name] markers from the CORE segment text and map them
+    to real timestamps from the timeline scenes.
+
+    Returns list of (mm, ss, name) tuples for YouTube chapter description.
+    Falls back to empty list if no markers found.
+    """
+    import re as _re
+    core_text = ""
+    for seg in script.get("segments", []):
+        if seg.get("label") == "CORE":
+            core_text = seg.get("text", "")
+            break
+
+    chapter_names = _re.findall(r"\[CHAPTER:\s*([^\]]+)\]", core_text)
+    if not chapter_names:
+        return []
+
+    # Find scene timestamps for the CORE segment — split evenly across named chapters
+    core_scenes = [sc for sc in timeline.get("scenes", [])
+                   if sc.get("segment_label") == "CORE"]
+    if not core_scenes or len(chapter_names) == 0:
+        return []
+
+    result: list[tuple[int, int, str]] = []
+
+    # 0:00 — always Introduction (HOOK start)
+    result.append((0, 0, "Introduction"))
+
+    # CORE start timestamp
+    core_start_ms = core_scenes[0]["start_ms"]
+    core_dur_ms   = core_scenes[-1]["end_ms"] - core_start_ms
+    if core_dur_ms <= 0 or len(chapter_names) == 0:
+        return []
+
+    # Distribute chapters evenly across CORE duration
+    per_chapter_ms = core_dur_ms / len(chapter_names)
+    for i, name in enumerate(chapter_names):
+        chapter_ms = core_start_ms + int(i * per_chapter_ms)
+        total_s    = chapter_ms // 1000
+        mm, ss     = divmod(total_s, 60)
+        result.append((mm, ss, name.strip()))
+
+    return result
 
 
 def _chapter_label(segment_label: str) -> str:

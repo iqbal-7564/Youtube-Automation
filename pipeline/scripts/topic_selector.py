@@ -557,56 +557,85 @@ _GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
-def select_topic_cluster(logs_dir: Path, n: int = 5) -> dict | None:
+def select_topic_cluster(logs_dir: Path) -> dict | None:
     """
-    For standard/long videos:
-    - If YouTube trending has 3+ topics in the same category → use ALL of them
-      as seeds (trending multi-topic video — highest relevance).
-    - If only 1-2 trending topics in a category → single topic video from that seed.
-    - Falls back to broad _SEEDS if no trending content maps to categories.
+    Collects 150+ live search seeds across all 15 categories via YouTube
+    autocomplete (each category has 8 search queries → ~10 suggestions each).
+    Merges with YouTube Trending top-50 for virality signals.
+
+    Picks the category with the most total seeds (= highest current search demand),
+    then feeds ALL its seeds to Groq which selects 10-12 that share one central
+    theme. The result is a multi-topic cluster that fills an 8-10 minute script.
+
+    Fallback chain: autocomplete mega-cluster → YT trending cluster → single topic.
     """
-    full_history    = _load_full_history(logs_dir)
-    produced_today  = _load_produced_today(logs_dir)
-    used_categories = {v.get("intent", "") for v in produced_today}
+    full_history = _load_full_history(logs_dir)
 
-    # ── Step 1: Get YouTube Top-50 trending, group by category ───────────────
-    yt_trending = _fetch_youtube_trending()   # {cat: [(seed, score), ...]}
+    # ── Step 1: Pull 150+ seeds from all 15 categories via autocomplete ───────
+    log.info("Fetching autocomplete seed pool (150+ topics across all categories)…")
+    autocomplete = _fetch_autocomplete_seeds()  # {cat: [(phrase, score), ...]}
 
-    # Sort each category's seeds by score, build category ranking by total score
-    cat_scores: dict[str, float] = {}
-    for cat, items in yt_trending.items():
-        cat_scores[cat] = sum(score for _, score in items)
-    ranked_cats = sorted(cat_scores, key=cat_scores.get, reverse=True)
+    # ── Step 2: Merge YouTube Trending top-50 (virality boost) ───────────────
+    yt_trending = _fetch_youtube_trending()     # {cat: [(phrase, score), ...]}
 
-    tried_cats: set[str] = set()
+    # Combined per-category seed list: autocomplete first (search demand),
+    # trending appended (virality). Deduplicated by phrase.
+    combined: dict[str, list[str]] = {}
+    for cat in CATEGORIES:
+        seen: set[str] = set()
+        seeds: list[str] = []
+        # Autocomplete: sorted by score, already the strongest demand signals
+        for phrase, _ in autocomplete.get(cat, []):
+            p = phrase.strip()
+            if p and p not in seen:
+                seen.add(p)
+                seeds.append(p)
+        # Trending: real viral titles from YouTube right now
+        for phrase, _ in yt_trending.get(cat, []):
+            p = phrase.strip()
+            if p and p not in seen:
+                seen.add(p)
+                seeds.append(p)
+        combined[cat] = seeds
 
-    # ── Step 2: Categories with 3+ trending topics → multi-topic cluster ─────
-    for cat in ranked_cats:
-        if cat in tried_cats:
+    total_seeds = sum(len(v) for v in combined.values())
+    log.info("Total seed pool: %d topics across %d categories", total_seeds, len(CATEGORIES))
+
+    # ── Step 3: Rank categories by seed count — most seeds = highest demand ──
+    ranked = sorted(combined, key=lambda c: len(combined.get(c, [])), reverse=True)
+
+    # ── Step 4: Try each category from richest downward ──────────────────────
+    # Use 10-12 seeds per cluster → Groq picks the most coherent subset.
+    # 10 topics × 50s each ≈ 8 minutes; 12 topics × 50s each ≈ 10 minutes.
+    for cat in ranked:
+        seeds = combined[cat]
+        if len(seeds) < 5:
             continue
-        seeds_in_cat = [seed for seed, _ in yt_trending.get(cat, [])]
-        if len(seeds_in_cat) >= 3:
-            tried_cats.add(cat)
-            use_n = min(n, len(seeds_in_cat))
-            cluster = _groq_build_cluster(cat, seeds_in_cat[:use_n + 2], use_n)
+
+        # Take up to 18 seeds and ask Groq to pick the best 10-12 that connect.
+        # Extra seeds give Groq more options; it selects the most thematically unified.
+        pool_size    = min(18, len(seeds))
+        cluster_size = min(12, len(seeds))
+
+        cluster = _groq_build_cluster(cat, seeds[:pool_size], cluster_size)
+        if cluster and not _is_duplicate(cluster["title"], full_history):
+            cluster["source"] = "AutocompleteCluster"
+            log.info(
+                "Mega-cluster [%s] '%s' — %d topics → 8-10 min video",
+                cat, cluster["title"][:70], len(cluster.get("topics", [])),
+            )
+            return cluster
+
+    # ── Step 5: Fallback — any category with 3+ seeds ─────────────────────────
+    for cat in ranked:
+        seeds = combined[cat]
+        if len(seeds) >= 3:
+            cluster = _groq_build_cluster(cat, seeds[:8], min(5, len(seeds)))
             if cluster and not _is_duplicate(cluster["title"], full_history):
-                cluster["source"] = "YT-MultiTrend"
-                log.info("Multi-trend cluster [%s] '%s' (%d trending topics)",
-                         cat, cluster["title"][:60], use_n)
+                cluster["source"] = "SmallCluster"
+                log.info("Small fallback cluster [%s] '%s' (%d topics)",
+                         cat, cluster["title"][:60], len(cluster.get("topics", [])))
                 return cluster
-
-    # ── Step 3: Categories with 1-2 trending topics → single trending topic ──
-    for cat in ranked_cats:
-        if cat in tried_cats:
-            continue
-        seeds_in_cat = [seed for seed, _ in yt_trending.get(cat, [])]
-        if seeds_in_cat:
-            tried_cats.add(cat)
-            topic = _build_topic(cat, seeds_in_cat[0], full_history, "")
-            if topic:
-                topic["source"] = "YT-SingleTrend"
-                log.info("Single trend topic [%s]: %s", cat, topic["title"][:80])
-                return topic
 
     log.warning("Cluster selection failed — falling back to single topic")
     return select_topic(logs_dir)
@@ -634,11 +663,9 @@ def _build_topic_cluster(category: str, n: int, produced: list[dict]) -> dict | 
 
 def _groq_build_cluster(category: str, seeds: list[str], n: int) -> dict | None:
     """
-    Ask Groq to:
-    1. Choose n seeds that share ONE central angle / connecting theme
-    2. Generate an overarching video title (curiosity-gap, max 70 chars)
-    3. Generate a short description
-    Returns a cluster dict ready for use as a topic.
+    Ask Groq to select n seeds that share ONE central theme, then generate
+    an overarching title suitable for an 8-10 minute educational YouTube video.
+    Returns a cluster dict ready for the script generator.
     """
     keys = [
         os.getenv("GROQ_API_KEY_1", "").strip(),
@@ -657,33 +684,41 @@ def _groq_build_cluster(category: str, seeds: list[str], n: int) -> dict | None:
                     "messages": [{
                         "role": "system",
                         "content": (
-                            "You are a viral YouTube content strategist. "
-                            "Return ONLY valid JSON, no markdown, no explanation."
+                            "You are a viral YouTube content strategist for an 8-10 minute "
+                            "educational channel. Return ONLY valid JSON, no markdown, no explanation."
                         ),
                     }, {
                         "role": "user",
                         "content": (
                             f"Category: {category}\n"
-                            f"Available topics:\n{seeds_str}\n\n"
+                            f"Available topics ({len(seeds)} seeds):\n{seeds_str}\n\n"
                             f"Task: Select exactly {n} topics that connect to ONE central "
-                            "angle or theme — they should feel like chapters of the same "
-                            "story, not random facts. The viewer must feel they are getting "
-                            "a deep dive into one idea, not a random list.\n\n"
-                            "Also generate:\n"
-                            "- overarching video title (max 70 chars, curiosity-gap question "
-                            "starting with Why/How/What — no words: shocking/amazing/mind-blowing)\n"
-                            "- description (2 sentences: most surprising angle, then why it matters)\n"
-                            "- central_angle (the connecting theme in 6-10 words)\n\n"
+                            "angle — they must feel like chapters of the same deep-dive story, "
+                            "not a random list. Each topic adds a surprising new layer.\n\n"
+                            "Generate:\n"
+                            "- title: 8-10 minute YouTube video title. "
+                            "  Format options (pick the best fit):\n"
+                            "  A) 'Why [Topic] Is More [Adjective] Than You Think'\n"
+                            "  B) 'The [Number] Most [Category] Facts About [Topic]'\n"
+                            "  C) 'What [Topic] Actually Does — The Science Explained'\n"
+                            "  D) 'How [Topic] Really Works (Scientists Just Found Out)'\n"
+                            "  E) '[Topic]: [Surprising Claim] | [Category] Explained'\n"
+                            "  Rules: max 90 chars, front-load the topic keyword, "
+                            "  no ALL CAPS, end with ONE emoji, "
+                            "  BANNED words: shocking/amazing/unbelievable/mind-blowing\n"
+                            "- description: 2 sentences covering the central connecting insight "
+                            "  and why it matters. Include a specific number.\n"
+                            "- central_angle: the unifying theme in 6-10 words\n\n"
                             "Return JSON:\n"
                             '{"title": "...", "description": "...", "central_angle": "...", '
                             f'"topics": [{{"seed": "...", "title": "...", "description": "..."}}]}} '
                             f"(exactly {n} items in topics array)"
                         ),
                     }],
-                    "temperature": 0.8,
-                    "max_tokens":  900,
+                    "temperature": 0.75,
+                    "max_tokens":  1800,
                 },
-                timeout=25,
+                timeout=30,
             )
             if r.ok:
                 raw = r.json()["choices"][0]["message"]["content"].strip()

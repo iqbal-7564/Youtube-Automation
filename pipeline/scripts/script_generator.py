@@ -486,30 +486,52 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 }}"""
 
 
-_CLUSTER_USER_TMPL = """Write a {video_label} "MindBlownFacts" script covering these RELATED topics as one cohesive video:
+_CLUSTER_USER_TMPL = """Write an 8-10 MINUTE "MindBlownFacts" educational YouTube script covering these related topics as one deep-dive video:
 
 OVERARCHING THEME : {title}
 CENTRAL ANGLE     : {central_angle}
 CATEGORY          : {intent}
 TEMPLATE          : {template_name}
 
-TOPICS TO COVER (cover ALL of them in the CORE, in this exact order):
+TOPICS TO COVER — treat EACH as its own named chapter in the CORE:
 {topics_list}
 
-STRUCTURE RULES:
-- HOOK     : ONE sentence (max 12 words) teasing the central angle — NOT a single sub-topic. Pure curiosity gap.
-             HOOK FORMULA TO USE: {hook_formula}
-- TENSION  : 2-3 sentences building anticipation. Hint that viewers are about to learn several things that connect in a surprising way.
-- CORE     : Cover EACH topic as its own named mini-segment. For every topic:
-               * Open with a clear transition: "First...", "Second...", "Now here's where it gets strange...", "But that's not the most surprising part..." etc.
-               * 4-6 sentences: the surprising fact → the mechanism → real-world scale comparison → counterintuitive implication
-               * Place [WOW] on the single most shocking sentence across ALL topics (only one [WOW] total)
-             Vary rhythm: short punch. Longer explanation. Short again.
-             DEPTH: {core_depth}
-- PAYOFF   : 2 sentences connecting ALL topics back to the central angle — the big-picture insight that ties everything together.
-- CLOSE    : {close_rule}
+CRITICAL LENGTH REQUIREMENT: This video MUST be 8-10 minutes (1650-1950 words minimum).
+Each topic chapter must be FULLY DEVELOPED — not a quick mention.
+A viewer who watches all the way through should feel they received a complete education on this theme.
 
-TARGET: {word_target}. Duration hint: {duration_hint}.
+STRUCTURE RULES:
+- HOOK (0-30s):
+  ONE sentence (max 12 words) teasing the central angle — not one sub-topic. Pure curiosity gap.
+  HOOK FORMULA: {hook_formula}
+  End with: "Here's what connects all of this — and nobody taught you this."
+
+- TENSION (30s-2min):
+  3-4 sentences. Build anticipation. "You are about to learn {n_topics} things that connect
+  in a way that completely changes how you see {intent.lower()}."
+  Create urgency: "What you find out changes the entire picture."
+
+- CORE (2min-9min — THE MAIN CONTENT — most critical):
+  Write EACH topic as a NAMED CHAPTER using [CHAPTER: ChapterName].
+  For EVERY chapter, write ALL of these 4 beats:
+    Beat 1 — FACT (1-2 short punchy sentences): The most surprising thing about this topic.
+    Beat 2 — MECHANISM (2 sentences): How/why it actually works this way.
+    Beat 3 — SCALE (1 sentence): A real-world comparison that makes the scale impossible to ignore.
+    Beat 4 — IMPLICATION (1-2 sentences): Why this changes how you see the world.
+  End EVERY chapter with [BRIDGE] — a 1-sentence teaser for the next chapter.
+  PATTERN INTERRUPT at chapters 3 and 6: direct viewer re-engagement line.
+  DEPTH: {core_depth}
+  Mark the single most shocking sentence across ALL chapters with [WOW].
+
+- PAYOFF (9min-9min30s):
+  3 sentences: resolve what connects ALL topics → the single big-picture insight →
+  "The real implication is this:" followed by the one sentence that reframes everything.
+
+- CLOSE (9min30s-10min):
+  {close_rule}
+
+TARGET: {word_target}. Duration: {duration_hint}.
+AT MINIMUM: 1650 words. If your script is under 1650 words you have FAILED — expand every chapter.
 
 Return EXACTLY this JSON (no extra keys, no markdown):
 {{
@@ -524,10 +546,10 @@ Return EXACTLY this JSON (no extra keys, no markdown):
   "total_estimated_seconds": {total_est},
   "full_script": "all segments combined into one paragraph",
   "metadata": {{
-    "title": "Write a YouTube title for '{title}'. RULES: (1) Front-load the main topic keyword in first 40 chars. (2) Pick ONE format from the FORMAT POOL — vary it every video. (3) Under 70 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS. (6) Must stay on topic '{title}'.",
-    "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this overarching theme, then a compelling sentence. Front-load the keyword.\nLine 2: The single most surprising connection across all topics — include a real number or comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords (e.g. 'Scientists recently discovered...', 'Most people never learn that...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
+    "title": "Write a YouTube title for an 8-10 minute video about '{title}'. RULES: (1) PREFER format: '[Topic]: [Surprising Claim] | [Category] Explained' OR 'Why [Topic] Is More [Adj] Than You Think' OR 'The [N] Most [Category] Facts About [Topic]'. (2) Front-load topic keyword in first 40 chars. (3) Under 90 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS. (6) BANNED: shocking/amazing/unbelievable. (7) Must cover '{title}' exactly.",
+    "description": "SEO-CRITICAL — follow exactly:\nLine 1 (max 140 chars): The EXACT phrase people search to find this topic, then a compelling sentence with a real number.\nLine 2: The most surprising cross-topic connection — specific fact with a number or scale.\nLine 3: Subscribe to MindBlownFacts for daily science and history facts.\nLine 4-5: 2 sentences weaving in long-tail search keywords (e.g. 'Scientists recently discovered...', 'Most people never learn that...').\nFinal line: 12-15 hashtags — mix specific topic tags with broad: #Facts #DidYouKnow #Educational #MindBlownFacts",
     "tags": {tags_instruction},
-    "engagement_question": "One question about '{title}' that sparks debate or personal stories"
+    "engagement_question": "One question about '{title}' that sparks debate or personal stories — make it feel like something viewers genuinely want to answer"
   }}
 }}"""
 
@@ -570,9 +592,10 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         intent            = topic["intent"],
         template_name     = template_name,
         topics_list       = topics_list,
+        n_topics          = len(topic["topics"]),
         hook_formula      = hook_formula,
         core_depth        = fmt_profile["core_depth"],
-        close_rule        = variant["close_rule"],
+        close_rule        = _CLOSE_RULE_STANDARD,
         word_target       = fmt_profile["word_target"],
         duration_hint     = fmt_profile["duration_hint"],
         hook_dur          = fmt_timing["hook_dur"],
@@ -600,9 +623,11 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                             {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
-                        "max_tokens":  fmt_profile["max_tokens"],
+                        # Cluster scripts need more tokens: 1650 words of content
+                        # + JSON structure overhead ≈ 7000 tokens minimum.
+                        "max_tokens":  max(fmt_profile["max_tokens"], 7000),
                     },
-                    timeout=60,
+                    timeout=90,
                 )
                 if r.status_code == 429:
                     log.warning("Rate limit on key …%s (cluster)", key[-4:])
@@ -612,6 +637,15 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                 script = _parse(raw)
                 if script:
                     words = len(script["full_script"].split())
+
+                    # 8-10 min target = 1600+ words. Retry if LLM writes a short script.
+                    if words < 800 and attempt < 2:
+                        log.warning(
+                            "Cluster script too short (%d words, need ≥800 for 8-10 min) "
+                            "— retrying attempt %d", words, attempt + 2,
+                        )
+                        continue
+
                     log.info("Cluster script OK — %d words [%s/%s/%d topics]",
                              words, video_format, template_name, len(topic["topics"]))
                     check = _fact_check(script["full_script"], key)
@@ -845,6 +879,17 @@ def generate_script(topic: dict, logs_dir: Path | None = None) -> dict:
                             continue
 
                     words = len(script["full_script"].split())
+
+                    # Long-form minimum word check — LLMs sometimes output short scripts
+                    # even when told to write 8-10 minutes. Under 800 words = under 4 min.
+                    # Videos under 4 min are invisible to the YouTube algorithm.
+                    if is_longform and words < 800 and attempt < 2:
+                        log.warning(
+                            "Standard script too short (%d words, need ≥800) — retrying "
+                            "attempt %d with higher temperature", words, attempt + 2,
+                        )
+                        continue
+
                     log.info("Script OK — %d words via Groq [%s/%s/hook:%s]",
                              words, video_format, template_name,
                              hook_formula.split(":")[0])
