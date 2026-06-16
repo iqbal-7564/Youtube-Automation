@@ -508,7 +508,7 @@ STRUCTURE RULES:
 
 - TENSION (30s-2min):
   3-4 sentences. Build anticipation. "You are about to learn {n_topics} things that connect
-  in a way that completely changes how you see {intent.lower()}."
+  in a way that completely changes how you see {intent_lower}."
   Create urgency: "What you find out changes the entire picture."
 
 - CORE (2min-9min — THE MAIN CONTENT — most critical):
@@ -590,6 +590,7 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         title             = topic["title"],
         central_angle     = topic.get("central_angle", topic["description"][:60]),
         intent            = topic["intent"],
+        intent_lower      = topic["intent"].lower(),
         template_name     = template_name,
         topics_list       = topics_list,
         n_topics          = len(topic["topics"]),
