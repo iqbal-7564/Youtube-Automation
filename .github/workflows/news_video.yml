@@ -7,8 +7,8 @@ on:
     - cron: '0 7 * * *'   # 07:00 UTC │ 12:00 PM PKT │ SHORT #1  — UK morning + US late night
     - cron: '0 11 * * *'  # 11:00 UTC │  4:00 PM PKT │ STANDARD  — UK afternoon + US early morning
     - cron: '0 14 * * *'  # 14:00 UTC │  7:00 PM PKT │ SHORT #2  — UK prime-time + US lunch
-    - cron: '0 17 * * *'  # 17:00 UTC │ 10:00 PM PKT │ BONUS     — UK before bed + US afternoon peak
-    - cron: '0 20 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — US prime-time peak
+    - cron: '0 20 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — UK prime evening (8 PM GMT) + US afternoon
+    - cron: '0 0 * * *'   # 00:00 UTC │  5:00 AM PKT │ BONUS     — US prime time 7 PM ET / 4 PM PT (highest US traffic)
     # ── Background tasks — always running ──────────────────────────────────────
     - cron: '0 * * * *'   # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
@@ -267,14 +267,14 @@ jobs:
             git commit -m "bot: update analytics data [skip ci]"
           git push 2>/dev/null || true
 
-  # ── Bonus video — RSS/news-trigger driven, uploads every day at 10 PM PKT ────
-  # Runs only when '0 17 * * *' schedule fires (17:00 UTC = 10:00 PM PKT).
+  # ── Bonus video — RSS/news-trigger driven, uploads daily at 5 AM PKT (00:00 UTC) ──
+  # 00:00 UTC = 7 PM ET / 4 PM PT — US prime-time peak (highest YouTube traffic globally).
   # Only produces a video if news_trigger.json has an unused trigger (score ≥ 70).
   # Topic comes exclusively from RSS feeds / news monitor — never YouTube search.
   bonus-video:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    if: github.event.schedule == '0 17 * * *'
+    if: github.event.schedule == '0 0 * * *'
 
     steps:
       - name: Checkout
@@ -352,7 +352,7 @@ jobs:
           HUGGINGFACE_API_KEY_4:   ${{ secrets.HUGGINGFACE_API_KEY_4 }}
           HUGGINGFACE_API_KEY_5:   ${{ secrets.HUGGINGFACE_API_KEY_5 }}
         run: |
-          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 10 PM PKT ==="
+          echo "=== MindBlownFacts Bonus Video Pipeline — RSS topic, 5 AM PKT / 7 PM ET ==="
           python pipeline/main.py
           echo ""
           echo "=== Output files ==="
