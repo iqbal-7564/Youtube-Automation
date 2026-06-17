@@ -171,14 +171,21 @@ def generate_ass_subtitles(timeline: dict, out_dir: Path) -> Path:
             continue
 
         # Chunk into groups (2 words for kinetic Shorts, 4 for standard)
-        chunks = [words[i:i + chunk_size] for i in range(0, len(words), chunk_size)]
-        n      = len(chunks)
-        ms_per = speech_dur // n
+        chunks      = [words[i:i + chunk_size] for i in range(0, len(words), chunk_size)]
+        # Distribute time proportional to character count — longer words take more time.
+        # Equal distribution causes subtitles to drift ahead/behind the voice.
+        chunk_chars = [max(1, len(" ".join(c))) for c in chunks]
+        total_chars = sum(chunk_chars)
+        chunk_ms    = [int(speech_dur * ch / total_chars) for ch in chunk_chars]
+        # Fix rounding so total exactly equals speech_dur
+        chunk_ms[-1] += speech_dur - sum(chunk_ms)
 
+        cursor = speech_start
         for i, chunk in enumerate(chunks):
-            c_start = speech_start + i * ms_per
-            c_end   = (speech_start + (i + 1) * ms_per) if i < n - 1 else speech_end
+            c_start = cursor
+            c_end   = cursor + chunk_ms[i]
             c_end   = max(c_end, c_start + 200)   # 200ms min for fast 2-word flashes
+            cursor  = c_end if i < len(chunks) - 1 else speech_end
 
             dur_cs  = max(len(chunk), (c_end - c_start) // 10)
             base_cs = dur_cs // len(chunk)
