@@ -223,7 +223,7 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
                 r = requests.post(
                     f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
                     headers={"xi-api-key": key, "Content-Type": "application/json"},
-                    json={"text": text, "model_id": "eleven_monolingual_v1",
+                    json={"text": text, "model_id": "eleven_turbo_v2_5",
                           "voice_settings": settings},
                     timeout=30,
                 )
