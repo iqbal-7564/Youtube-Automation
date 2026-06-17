@@ -603,13 +603,15 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                 if script:
                     words = len(script["full_script"].split())
 
-                    # 8-10 min target = 1600+ words. Retry if LLM writes a short script.
-                    if words < 800 and attempt < 2:
+                    # Accept ≥400 words — 8B model on free tier caps at ~600 words
+                    # per response. Retrying same key in same minute hits rate limit.
+                    # Move to next key on short result instead of same-key retry.
+                    if words < 400:
                         log.warning(
-                            "Cluster script too short (%d words, need ≥800 for 8-10 min) "
-                            "— retrying attempt %d", words, attempt + 2,
+                            "Cluster script too short (%d words, need ≥400) — trying next key",
+                            words,
                         )
-                        continue
+                        break
 
                     log.info("Cluster script OK — %d words [%s/%s/%d topics]",
                              words, video_format, template_name, len(topic["topics"]))
