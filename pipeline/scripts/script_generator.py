@@ -625,9 +625,10 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                             {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
-                        # Cluster scripts need more tokens: 1650 words of content
-                        # + JSON structure overhead ≈ 7000 tokens minimum.
-                        "max_tokens":  max(fmt_profile["max_tokens"], 7000),
+                        # Groq free tier = 6000 TPM (input+output).
+                        # Input prompt ≈ 1000 tokens → cap output at 5000.
+                        # 5000 tokens ≈ 3750 words, well above 1650-word minimum.
+                        "max_tokens":  max(fmt_profile["max_tokens"], 5000),
                     },
                     timeout=90,
                 )

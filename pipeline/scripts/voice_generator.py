@@ -202,9 +202,11 @@ def _edge_tts(text: str, out: Path, emotion: str) -> bool:
     return False
 
 
+# Keys that returned 401/429 this run — skip them for remaining scenes
+_el_exhausted: set[str] = set()
+
+
 def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
-    # Try all available keys in order — when one hits quota (429/401) move to next.
-    # Add ELEVENLABS_API_KEY_3 / _4 in GitHub secrets to extend monthly quota.
     keys = [
         os.getenv("ELEVENLABS_API_KEY",   "").strip(),
         os.getenv("ELEVENLABS_API_KEY_2", "").strip(),
@@ -214,7 +216,7 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
     settings = _EL_SETTINGS.get(emotion, _EL_SETTINGS["neutral"])
 
     for key in keys:
-        if not key:
+        if not key or key in _el_exhausted:
             continue
         for attempt in range(2):
             try:
@@ -229,9 +231,9 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
                     out.write_bytes(r.content)
                     return True
                 if r.status_code in (401, 429):
-                    # Quota exhausted or rate limited — switch to next key
-                    log.warning("ElevenLabs key …%s HTTP %d — trying next key",
+                    log.warning("ElevenLabs key …%s HTTP %d — skipping for rest of run",
                                 key[-4:], r.status_code)
+                    _el_exhausted.add(key)
                     break
                 log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
             except Exception as exc:
