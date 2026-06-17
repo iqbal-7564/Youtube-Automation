@@ -612,10 +612,10 @@ def select_topic_cluster(logs_dir: Path) -> dict | None:
         if len(seeds) < 5:
             continue
 
-        # Take up to 18 seeds and ask Groq to pick the best 10-12 that connect.
-        # Extra seeds give Groq more options; it selects the most thematically unified.
-        pool_size    = min(18, len(seeds))
-        cluster_size = min(12, len(seeds))
+        # Take up to 8 seeds and ask Groq to pick the best 5 that connect.
+        # Smaller cluster = smaller prompt = fits Groq 6000 TPM free tier.
+        pool_size    = min(8, len(seeds))
+        cluster_size = min(5, len(seeds))
 
         cluster = _groq_build_cluster(cat, seeds[:pool_size], cluster_size)
         if cluster and not _is_duplicate(cluster["title"], full_history):
