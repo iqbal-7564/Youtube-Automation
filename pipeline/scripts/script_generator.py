@@ -581,9 +581,9 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                             {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
-                        # llama-3.1-8b-instant: 30,000 TPM free tier (vs 6,000 for 70B).
-                        # Cluster prompt is large — 8B model avoids rate limits entirely.
-                        "max_tokens":  max(fmt_profile["max_tokens"], 3500),
+                        # Hard-capped at 2000: llama-3.1-8b-instant free tier rejects
+                        # requests with max_tokens > ~2048 with 413 Payload Too Large.
+                        "max_tokens":  2000,
                     },
                     timeout=90,
                 )
