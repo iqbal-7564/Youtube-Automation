@@ -157,11 +157,10 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
 def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3.0) -> str:
-    # ElevenLabs first — it sounds closest to a real human voice.
-    # edge-tts is free but recognisably robotic; viewers can tell immediately
-    # and it reduces watch time and trust. ElevenLabs is used FIRST because
-    # voice quality is the single biggest differentiator vs other channels.
-    if _elevenlabs(text, out, emotion):
+    # Shorts go straight to edge-tts — ElevenLabs quota is reserved for
+    # Standard/Bonus where 8-10 min watch time depends on voice quality.
+    is_shorts = os.getenv("VIDEO_FORMAT", "").lower() == "shorts"
+    if not is_shorts and _elevenlabs(text, out, emotion):
         return "elevenlabs"
     if _edge_tts(text, out, emotion):
         return "edge-tts"
