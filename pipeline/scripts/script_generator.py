@@ -626,9 +626,9 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                         ],
                         "temperature": 0.75,
                         # Groq free tier = 6000 TPM (input+output).
-                        # Input prompt ≈ 1000 tokens → cap output at 5000.
-                        # 5000 tokens ≈ 3750 words, well above 1650-word minimum.
-                        "max_tokens":  max(fmt_profile["max_tokens"], 5000),
+                        # Input prompt can be 2000+ tokens → cap output at 3500.
+                        # 3500 tokens ≈ 2600 words, above 1650-word minimum.
+                        "max_tokens":  max(fmt_profile["max_tokens"], 3500),
                     },
                     timeout=90,
                 )
