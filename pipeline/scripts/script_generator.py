@@ -493,11 +493,19 @@ _CLUSTER_USER_TMPL = """Write an 8-10 minute MindBlownFacts YouTube script on: {
 Topics: {topics_list}
 Central angle: {central_angle} | Category: {intent}
 
-Structure (5 segments, 1650+ words total):
+WORD REQUIREMENTS (non-negotiable):
+- HOOK: 30-40 words
+- TENSION: 80-100 words
+- CORE: minimum 900 words (each of the {n_topics} topics gets 180+ words)
+- PAYOFF: 60-80 words
+- CLOSE: 40-50 words
+- TOTAL: minimum 1200 words
+
+Structure:
 HOOK (30s): 1 shocking sentence + "Here's what connects all of this."
-TENSION (90s): 3 sentences building anticipation about {intent_lower}.
-CORE (7min): Each topic = [CHAPTER: Name] with fact/mechanism/scale/implication + [BRIDGE]. Mark best line [WOW].
-PAYOFF (30s): "The real implication is this:" + 1 reframing sentence.
+TENSION (90s): 3-4 sentences building anticipation about {intent_lower}.
+CORE (7min): Each topic = [CHAPTER: Name] then 180+ words covering fact/mechanism/scale/implication + [BRIDGE] teaser. Mark best sentence [WOW].
+PAYOFF (30s): "The real implication is this:" + 2 sentences.
 CLOSE (30s): Like/subscribe + teaser for next video.
 
 Return ONLY this JSON:
@@ -581,9 +589,8 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                             {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
-                        # Hard-capped at 2000: llama-3.1-8b-instant free tier rejects
-                        # requests with max_tokens > ~2048 with 413 Payload Too Large.
-                        "max_tokens":  2000,
+                        # 3000 tokens ≈ 2200 words — enough for 1200-word script + JSON overhead.
+                        "max_tokens":  3000,
                     },
                     timeout=90,
                 )
