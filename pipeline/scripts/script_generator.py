@@ -573,6 +573,47 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         tags_instruction  = _build_tags_for_prompt(topic["intent"]),
     )
 
+    def _try_script(raw):
+        script = _parse(raw)
+        if not script:
+            return None
+        words = len(script["full_script"].split())
+        if words < 400:
+            log.warning("Cluster script too short (%d words) — skipping", words)
+            return None
+        log.info("Cluster script OK — %d words [%s/%s/%d topics]",
+                 words, video_format, template_name, len(topic["topics"]))
+        script["video_format"]    = video_format
+        script["is_cluster"]      = True
+        script["cluster_topics"]  = [t.get("title", t.get("seed", ""))
+                                      for t in topic["topics"]]
+        return script
+
+    # ── 1. Gemini (free, 8192 output tokens → 8-10 min video) ───────────────
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if gemini_key:
+        try:
+            full_prompt = system_prompt + "\n\n" + filled_prompt
+            r = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}",
+                json={
+                    "contents": [{"parts": [{"text": full_prompt}]}],
+                    "generationConfig": {"maxOutputTokens": 8192, "temperature": 0.75},
+                },
+                timeout=120,
+            )
+            if r.ok:
+                raw = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                script = _try_script(raw)
+                if script:
+                    log.info("Cluster script via Gemini")
+                    return script
+            else:
+                log.warning("Gemini cluster HTTP %d — falling back to Groq", r.status_code)
+        except Exception as exc:
+            log.warning("Gemini cluster error: %s — falling back to Groq", exc)
+
+    # ── 2. Groq fallback (free, ~2000 tokens → 4 min video) ─────────────────
     for key in _GROQ_KEYS:
         if not key:
             continue
@@ -583,13 +624,10 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                     headers={"Authorization": f"Bearer {key}",
                              "Content-Type":  "application/json"},
                     json={
-                        "model":    _MODEL_CLUSTER,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user",   "content": filled_prompt},
-                        ],
+                        "model":       _MODEL_CLUSTER,
+                        "messages":    [{"role": "system", "content": system_prompt},
+                                        {"role": "user",   "content": filled_prompt}],
                         "temperature": 0.75,
-                        # 3000 tokens ≈ 2200 words — enough for 1200-word script + JSON overhead.
                         "max_tokens":  3000,
                     },
                     timeout=90,
@@ -599,22 +637,8 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                     break
                 r.raise_for_status()
                 raw    = r.json()["choices"][0]["message"]["content"].strip()
-                script = _parse(raw)
+                script = _try_script(raw)
                 if script:
-                    words = len(script["full_script"].split())
-
-                    # Accept ≥400 words — 8B model on free tier caps at ~600 words
-                    # per response. Retrying same key in same minute hits rate limit.
-                    # Move to next key on short result instead of same-key retry.
-                    if words < 400:
-                        log.warning(
-                            "Cluster script too short (%d words, need ≥400) — trying next key",
-                            words,
-                        )
-                        break
-
-                    log.info("Cluster script OK — %d words [%s/%s/%d topics]",
-                             words, video_format, template_name, len(topic["topics"]))
                     check = _fact_check(script["full_script"], key)
                     if check.get("has_issues"):
                         log.warning("Fact-check flagged cluster (attempt %d): %s",
@@ -624,10 +648,6 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                         log.warning("Fact-check still flagged — using best available")
                     else:
                         log.info("Cluster fact-check passed")
-                    script["video_format"] = video_format
-                    script["is_cluster"]   = True
-                    script["cluster_topics"] = [t.get("title", t.get("seed", ""))
-                                                for t in topic["topics"]]
                     return script
             except Exception as exc:
                 log.warning("Groq cluster attempt %d: %s", attempt + 1, exc)
