@@ -36,7 +36,8 @@ _GROQ_KEYS = [
     os.getenv("GROQ_API_KEY_3", "").strip(),
     os.getenv("GROQ_API_KEY_4", "").strip(),
 ]
-_MODEL = "llama-3.3-70b-versatile"
+_MODEL         = "llama-3.3-70b-versatile"   # single-topic scripts
+_MODEL_CLUSTER = "llama-3.1-8b-instant"       # cluster: 30,000 TPM vs 6,000 TPM on free tier
 
 # ── Narrative templates ───────────────────────────────────────────────────────
 
@@ -620,15 +621,14 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
                     headers={"Authorization": f"Bearer {key}",
                              "Content-Type":  "application/json"},
                     json={
-                        "model":    _MODEL,
+                        "model":    _MODEL_CLUSTER,
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user",   "content": filled_prompt},
                         ],
                         "temperature": 0.75,
-                        # Groq free tier = 6000 TPM (input+output).
-                        # Input prompt can be 2000+ tokens → cap output at 3500.
-                        # 3500 tokens ≈ 2600 words, above 1650-word minimum.
+                        # llama-3.1-8b-instant: 30,000 TPM free tier (vs 6,000 for 70B).
+                        # Cluster prompt is large — 8B model avoids rate limits entirely.
                         "max_tokens":  max(fmt_profile["max_tokens"], 3500),
                     },
                     timeout=90,
