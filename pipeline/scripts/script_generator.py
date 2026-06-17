@@ -34,6 +34,7 @@ _GROQ_KEYS = [
     os.getenv("GROQ_API_KEY_1", "").strip(),
     os.getenv("GROQ_API_KEY_2", "").strip(),
     os.getenv("GROQ_API_KEY_3", "").strip(),
+    os.getenv("GROQ_API_KEY_4", "").strip(),
 ]
 _MODEL = "llama-3.3-70b-versatile"
 
