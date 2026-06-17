@@ -489,54 +489,18 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
 }}"""
 
 
-_CLUSTER_USER_TMPL = """Write an 8-10 MINUTE "MindBlownFacts" educational YouTube script covering these related topics as one deep-dive video:
+_CLUSTER_USER_TMPL = """Write an 8-10 minute MindBlownFacts YouTube script on: {title}
+Topics: {topics_list}
+Central angle: {central_angle} | Category: {intent}
 
-OVERARCHING THEME : {title}
-CENTRAL ANGLE     : {central_angle}
-CATEGORY          : {intent}
-TEMPLATE          : {template_name}
+Structure (5 segments, 1650+ words total):
+HOOK (30s): 1 shocking sentence + "Here's what connects all of this."
+TENSION (90s): 3 sentences building anticipation about {intent_lower}.
+CORE (7min): Each topic = [CHAPTER: Name] with fact/mechanism/scale/implication + [BRIDGE]. Mark best line [WOW].
+PAYOFF (30s): "The real implication is this:" + 1 reframing sentence.
+CLOSE (30s): Like/subscribe + teaser for next video.
 
-TOPICS TO COVER — treat EACH as its own named chapter in the CORE:
-{topics_list}
-
-CRITICAL LENGTH REQUIREMENT: This video MUST be 8-10 minutes (1650-1950 words minimum).
-Each topic chapter must be FULLY DEVELOPED — not a quick mention.
-A viewer who watches all the way through should feel they received a complete education on this theme.
-
-STRUCTURE RULES:
-- HOOK (0-30s):
-  ONE sentence (max 12 words) teasing the central angle — not one sub-topic. Pure curiosity gap.
-  HOOK FORMULA: {hook_formula}
-  End with: "Here's what connects all of this — and nobody taught you this."
-
-- TENSION (30s-2min):
-  3-4 sentences. Build anticipation. "You are about to learn {n_topics} things that connect
-  in a way that completely changes how you see {intent_lower}."
-  Create urgency: "What you find out changes the entire picture."
-
-- CORE (2min-9min — THE MAIN CONTENT — most critical):
-  Write EACH topic as a NAMED CHAPTER using [CHAPTER: ChapterName].
-  For EVERY chapter, write ALL of these 4 beats:
-    Beat 1 — FACT (1-2 short punchy sentences): The most surprising thing about this topic.
-    Beat 2 — MECHANISM (2 sentences): How/why it actually works this way.
-    Beat 3 — SCALE (1 sentence): A real-world comparison that makes the scale impossible to ignore.
-    Beat 4 — IMPLICATION (1-2 sentences): Why this changes how you see the world.
-  End EVERY chapter with [BRIDGE] — a 1-sentence teaser for the next chapter.
-  PATTERN INTERRUPT at chapters 3 and 6: direct viewer re-engagement line.
-  DEPTH: {core_depth}
-  Mark the single most shocking sentence across ALL chapters with [WOW].
-
-- PAYOFF (9min-9min30s):
-  3 sentences: resolve what connects ALL topics → the single big-picture insight →
-  "The real implication is this:" followed by the one sentence that reframes everything.
-
-- CLOSE (9min30s-10min):
-  {close_rule}
-
-TARGET: {word_target}. Duration: {duration_hint}.
-AT MINIMUM: 1650 words. If your script is under 1650 words you have FAILED — expand every chapter.
-
-Return EXACTLY this JSON (no extra keys, no markdown):
+Return ONLY this JSON:
 {{
   "narrative_template": "{template_name}",
   "segments": [
@@ -547,12 +511,12 @@ Return EXACTLY this JSON (no extra keys, no markdown):
     {{"id": 5, "label": "CLOSE",   "text": "...", "estimated_duration_seconds": {close_dur},   "emotion": "neutral",    "complexity": "simple"}}
   ],
   "total_estimated_seconds": {total_est},
-  "full_script": "all segments combined into one paragraph",
+  "full_script": "all segments combined",
   "metadata": {{
-    "title": "Write a YouTube title for an 8-10 minute video about '{title}'. RULES: (1) PREFER format: '[Topic]: [Surprising Claim] | [Category] Explained' OR 'Why [Topic] Is More [Adj] Than You Think' OR 'The [N] Most [Category] Facts About [Topic]'. (2) Front-load topic keyword in first 40 chars. (3) Under 90 chars. (4) End with exactly 1 relevant emoji. (5) No ALL CAPS. (6) BANNED: shocking/amazing/unbelievable. (7) Must cover '{title}' exactly.",
-    "description": "SEO-CRITICAL — follow exactly:\nLine 1 (max 140 chars): The EXACT phrase people search to find this topic, then a compelling sentence with a real number.\nLine 2: The most surprising cross-topic connection — specific fact with a number or scale.\nLine 3: Subscribe to MindBlownFacts for daily science and history facts.\nLine 4-5: 2 sentences weaving in long-tail search keywords (e.g. 'Scientists recently discovered...', 'Most people never learn that...').\nFinal line: 12-15 hashtags — mix specific topic tags with broad: #Facts #DidYouKnow #Educational #MindBlownFacts",
+    "title": "YouTube title under 90 chars with 1 emoji for: {title}",
+    "description": "SEO description with hashtags #Facts #DidYouKnow #Educational #MindBlownFacts",
     "tags": {tags_instruction},
-    "engagement_question": "One question about '{title}' that sparks debate or personal stories — make it feel like something viewers genuinely want to answer"
+    "engagement_question": "debate question about {title}"
   }}
 }}"""
 
@@ -570,23 +534,13 @@ def _generate_cluster_script(topic: dict, video_format: str) -> dict:
         for i, t in enumerate(topic["topics"])
     )
 
-    system_prompt = _SYSTEM_TMPL.format(
-        description    = variant["description"],
-        hook_rule      = variant["hook_rule"],
-        tension_rule   = variant["tension_rule"],
-        core_rule      = variant["core_rule"],
-        payoff_rule    = variant["payoff_rule"],
-        close_rule     = _CLOSE_RULE_STANDARD,
-        word_target    = fmt_profile["word_target"],
-        duration_hint  = fmt_profile["duration_hint"],
-        core_depth     = fmt_profile["core_depth"],
-        hook_time      = fmt_timing["hook_time"],
-        tension_time   = fmt_timing["tension_time"],
-        core_time      = fmt_timing["core_time"],
-        payoff_time    = fmt_timing["payoff_time"],
-        close_time     = fmt_timing["close_time"],
-        director_brief = json.dumps(_DIRECTOR_CONTEXT, indent=2),
-    ) + _load_viewer_note() + _STANDARD_SYSTEM_BOOST
+    # Use a minimal system prompt for cluster — the full _SYSTEM_TMPL + boosts
+    # exceeded Groq's payload size limit (413). Content quality comes from the
+    # structured user template instead.
+    system_prompt = (
+        "You are an educational YouTube scriptwriter for MindBlownFacts. "
+        "Write factual, engaging scripts. Return only valid JSON, no markdown."
+    )
 
     filled_prompt = _CLUSTER_USER_TMPL.format(
         video_label       = fmt_timing["video_label"],
