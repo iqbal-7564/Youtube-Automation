@@ -80,7 +80,7 @@ from quality_gate        import run_quality_gate
 from thumbnail_generator import generate_thumbnail
 from ctr_optimizer       import optimize_ctr
 from uploader            import upload_video
-from news_analytics      import log_result, predict_retention_risk, update_velocity_queue
+from news_analytics      import log_result, predict_retention_risk
 
 
 def _check_youtube_token() -> bool:
@@ -577,10 +577,6 @@ def run_pipeline() -> bool:
         # ── 14: Analytics ─────────────────────────────────────────────────────
         log.info("[14/14] Analytics")
         log_result(video_id, topic, timeline, gate, profile, LOGS_DIR)
-
-        # Velocity clustering: check if any recent video is performing above average
-        # and queue related topics for the next pipeline run
-        update_velocity_queue(LOGS_DIR)
 
         _record_success()
         _send_daily_summary()

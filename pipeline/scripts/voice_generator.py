@@ -157,10 +157,7 @@ def generate_voices(timeline: dict, voice_dir: Path) -> dict:
 # ── TTS engines ───────────────────────────────────────────────────────────────
 
 def _generate(text: str, out: Path, emotion: str, fallback_duration_s: float = 3.0) -> str:
-    # Shorts go straight to edge-tts — ElevenLabs quota is reserved for
-    # Standard/Bonus where 8-10 min watch time depends on voice quality.
-    is_shorts = os.getenv("VIDEO_FORMAT", "").lower() == "shorts"
-    if not is_shorts and _elevenlabs(text, out, emotion):
+    if _elevenlabs(text, out, emotion):
         return "elevenlabs"
     if _edge_tts(text, out, emotion):
         return "edge-tts"
