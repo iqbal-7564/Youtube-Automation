@@ -69,6 +69,7 @@ def log_result(
         "scene_count":            len(timeline["scenes"]),
         "avg_clip_score":         avg_clip,
         "quality_gate_passed":    gate["passed"],
+        "quality_score":          gate.get("quality_score", 0),
         "uploaded_at":            datetime.utcnow().isoformat(),
         "profile":                profile,
         "tts_engines":            engines,

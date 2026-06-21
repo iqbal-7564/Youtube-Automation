@@ -26,11 +26,13 @@ log = logging.getLogger(__name__)
 _EL_VOICE_ID = "pNInz6obpgDQGcFmaJgB"
 _EDGE_VOICE  = "en-US-ChristopherNeural"
 
+_EL_SETTINGS_DEFAULT = {"stability": 0.75, "similarity_boost": 0.90, "style": 0.00, "use_speaker_boost": True}
+
 _EL_SETTINGS: dict[str, dict] = {
-    "excited":    {"stability": 0.35, "similarity_boost": 0.90, "style": 0.70, "use_speaker_boost": True},
-    "mysterious": {"stability": 0.85, "similarity_boost": 0.80, "style": 0.10, "use_speaker_boost": False},
-    "dramatic":   {"stability": 0.55, "similarity_boost": 0.90, "style": 0.45, "use_speaker_boost": True},
-    "neutral":    {"stability": 0.75, "similarity_boost": 0.85, "style": 0.00, "use_speaker_boost": True},
+    "excited":    _EL_SETTINGS_DEFAULT,
+    "mysterious": _EL_SETTINGS_DEFAULT,
+    "dramatic":   _EL_SETTINGS_DEFAULT,
+    "neutral":    _EL_SETTINGS_DEFAULT,
 }
 
 _EDGE_RATE: dict[str, str] = {

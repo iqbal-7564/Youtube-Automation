@@ -267,7 +267,7 @@ def _freeze(path: Path, timeout: int = 30):
         r = subprocess.run(
             ["ffmpeg", "-i", str(path),
              "-t", "120",
-             "-vf", "freezedetect=n=-60dB:d=4.5",
+             "-vf", "freezedetect=n=-60dB:d=2.0",
              "-f", "null", "-"],
             capture_output=True, text=True, timeout=timeout,
         )
