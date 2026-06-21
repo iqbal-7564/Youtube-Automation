@@ -529,5 +529,27 @@
     "tts_engines": [
       "elevenlabs"
     ]
+  },
+  {
+    "video_id": "BPIyqmUfo4g",
+    "intent": "SCIENCE",
+    "title": "Memory Hacking Discovered",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Memory Hacking Discovered",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 25.16,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-21T18:43:32.908805",
+    "profile": "shorts",
+    "tts_engines": [
+      "elevenlabs",
+      "edge-tts"
+    ]
   }
 ]
