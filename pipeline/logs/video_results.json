@@ -508,5 +508,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "FjCRxxhJpN0",
+    "intent": "SCIENCE",
+    "title": "Fusion Breakthrough",
+    "hook_text": "Fusion breakthroughs happen.",
+    "script_key_sents": [
+      "Fusion breakthroughs happen",
+      "Scientists just achieved a record 59-second nuclear fusion",
+      "This breakthrough could revolutionize space exploration and make humanity a multi-planetary species"
+    ],
+    "total_duration_seconds": 25.52,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-21T18:09:29.789247",
+    "profile": "shorts",
+    "tts_engines": [
+      "elevenlabs"
+    ]
   }
 ]
