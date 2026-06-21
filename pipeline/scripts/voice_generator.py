@@ -205,8 +205,7 @@ def _edge_tts(text: str, out: Path, emotion: str) -> bool:
 _el_exhausted: set[str] = set()
 
 
-# Try the original model first; fall back to the v2 successor if rejected.
-_EL_MODELS = ["eleven_monolingual_v1", "eleven_multilingual_v2"]
+_EL_MODEL = "eleven_monolingual_v1"
 
 
 def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
@@ -221,35 +220,28 @@ def _elevenlabs(text: str, out: Path, emotion: str) -> bool:
     for key in keys:
         if not key or key in _el_exhausted:
             continue
-        for model_id in _EL_MODELS:
-            for attempt in range(2):
-                try:
-                    r = requests.post(
-                        f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
-                        headers={"xi-api-key": key, "Content-Type": "application/json"},
-                        json={"text": text, "model_id": model_id,
-                              "voice_settings": settings},
-                        timeout=30,
-                    )
-                    if r.ok:
-                        log.debug("ElevenLabs model=%s OK", model_id)
-                        out.write_bytes(r.content)
-                        return True
-                    if r.status_code in (401, 429):
-                        log.warning("ElevenLabs key …%s HTTP %d — skipping for rest of run",
-                                    key[-4:], r.status_code)
-                        _el_exhausted.add(key)
-                        break
-                    if r.status_code in (400, 422):
-                        # Model rejected (deprecated/removed) — try next model
-                        log.debug("ElevenLabs model=%s rejected (HTTP %d) — trying next",
-                                  model_id, r.status_code)
-                        break
-                    log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
-                except Exception as exc:
-                    log.debug("ElevenLabs attempt %d: %s", attempt + 1, exc)
-                if attempt == 0:
-                    import time as _t; _t.sleep(1)
+        for attempt in range(2):
+            try:
+                r = requests.post(
+                    f"https://api.elevenlabs.io/v1/text-to-speech/{_EL_VOICE_ID}",
+                    headers={"xi-api-key": key, "Content-Type": "application/json"},
+                    json={"text": text, "model_id": _EL_MODEL,
+                          "voice_settings": settings},
+                    timeout=30,
+                )
+                if r.ok:
+                    out.write_bytes(r.content)
+                    return True
+                if r.status_code in (401, 429):
+                    log.warning("ElevenLabs key …%s HTTP %d — skipping for rest of run",
+                                key[-4:], r.status_code)
+                    _el_exhausted.add(key)
+                    break
+                log.debug("ElevenLabs HTTP %d (attempt %d)", r.status_code, attempt + 1)
+            except Exception as exc:
+                log.debug("ElevenLabs attempt %d: %s", attempt + 1, exc)
+            if attempt == 0:
+                import time as _t; _t.sleep(1)
 
     return False
 
