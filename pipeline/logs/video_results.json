@@ -572,5 +572,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "3eew_2_3EbY",
+    "intent": "SCIENCE",
+    "title": "Dreams Are Not Random",
+    "hook_text": "Dreams are not random.",
+    "script_key_sents": [
+      "Dreams are not random",
+      "The brain's ability to clear toxins increases during dream stages,",
+      "This means that dreams are not just random firings of the brain, but an essential part of our mental health"
+    ],
+    "total_duration_seconds": 36.11,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-22T00:26:35.557097",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
