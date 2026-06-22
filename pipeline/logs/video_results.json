@@ -635,5 +635,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "b9ArdPKHkbU",
+    "intent": "TECHNOLOGY",
+    "title": "Lithium's Dark Secret",
+    "hook_text": "Lithium harms ecosystems.",
+    "script_key_sents": [
+      "Lithium harms ecosystems",
+      "Lithium's dark secret is that its extraction is now",
+      "The truth about lithium's impact on the environment is forcing us to reconsider our reliance on battery-powered devices and seek alternative"
+    ],
+    "total_duration_seconds": 34.46,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-22T21:55:58.324445",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
