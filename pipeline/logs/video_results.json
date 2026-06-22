@@ -593,5 +593,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "oQvu8cb6was",
+    "intent": "TECHNOLOGY",
+    "title": "DeepMind AI",
+    "hook_text": "DeepMind AI develops neural networks.",
+    "script_key_sents": [
+      "DeepMind AI develops neural networks",
+      "DeepMind AI uses neural networks to develop intelligent systems",
+      "DeepMind AI's technology has the potential to transform various industries and improve our daily lives"
+    ],
+    "total_duration_seconds": 51.43,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-22T18:02:09.617588",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
