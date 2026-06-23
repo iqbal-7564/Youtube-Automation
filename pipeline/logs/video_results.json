@@ -677,5 +677,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "sDt9F5UG2eA",
+    "intent": "TECHNOLOGY",
+    "title": "Materials That Heal Like Skin",
+    "hook_text": "Materials heal like skin.",
+    "script_key_sents": [
+      "Materials heal like skin",
+      "These materials can repair cracks and damages in a",
+      "This technology could make broken devices a thing of the past, thanks to recent discoveries that have made these materials stronger and more"
+    ],
+    "total_duration_seconds": 29.73,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-23T14:10:34.857722",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
