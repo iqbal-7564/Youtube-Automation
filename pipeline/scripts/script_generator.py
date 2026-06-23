@@ -257,7 +257,14 @@ TENSION:
 5. First sentence of TENSION names the topic again and deepens the mystery — do NOT switch subjects.
 
 PAYOFF:
-6. End PAYOFF with ONE engagement line: 'Like if this changed how you see it.' Natural, short.
+6. TWO parts:
+   (1) LOOP ECHO — echo ONE specific word or phrase from the HOOK as your second-to-last sentence.
+       This makes the last thing they hear connect to the first, triggering a rewatch.
+       Hook: 'Sharks cannot sleep.' → Payoff ends: 'Sharks never rest. Not once.'
+       Hook: 'The ocean glows.' → Payoff ends: 'The glow never stops.'
+       Hook: 'Black holes stop time.' → Payoff ends: 'Time. It was always the answer.'
+   (2) ONE short engagement line LAST: 'Like if this changed how you see it.'
+       or 'Drop a comment if you already knew this.' Vary the wording every video.
    PAYOFF is the LAST segment — no CLOSE scene follows for Shorts.
 
 NO CLOSE SEGMENT FOR SHORTS:
@@ -484,7 +491,7 @@ Return EXACTLY this JSON (no extra keys, no markdown fences):
     "title": "Write a YouTube title for '{title}'. RULES: (1) STRONGLY PREFER format K from the FORMAT POOL — use the | separator: 'Hook phrase | Search category 🔬'. This is the highest-performing SEO format. (2) If format K doesn't fit naturally, pick any other format from the pool — vary, never reuse the same format twice. (3) First 40 chars must contain the main topic keyword. (4) Under 70 chars total. (5) End with exactly 1 relevant emoji. (6) No ALL CAPS. (7) Must describe '{title}' exactly — no subject changes. (8) NEVER use: Nobody Told You / Truth Nobody / shocking / amazing.",
     "description": "SEO-CRITICAL structure — follow exactly:\nLine 1 (max 140 chars): open with the EXACT 2-3 word phrase people search for this topic, then a compelling sentence. Front-load the keyword — YouTube indexes first words most heavily. Example: 'Black holes are regions...' / 'Octopuses have three hearts...' / 'The real reason Rome collapsed...'\nLine 2: The single most shocking specific fact from the script — include a real number or a scale comparison.\nLine 3: Subscribe to MindBlownFacts for daily mind-blowing facts.\nLine 4-5: 2 natural sentences weaving in long-tail keywords people actually search (e.g. 'Scientists recently discovered...', 'Most people never learn that...', 'The truth about X is...').\nFinal line: 10-12 hashtags — mix specific topic hashtags with broad ones: #Facts #DidYouKnow #Educational #Science #MindBlownFacts",
     "tags": {tags_instruction},
-    "engagement_question": "One question about '{title}' that sparks debate or invites personal stories from viewers"
+    "engagement_question": "One polarizing question about '{title}' that forces viewers to pick a side or defend a belief. Must be controversial-but-true — not a safe 'which fact surprised you' question. Good formats: (A) 'Hot take: [bold claim about topic]. Agree or disagree?' (B) 'Be honest — did you actually know this or did this just change your view?' (C) 'Most people believe [wrong thing about topic]. Are you one of them?' The question must make someone feel compelled to comment to either agree or prove you wrong. Never use: 'Which fact surprised you most?' / 'What did you learn?' / 'Tell us below!'"
   }}
 }}"""
 
@@ -720,6 +727,8 @@ def _is_script_repeat(script: dict, banned: list[str], threshold: float = 0.60) 
     if not hook_seg:
         return False
     hook_text = hook_seg.get("text", "")
+    if len(hook_text.split()) < 3:
+        return False  # too short to judge similarity reliably
     return any(_sim_score(hook_text, b) > threshold for b in banned)
 
 

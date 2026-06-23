@@ -80,7 +80,7 @@ from quality_gate        import run_quality_gate
 from thumbnail_generator import generate_thumbnail
 from ctr_optimizer       import optimize_ctr
 from uploader            import upload_video
-from news_analytics      import log_result, predict_retention_risk
+from news_analytics      import log_result, predict_retention_risk, schedule_early_check, run_pending_early_checks
 
 
 def _check_youtube_token() -> bool:
@@ -349,6 +349,9 @@ def run_pipeline() -> bool:
     # Guard 1: circuit breaker — abort immediately if N consecutive failures
     check_circuit_breaker()
 
+    # Fetch real-time stats for any Shorts past their 3h first-push window
+    run_pending_early_checks(LOGS_DIR)
+
     _preflight()
 
     # Guard 2: validate YouTube token + quota before burning any API calls or CI minutes
@@ -573,6 +576,8 @@ def run_pipeline() -> bool:
         # ── 14: Analytics ─────────────────────────────────────────────────────
         log.info("[14/14] Analytics")
         log_result(video_id, topic, timeline, gate, profile, LOGS_DIR)
+        if profile == "shorts":
+            schedule_early_check(video_id, LOGS_DIR)
 
         _record_success()
         _send_daily_summary()

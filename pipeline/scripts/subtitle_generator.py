@@ -25,7 +25,7 @@ def _auto_font_adjust() -> int:
     try:
         p = Path(__file__).parent.parent / "logs" / "auto_fixes.json"
         if p.exists():
-            return int(json.loads(p.read_text()).get("subtitle_font_adjust", 0))
+            return int(json.loads(p.read_text()).get("subtitle_font_adjust") or 0)
     except Exception:
         pass
     return 0

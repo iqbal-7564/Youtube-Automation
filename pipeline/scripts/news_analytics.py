@@ -224,7 +224,7 @@ def _fetch_stats(video_id: str, token: str) -> dict:
                 "ids":        "channel==MINE",
                 "dimensions": "video",
                 "filters":    f"video=={video_id}",
-                "metrics":    "views,averageViewDuration,averageViewPercentage,likes,impressions,impressionClickThroughRate",
+                "metrics":    "views,averageViewDuration,averageViewPercentage,likes,shares,impressions,impressionClickThroughRate",
                 "startDate":  "2020-01-01",
                 "endDate":    today,
             },
@@ -234,12 +234,14 @@ def _fetch_stats(video_id: str, token: str) -> dict:
             rows = r.json().get("rows", [])
             if rows:
                 row = rows[0]
+                # columns: video, views, avgViewDuration, avgViewPct, likes, shares, impressions, ctr
                 return {
                     "views_48h":    int(row[1])   if len(row) > 1 else 0,
                     "avg_view_pct": float(row[3]) if len(row) > 3 else 0.0,
                     "likes":        int(row[4])   if len(row) > 4 else 0,
-                    "impressions":  int(row[5])   if len(row) > 5 else 0,
-                    "ctr":          float(row[6]) if len(row) > 6 else 0.0,
+                    "shares":       int(row[5])   if len(row) > 5 else 0,
+                    "impressions":  int(row[6])   if len(row) > 6 else 0,
+                    "ctr":          float(row[7]) if len(row) > 7 else 0.0,
                 }
     except Exception as exc:
         log.debug("Analytics fetch %s: %s", video_id, exc)
@@ -746,6 +748,107 @@ def _generate_related_seeds(category: str, source_title: str) -> list[str]:
         except Exception as exc:
             log.debug("Related seeds: %s", exc)
     return []
+
+
+def schedule_early_check(video_id: str, logs_dir: Path) -> None:
+    """
+    Schedules a real-time stats check 3 hours after upload.
+    Writes to pending_checks.json — picked up at the start of the next pipeline run.
+    6 hours matches the actual upload schedule — enough time for the algorithm's
+    first-push window to complete before we read the result.
+    """
+    from datetime import timedelta
+    check_path = logs_dir / "pending_checks.json"
+    pending = json.loads(check_path.read_text()) if check_path.exists() else []
+    pending.append({
+        "video_id":    video_id,
+        "check_after": (datetime.utcnow() + timedelta(hours=6)).isoformat(),
+        "done":        False,
+    })
+    check_path.write_text(json.dumps(pending[-50:], indent=2))
+    log.info("  Early stats check scheduled for %s in 6h", video_id)
+
+
+def fetch_early_stats(video_id: str) -> dict:
+    """
+    Fetch real-time stats via YouTube Data API (not Analytics — no delay).
+    Returns views, likes, comment count — available within minutes of upload.
+    Shares are NOT available here; they come from Analytics with 24-72h delay.
+    """
+    token = _token()
+    if not token:
+        return {}
+    try:
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            headers={"Authorization": f"Bearer {token}"},
+            params={"part": "statistics", "id": video_id},
+            timeout=10,
+        )
+        if r.ok:
+            items = r.json().get("items", [])
+            if items:
+                s = items[0].get("statistics", {})
+                return {
+                    "early_views":      int(s.get("viewCount",    0)),
+                    "early_likes":      int(s.get("likeCount",    0)),
+                    "early_comments":   int(s.get("commentCount", 0)),
+                    "early_fetched_at": datetime.utcnow().isoformat(),
+                }
+    except Exception as exc:
+        log.debug("Early stats %s: %s", video_id, exc)
+    return {}
+
+
+def run_pending_early_checks(logs_dir: Path) -> None:
+    """
+    Called at the start of each pipeline run.
+    Fetches real-time stats for any videos that are past their 3h check window.
+    Logs a warning if early views are low — indicates algorithm did not push the Short.
+    """
+    check_path   = logs_dir / "pending_checks.json"
+    results_path = logs_dir / "video_results.json"
+    if not check_path.exists():
+        return
+
+    pending = json.loads(check_path.read_text())
+    now     = datetime.utcnow().isoformat()
+    due     = [p for p in pending if not p.get("done") and p["check_after"] <= now]
+    if not due:
+        return
+
+    results = json.loads(results_path.read_text()) if results_path.exists() else []
+    changed = False
+
+    for entry in due:
+        vid   = entry["video_id"]
+        stats = fetch_early_stats(vid)
+        if stats:
+            for r in results:
+                if r.get("video_id") == vid:
+                    r.update(stats)
+                    changed = True
+                    views = stats.get("early_views", 0)
+                    log.info(
+                        "Early check [%s]: %d views | %d likes | %d comments",
+                        vid, views, stats.get("early_likes", 0), stats.get("early_comments", 0),
+                    )
+                    if views < 50:
+                        log.warning(
+                            "LOW early views (%d) for %s — Shorts first-push failed. "
+                            "Consider reposting with a stronger hook or at a peak hour.", views, vid,
+                        )
+                    elif views < 200:
+                        log.info("Moderate early views (%d) — algorithm push was limited", views)
+                    else:
+                        log.info("Strong early views (%d) — algorithm is pushing this Short", views)
+                    break
+        entry["done"] = True
+
+    if changed:
+        results_path.write_text(json.dumps(results[-200:], indent=2))
+    check_path.write_text(json.dumps(pending[-50:], indent=2))
+    log.info("Early checks completed for %d videos", len(due))
 
 
 def _token() -> str | None:

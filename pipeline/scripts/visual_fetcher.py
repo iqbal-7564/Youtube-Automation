@@ -766,7 +766,7 @@ def _huggingface_fetch(query: str, out_path: Path,
                 r = requests.post(
                     _HF_MODEL_URL,
                     headers={"Authorization": f"Bearer {key}"},
-                    json={"inputs": prompt, "parameters": {"num_inference_steps": _auto_hf_steps(),
+                    json={"inputs": prompt, "parameters": {"num_inference_steps": min(50, max(1, _auto_hf_steps())),
                                                         "width": 1280, "height": 720}},
                     timeout=60,
                 )

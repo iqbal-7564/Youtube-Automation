@@ -868,6 +868,10 @@ def select_topic(logs_dir: Path) -> dict | None:
 
     # Priority 0: INTENT_OVERRIDE env var — forces a specific category
     override = os.getenv("INTENT_OVERRIDE", "").strip().upper()
+    if override and override not in CATEGORIES:
+        log.error("INTENT_OVERRIDE=%s is not a valid category — ignoring. Valid: %s",
+                  override, CATEGORIES)
+        override = ""
     if override and override in CATEGORIES:
         log.info("INTENT_OVERRIDE=%s — forcing category", override)
         seeds = _SEEDS.get(override, [])
@@ -894,18 +898,21 @@ def select_topic(logs_dir: Path) -> dict | None:
         }
 
     # Priority 1: YouTube Autocomplete — real-time search demand.
-    # These are EXACTLY what people are typing into YouTube right now.
-    # Use the search phrase directly as the topic seed so the title matches
-    # what people search for — highest chance of appearing in search results.
+    # Each category contributes its top 3 highest-demand phrases, then ALL phrases
+    # compete purely on search score — highest score wins regardless of category.
+    # This prevents any single category from flooding the pool and blocking others.
     autocomplete_seeds = _fetch_autocomplete_seeds()
-    # Flatten and sort all autocomplete results by score
+
+    # Take top 3 phrases per category so all 15 categories enter the competition
     all_ac: list[tuple[str, str, float]] = []
     for cat, items in autocomplete_seeds.items():
-        for phrase, score in items:
+        for phrase, score in items[:3]:
             all_ac.append((cat, phrase, score))
+    # Sort purely by search demand score — no category weighting
     all_ac.sort(key=lambda x: x[2], reverse=True)
+    log.info("Autocomplete pool: %d phrases across all categories", len(all_ac))
 
-    for cat, phrase, _ in all_ac[:30]:
+    for cat, phrase, score in all_ac:
         # is_search_phrase=True → _build_topic uses _groq_title_from_search
         # which KEEPS the autocomplete keywords in the title so the video
         # ranks for the exact search that generated this phrase.
@@ -913,11 +920,11 @@ def select_topic(logs_dir: Path) -> dict | None:
         if topic:
             topic["source"]       = "YouTubeSearch"
             topic["search_query"] = phrase
-            log.info("Search demand [%s] phrase='%s' → '%s'",
-                     cat, phrase[:50], topic["title"][:60])
+            log.info("Search demand [%s] score=%.0f phrase='%s' → '%s'",
+                     cat, score, phrase[:50], topic["title"][:60])
             return topic
 
-    # Priority 3: YouTube trending tells us WHICH CATEGORY is hot right now,
+    # Priority 2: YouTube trending tells us WHICH CATEGORY is hot right now,
     # but we pick the actual topic from curated broad _SEEDS (not the trending
     # video title itself — those are niche/competitive and already covered by
     # big channels). Broad evergreen seeds get wide reach; trending category

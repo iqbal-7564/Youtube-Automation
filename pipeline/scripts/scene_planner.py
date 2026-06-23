@@ -48,6 +48,7 @@ def _save_used_keywords(keywords: list[str]) -> None:
         if _USED_KEYWORDS_PATH.exists():
             existing = json.loads(_USED_KEYWORDS_PATH.read_text()).get("keywords", [])
         combined = (existing + keywords)[-150:]  # rolling 150 entries
+        _LOGS_DIR.mkdir(parents=True, exist_ok=True)
         tmp = _USED_KEYWORDS_PATH.with_suffix(".tmp")
         tmp.write_text(json.dumps({"keywords": combined}, indent=2))
         tmp.replace(_USED_KEYWORDS_PATH)

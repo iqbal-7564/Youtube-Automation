@@ -50,8 +50,17 @@ _INTENT_COLOR = {
 }
 _INTENT_LABEL = {k: k for k in _INTENT_COLOR}
 
-_FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-_FONT_REG  = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+import platform as _platform
+_FONT_BOLD = (
+    "C:/Windows/Fonts/arialbd.ttf"
+    if _platform.system() == "Windows"
+    else "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+)
+_FONT_REG = (
+    "C:/Windows/Fonts/arial.ttf"
+    if _platform.system() == "Windows"
+    else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+)
 
 
 def _escape_drawtext(text: str) -> str:

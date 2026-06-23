@@ -106,7 +106,7 @@ def upload_video(
     try:
         token = _token()
     except Exception as exc:
-        log.error("Token refresh failed: %s", exc)
+        log.warning("Token refresh failed: %s", exc)
         return None
 
     metadata = _build_meta(script, topic, timeline, profile)
@@ -156,10 +156,10 @@ def upload_video(
     if not question or "Which fact" in question:
         _title = topic.get("title", "this topic")[:45]
         question = random.choice([
-            f"What did you NOT know about {_title}? Tell us below! 👇",
-            "Did you already know this? Comment YES or NO! 🤔",
-            "Which part surprised you most? Drop it below! 💬",
-            "Would you have believed this before watching? 🌍",
+            f"Hot take: most people will never admit this changed how they see {_title}. Did it change yours?",
+            f"Be honest — did you already know this about {_title}, or did this just prove you wrong? 👇",
+            "This is one of those facts that makes you question what else you've been taught wrong. What other 'fact' turned out to be false?",
+            f"Controversial opinion: {_title} is something schools should teach but never do. Agree or disagree?",
         ])
     _post_comment(video_id, question, token)
 
