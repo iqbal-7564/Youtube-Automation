@@ -698,5 +698,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "ORkLrYmI1x4",
+    "intent": "TECHNOLOGY",
+    "title": "Data Explosion Secret",
+    "hook_text": "Data explosion happens daily.",
+    "script_key_sents": [
+      "Data explosion happens daily",
+      "The data explosion secret is that 99% of the 5 billion",
+      "The secret to the data explosion is the vast amount of dark data"
+    ],
+    "total_duration_seconds": 38.64,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-23T18:58:29.818562",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
