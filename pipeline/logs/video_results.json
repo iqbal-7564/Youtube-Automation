@@ -719,5 +719,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "abTxMqST1o8",
+    "intent": "TECHNOLOGY",
+    "title": "NASA's 1969 Secret",
+    "hook_text": "NASA's 1969 secret",
+    "script_key_sents": [
+      "NASA's 1969 secret",
+      "The secret is that a modern smartphone's processor is over",
+      "NASA's 1969 secret was not just about the limited technology at the time, but about the ingenuity that made it possible to land astronauts o"
+    ],
+    "total_duration_seconds": 57.78,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-23T21:13:26.701758",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
