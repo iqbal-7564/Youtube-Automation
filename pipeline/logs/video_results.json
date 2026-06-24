@@ -718,7 +718,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 38,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-24T12:35:59.869371"
   },
   {
     "video_id": "abTxMqST1o8",
@@ -736,6 +740,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-23T21:13:26.701758",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 43,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-24T12:36:00.141844"
+  },
+  {
+    "video_id": "xmwyBNT6r38",
+    "intent": "CULTURE",
+    "title": "Romans' Bizarre Toothpaste",
+    "hook_text": "Romans used mouse brains as toothpaste.",
+    "script_key_sents": [
+      "Romans used mouse brains as toothpaste",
+      "Recent archaeology findings confirm that crushed mouse brains were indeed used",
+      "Romans' bizarre toothpaste might have been onto something"
+    ],
+    "total_duration_seconds": 36.13,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-24T12:40:40.004615",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
