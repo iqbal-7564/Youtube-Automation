@@ -794,5 +794,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "295fMdATj_8",
+    "intent": "CULTURE",
+    "title": "Ancient Sumerian's Hidden Influence",
+    "hook_text": "Ancient Sumerian's influence remains.",
+    "script_key_sents": [
+      "Ancient Sumerian's influence remains",
+      "Over 30% of English words have Sumerian roots, and",
+      "Ancient Sumerian's influence remains, a testament to its enduring legacy"
+    ],
+    "total_duration_seconds": 37.68,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-24T23:58:51.200848",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
