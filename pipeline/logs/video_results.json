@@ -768,6 +768,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 40,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-24T20:23:03.468722"
+  },
+  {
+    "video_id": "TISVlz5OC7Q",
+    "intent": "CULTURE",
+    "title": "Ancient Navigators' Secret",
+    "hook_text": "Ancient navigators used bioluminescent fish.",
+    "script_key_sents": [
+      "Ancient navigators used bioluminescent fish",
+      "They used patterns of bioluminescent fish and ocean swells",
+      "Ancient navigators' secret is out, and it's changing how we see ocean navigation"
+    ],
+    "total_duration_seconds": 39.91,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-24T20:30:20.896605",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
