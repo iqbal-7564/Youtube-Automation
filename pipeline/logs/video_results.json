@@ -843,7 +843,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 101,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-25T21:02:20.742313"
   },
   {
     "video_id": "klnIBjOan9o",
@@ -861,6 +865,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-25T13:32:07.720884",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 293,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-25T21:02:21.044183"
+  },
+  {
+    "video_id": "RJEQk721FDk",
+    "intent": "CULTURE",
+    "title": "Last Speakers",
+    "hook_text": "Last Speakers exist.",
+    "script_key_sents": [
+      "Last Speakers exist",
+      "For example, Martha's Vineyard Sign Language was recently declared extinct",
+      "Last Speakers are a harsh reminder of language extinction"
+    ],
+    "total_duration_seconds": 40.01,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-25T21:07:51.697034",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
