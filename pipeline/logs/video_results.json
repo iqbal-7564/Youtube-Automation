@@ -844,5 +844,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "klnIBjOan9o",
+    "intent": "CULTURE",
+    "title": "Ancient Code Cracked",
+    "hook_text": "Ancient code cracked.",
+    "script_key_sents": [
+      "Ancient code cracked",
+      "The cracked code shows Sumerian is the ancestor of",
+      "The ancient code cracked, revealing Sumerian's surprising impact on modern languages"
+    ],
+    "total_duration_seconds": 33.19,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-25T13:32:07.720884",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
