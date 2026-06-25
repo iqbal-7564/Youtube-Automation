@@ -793,7 +793,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 36,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-25T10:29:44.481433"
   },
   {
     "video_id": "295fMdATj_8",
@@ -811,6 +815,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-24T23:58:51.200848",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 535,
+    "early_likes": 4,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-25T10:29:44.704831"
+  },
+  {
+    "video_id": "o8MX6tQf2gk",
+    "intent": "TECHNOLOGY",
+    "title": "Deep Ultraviolet Tools 🚀",
+    "hook_text": "Deep Ultraviolet Tools exist.",
+    "script_key_sents": [
+      "Deep Ultraviolet Tools exist",
+      "Deep Ultraviolet Tools enable the creation of smaller",
+      "This technology is essential for driving innovation in the tech industry, and its restricted availability can significantly slow progress"
+    ],
+    "total_duration_seconds": 38.81,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-25T10:33:54.076422",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
