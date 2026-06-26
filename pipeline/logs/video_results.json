@@ -894,5 +894,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "iTHYHv-EBP4",
+    "intent": "CULTURE",
+    "title": "Göbekli Tepe's Dark Secret",
+    "hook_text": "Göbekli Tepe hides a dark secret.",
+    "script_key_sents": [
+      "Göbekli Tepe hides a dark secret",
+      "Recent excavations uncovered evidence of a sophisticated, communal beer-brewing operation,",
+      "Göbekli Tepe's dark secret is its ancient beer-brewing roots"
+    ],
+    "total_duration_seconds": 40.32,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-26T00:28:54.896436",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
