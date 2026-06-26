@@ -893,7 +893,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 62,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-26T08:29:21.089429"
   },
   {
     "video_id": "iTHYHv-EBP4",
@@ -911,6 +915,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-26T00:28:54.896436",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 263,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-26T08:29:21.394187"
+  },
+  {
+    "video_id": "7ab6QzOUrPY",
+    "intent": "CULTURE",
+    "title": "Sumerians' Hidden Code",
+    "hook_text": "Sumerians' code hides algorithms.",
+    "script_key_sents": [
+      "Sumerians' code hides algorithms",
+      "The Sumerians' hidden code contains the earliest known examples",
+      "The Sumerians' code is no longer hidden, and its relevance to modern computer science is undeniable"
+    ],
+    "total_duration_seconds": 39.7,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-26T08:35:13.850176",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
