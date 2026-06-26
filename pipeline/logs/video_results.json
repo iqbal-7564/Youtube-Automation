@@ -943,7 +943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 22,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-26T16:06:06.350961"
   },
   {
     "video_id": "LAzCr0xs4z4",
@@ -961,6 +965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-26T10:44:41.537983",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "XY_zaUE2Lvo",
+    "intent": "CULTURE",
+    "title": "Ancient Pacific Navigators' Secret",
+    "hook_text": "Ancient Pacific Navigators used mental maps.",
+    "script_key_sents": [
+      "Ancient Pacific Navigators used mental maps",
+      "The secret to their navigation was observing ocean currents and astronomical",
+      "The ancient Pacific navigators' secret was their ability to read nature, and this skill is still being unraveled today, influencing autonomo"
+    ],
+    "total_duration_seconds": 43.9,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-26T16:11:33.309775",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
