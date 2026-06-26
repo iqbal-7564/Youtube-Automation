@@ -944,5 +944,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "LAzCr0xs4z4",
+    "intent": "TECHNOLOGY",
+    "title": "Patronus AI 🚀",
+    "hook_text": "Patronus AI builds worlds",
+    "script_key_sents": [
+      "Patronus AI builds worlds",
+      "Patronus AI creates digital environments to test and improve the",
+      "This technology has the potential to significantly impact various industries, and Patronus AI's digital worlds are the key to unlocking more"
+    ],
+    "total_duration_seconds": 41.47,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-26T10:44:41.537983",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
