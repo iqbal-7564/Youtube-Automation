@@ -968,7 +968,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 82,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-27T02:26:06.097749"
   },
   {
     "video_id": "XY_zaUE2Lvo",
@@ -986,6 +990,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-26T16:11:33.309775",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 35,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-27T02:26:06.376600"
+  },
+  {
+    "video_id": "EQLXjpzDSg4",
+    "intent": "TECHNOLOGY",
+    "title": "Jalapeño Chip",
+    "hook_text": "Jalapeño Chip reduces dependence",
+    "script_key_sents": [
+      "Jalapeño Chip reduces dependence",
+      "Jalapeño Chip is designed to reduce dependence on single suppliers like",
+      "This means Jalapeño Chip can lead to breakthroughs in AI technology, making it a game-changer for the industry"
+    ],
+    "total_duration_seconds": 34.7,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-27T02:29:58.508358",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"

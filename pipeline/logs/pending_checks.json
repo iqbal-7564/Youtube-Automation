@@ -52,11 +52,16 @@
   {
     "video_id": "LAzCr0xs4z4",
     "check_after": "2026-06-26T16:44:41.539051",
-    "done": false
+    "done": true
   },
   {
     "video_id": "XY_zaUE2Lvo",
     "check_after": "2026-06-26T22:11:33.310815",
+    "done": true
+  },
+  {
+    "video_id": "EQLXjpzDSg4",
+    "check_after": "2026-06-27T08:29:58.509561",
     "done": false
   }
 ]
