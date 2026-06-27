@@ -1018,7 +1018,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 57,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-27T15:07:09.957366"
   },
   {
     "video_id": "bSzrjm1BBvU",
@@ -1036,6 +1040,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-27T07:53:26.916702",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 592,
+    "early_likes": 6,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-27T15:07:10.245428"
+  },
+  {
+    "video_id": "fGs2lBxUluU",
+    "intent": "OCEAN",
+    "title": "Ocean's Hidden Volcanoes",
+    "hook_text": "Ocean's hidden volcanoes exist.",
+    "script_key_sents": [
+      "Ocean's hidden volcanoes exist",
+      "Scientists have discovered these underwater volcanoes, some with lakes of molten lava,",
+      "These hidden volcanoes challenge our understanding of oceanic volcanic activity, revealing a complex world beneath the waves"
+    ],
+    "total_duration_seconds": 34.61,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-27T15:12:04.138383",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
