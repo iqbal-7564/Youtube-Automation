@@ -1019,5 +1019,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "bSzrjm1BBvU",
+    "intent": "CULTURE",
+    "title": "Drunk Decisions?",
+    "hook_text": "Drunk decisions are made",
+    "script_key_sents": [
+      "Drunk decisions are made",
+      "Ancient Persians debated sober and then drunk to double-check",
+      "Drunk decisions, it turns out, have a historical basis in ancient Persian and Greek traditions, influencing even modern problem-solving meth"
+    ],
+    "total_duration_seconds": 41.56,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-27T07:53:26.916702",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
