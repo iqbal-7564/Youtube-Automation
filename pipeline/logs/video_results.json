@@ -1094,5 +1094,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "VdX56yQzLvw",
+    "intent": "ANIMALS",
+    "title": "Deep Sea Glow",
+    "hook_text": "Deep Sea Glow exists.",
+    "script_key_sents": [
+      "Deep Sea Glow exists",
+      "Deep Sea Glow is caused by a bioluminescent squid that",
+      "The Deep Sea Glow is now understood to be a result of this bioluminescent squid's ability"
+    ],
+    "total_duration_seconds": 46.18,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-28T08:25:59.508411",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
