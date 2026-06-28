@@ -1093,7 +1093,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 56,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-28T15:10:05.846644"
   },
   {
     "video_id": "VdX56yQzLvw",
@@ -1111,6 +1115,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-28T08:25:59.508411",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 22,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-28T15:10:06.035429"
+  },
+  {
+    "video_id": "W2HQ2TBhyE4",
+    "intent": "ANIMALS",
+    "title": "Secrets of 40,000 Mile Journeys",
+    "hook_text": "40,000 mile journeys happen annually.",
+    "script_key_sents": [
+      "40,000 mile journeys happen annually",
+      "Recent tracking technology has revealed that Arctic terns migrate",
+      "This journey of 40,000 miles is a testament to the endurance of Arctic terns"
+    ],
+    "total_duration_seconds": 45.88,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-28T15:15:46.372588",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
