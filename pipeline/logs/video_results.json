@@ -1144,5 +1144,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "fjARzF9ejB4",
+    "intent": "CULTURE",
+    "title": "Colosseum's Secret",
+    "hook_text": "Colosseum's secret",
+    "script_key_sents": [
+      "Colosseum's secret",
+      "The Colosseum's secret is that it could be flooded in",
+      "The Colosseum's secret is now revealed, and it's a testament to the ingenuity of the ancient Romans"
+    ],
+    "total_duration_seconds": 45.8,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-28T21:04:16.324843",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
