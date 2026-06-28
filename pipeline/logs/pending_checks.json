@@ -72,6 +72,11 @@
   {
     "video_id": "fGs2lBxUluU",
     "check_after": "2026-06-27T21:12:04.139542",
+    "done": true
+  },
+  {
+    "video_id": "bK3gaqeosTY",
+    "check_after": "2026-06-28T08:41:48.951528",
     "done": false
   }
 ]
