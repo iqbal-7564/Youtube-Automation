@@ -1143,7 +1143,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 14,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-29T02:38:49.847878"
   },
   {
     "video_id": "fjARzF9ejB4",
@@ -1161,6 +1165,26 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-28T21:04:16.324843",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "3sZzGJzY8vI",
+    "intent": "TECHNOLOGY",
+    "title": "AI Falls Short 🚗",
+    "hook_text": "AI falls short",
+    "script_key_sents": [
+      "The answer lies in AI's inability to fully replace human",
+      "AI falls short because it lacks the nuance and critical thinking of human engineers"
+    ],
+    "total_duration_seconds": 37.92,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-29T02:42:35.254640",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
