@@ -1243,5 +1243,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "0J_iJTttKlI",
+    "intent": "HISTORY",
+    "title": "Egypt's Pyramid Secret",
+    "hook_text": "Egypt's Pyramid Secret is hidden tunnels.",
+    "script_key_sents": [
+      "Egypt's Pyramid Secret is hidden tunnels",
+      "The secret is a hidden network of tunnels and",
+      "Egypt's Pyramid Secret is the hidden tunnels and chambers, revealing the true skills and knowledge of ancient Egyptian builders"
+    ],
+    "total_duration_seconds": 37.31,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-29T21:28:35.327986",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
