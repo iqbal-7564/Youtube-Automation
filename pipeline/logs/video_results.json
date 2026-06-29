@@ -1168,7 +1168,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 124,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-29T09:25:55.886611"
   },
   {
     "video_id": "3sZzGJzY8vI",
@@ -1185,6 +1189,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-29T02:42:35.254640",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 55,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-29T09:25:56.213640"
+  },
+  {
+    "video_id": "bKq9DE6jnto",
+    "intent": "TECHNOLOGY",
+    "title": "Paralyzed Minds Now Type",
+    "hook_text": "Paralyzed minds type now.",
+    "script_key_sents": [
+      "Paralyzed minds type now",
+      "Using only their thoughts, paralyzed individuals can type up to 8",
+      "Paralyzed minds are now typing, and it's changing the way we approach communication and technology for those with paralysis"
+    ],
+    "total_duration_seconds": 37.41,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-29T09:29:46.495774",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
