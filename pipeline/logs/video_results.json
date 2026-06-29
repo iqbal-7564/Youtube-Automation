@@ -1217,6 +1217,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 10,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-29T16:49:03.478269"
+  },
+  {
+    "video_id": "1eEFtkGXoTc",
+    "intent": "CULTURE",
+    "title": "Jericho's Dark Secret",
+    "hook_text": "Jericho's walls hide a dark secret.",
+    "script_key_sents": [
+      "Jericho's walls hide a dark secret",
+      "Recent excavations have uncovered that the city's ancient walls",
+      "Jericho's dark secret is its toxic valley, and the walls that saved its people"
+    ],
+    "total_duration_seconds": 37.31,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-29T16:54:34.027683",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
