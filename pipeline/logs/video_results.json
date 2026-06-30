@@ -1342,5 +1342,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "CjZm81us6tk",
+    "intent": "CULTURE",
+    "title": "Sumerians' Shocking Secret",
+    "hook_text": "Sumerians' shocking secret",
+    "script_key_sents": [
+      "Sumerians' shocking secret",
+      "The hidden code contains calculations for the movements of",
+      "Sumerians' shocking secret is their advanced understanding of astronomy and mathematics, encoded in their language"
+    ],
+    "total_duration_seconds": 51.28,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-30T21:32:18.160091",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
