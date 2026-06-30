@@ -1267,7 +1267,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-30T08:29:14.659726"
   },
   {
     "video_id": "20eo-o0EC8I",
@@ -1285,6 +1289,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-30T02:36:46.489990",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "bAugr4H8eFc",
+    "intent": "HISTORY",
+    "title": "Egypt's Pyramid Secret",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Egypt's Pyramid Secret",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.54,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-30T08:33:31.408787",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
