@@ -1242,7 +1242,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 130,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-06-30T02:32:34.936082"
   },
   {
     "video_id": "0J_iJTttKlI",
@@ -1260,6 +1264,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-06-29T21:28:35.327986",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "20eo-o0EC8I",
+    "intent": "TECHNOLOGY",
+    "title": "DRAM Chips 🚀",
+    "hook_text": "DRAM Chips power AI.",
+    "script_key_sents": [
+      "DRAM Chips power AI",
+      "South Korean tech giants are mass-producing DRAM Chips to",
+      "DRAM Chips are the key to unlocking faster and more efficient devices, and their mass production will impact everyday life"
+    ],
+    "total_duration_seconds": 39.46,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-06-30T02:36:46.489990",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
