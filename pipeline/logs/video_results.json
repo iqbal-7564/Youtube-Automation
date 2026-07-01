@@ -1416,6 +1416,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-01T16:15:00.996327"
+  },
+  {
+    "video_id": "0JeJsQAgNoM",
+    "intent": "CULTURE",
+    "title": "Ancient Navigators' Secret",
+    "hook_text": "Ancient navigators pinpoint locations.",
+    "script_key_sents": [
+      "Ancient navigators pinpoint locations",
+      "Recent studies reveal they used observations of ocean currents,",
+      "Ancient navigators' secret was their ability to read nature, pinpointing locations with astonishing accuracy"
+    ],
+    "total_duration_seconds": 34.45,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-01T16:20:11.584549",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
