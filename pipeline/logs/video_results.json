@@ -1366,7 +1366,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 22,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-01T08:48:30.768391"
   },
   {
     "video_id": "lJN4TwoZPZ4",
@@ -1384,6 +1388,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-01T02:42:27.308721",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-01T08:48:30.942463"
+  },
+  {
+    "video_id": "2CD7nVVE2Wg",
+    "intent": "CULTURE",
+    "title": "Egypt's 3,000yr Old Honey Cure",
+    "hook_text": "Egypt's 3,000yr old honey cure",
+    "script_key_sents": [
+      "Egypt's 3,000yr old honey cure",
+      "as one specific type of honey shows a",
+      "Egypt's 3,000yr old honey cure is real and it works, with a 99% success rate, which is why scientists are re-examining it, Egypt's 3,000yr o"
+    ],
+    "total_duration_seconds": 35.8,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-01T08:53:21.728600",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"

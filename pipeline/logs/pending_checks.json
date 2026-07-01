@@ -132,11 +132,16 @@
   {
     "video_id": "CjZm81us6tk",
     "check_after": "2026-07-01T03:32:18.161390",
-    "done": false
+    "done": true
   },
   {
     "video_id": "lJN4TwoZPZ4",
     "check_after": "2026-07-01T08:42:27.310038",
+    "done": true
+  },
+  {
+    "video_id": "2CD7nVVE2Wg",
+    "check_after": "2026-07-01T14:53:21.729979",
     "done": false
   }
 ]
