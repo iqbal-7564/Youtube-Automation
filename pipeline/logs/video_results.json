@@ -1441,6 +1441,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 13,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-02T02:28:36.963115"
+  },
+  {
+    "video_id": "vUHjRD32ISY",
+    "intent": "TECHNOLOGY",
+    "title": "AI Labs VC",
+    "hook_text": "AI Labs VC fuels innovation.",
+    "script_key_sents": [
+      "AI Labs VC fuels innovation",
+      "AI Labs VC invests in research centers developing",
+      "This targeted investment can make AI more scalable and accessible, changing how we live and work"
+    ],
+    "total_duration_seconds": 32.54,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-02T02:31:29.156270",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
