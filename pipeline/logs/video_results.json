@@ -1466,7 +1466,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 116,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-02T15:59:48.548183"
   },
   {
     "video_id": "hLrZTbFuHsE",
@@ -1484,6 +1488,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-02T08:15:54.577673",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 58,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-02T15:59:48.811544"
+  },
+  {
+    "video_id": "6D3wchI4-pI",
+    "intent": "HISTORY",
+    "title": "Roman Empire's Dark Secret",
+    "hook_text": "Roman Empire's dark secret",
+    "script_key_sents": [
+      "Roman Empire's dark secret",
+      "Climate change and devastating pandemics, similar to COVID-19, played",
+      "The Roman Empire's dark secret is that it was not just invaded, but also ravaged by the very environment it sought to control"
+    ],
+    "total_duration_seconds": 54.63,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-02T16:07:00.319486",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
