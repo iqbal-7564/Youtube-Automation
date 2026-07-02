@@ -1467,5 +1467,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "hLrZTbFuHsE",
+    "intent": "HISTORY",
+    "title": "Vikings in America",
+    "hook_text": "Vikings in America existed.",
+    "script_key_sents": [
+      "Vikings in America existed",
+      "Recent archaeological discoveries in Canada have uncovered a Viking settlement",
+      "This settlement proves Vikings in America existed 500 years before Columbus"
+    ],
+    "total_duration_seconds": 34.95,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-02T08:15:54.577673",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
