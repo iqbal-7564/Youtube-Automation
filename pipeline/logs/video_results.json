@@ -1517,5 +1517,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "CVcEsmHo1UA",
+    "intent": "NATURE",
+    "title": "Fire's Hidden Ally",
+    "hook_text": "Fire's hidden ally sparks",
+    "script_key_sents": [
+      "Fire's hidden ally sparks",
+      "Scientists found certain fungi create 'fire pathways', helping flames",
+      "Fire's hidden ally is actually a type of fungus"
+    ],
+    "total_duration_seconds": 28.85,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-02T21:05:52.523080",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
