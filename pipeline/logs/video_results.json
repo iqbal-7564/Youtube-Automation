@@ -1592,5 +1592,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "YE5i5np_oxs",
+    "intent": "CULTURE",
+    "title": "Lost Tongues",
+    "hook_text": "Lost Tongues disappear daily.",
+    "script_key_sents": [
+      "Lost Tongues disappear daily",
+      "Half of the world's languages are on the brink",
+      "Lost Tongues are indeed disappearing, but efforts to preserve them continue, and it's crucial we act now to save these languages, and by doi"
+    ],
+    "total_duration_seconds": 56.87,
+    "scene_count": 12,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-03T21:08:17.387624",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
