@@ -1541,7 +1541,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 39,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-03T15:48:03.093426"
   },
   {
     "video_id": "rPrT629Oj6w",
@@ -1559,6 +1563,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-03T02:08:33.885049",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 24,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-03T15:48:03.371006"
+  },
+  {
+    "video_id": "Gdx9b72evaA",
+    "intent": "CULTURE",
+    "title": "Ancient Secrets Hidden",
+    "hook_text": "Ancient secrets hidden in plain sight.",
+    "script_key_sents": [
+      "Ancient secrets hidden in plain sight",
+      "Göbekli Tepe, a site 6000 years older than Stonehenge,",
+      "The ancient secrets hidden at Göbekli Tepe are slowly being uncovered, revealing a new narrative of human civilization"
+    ],
+    "total_duration_seconds": 39.05,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-03T15:54:23.620312",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
