@@ -1516,7 +1516,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-03T02:04:01.540397"
   },
   {
     "video_id": "CVcEsmHo1UA",
@@ -1534,6 +1538,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-02T21:05:52.523080",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "rPrT629Oj6w",
+    "intent": "TECHNOLOGY",
+    "title": "Anthropic Chip 🚀",
+    "hook_text": "Anthropic Chip boosts AI",
+    "script_key_sents": [
+      "Anthropic Chip boosts AI",
+      "The Anthropic Chip, developed in partnership with Samsung, is",
+      "The Anthropic Chip's capabilities are a game-changer"
+    ],
+    "total_duration_seconds": 43.12,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-03T02:08:33.885049",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
