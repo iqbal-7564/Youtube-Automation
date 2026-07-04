@@ -1616,7 +1616,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 10,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-04T14:57:14.667381"
   },
   {
     "video_id": "kKhUIkt_JMg",
@@ -1634,6 +1638,30 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-04T02:06:24.369280",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 62,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-04T14:57:14.868387"
+  },
+  {
+    "video_id": "Nx6gEhIx1uo",
+    "intent": "HISTORY",
+    "title": "Khan's Secret To Success",
+    "hook_text": "Khan's secret",
+    "script_key_sents": [
+      "Khan's secret to success lies in his genetic legacy,",
+      "Khan's secret to success is now clear: his ability to leave a lasting genetic legacy"
+    ],
+    "total_duration_seconds": 46.59,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-04T15:03:10.192500",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
