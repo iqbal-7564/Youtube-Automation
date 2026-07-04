@@ -1591,7 +1591,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 159,
+    "early_likes": 7,
+    "early_comments": 6,
+    "early_fetched_at": "2026-07-04T02:01:33.415602"
   },
   {
     "video_id": "YE5i5np_oxs",
@@ -1609,6 +1613,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-03T21:08:17.387624",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "kKhUIkt_JMg",
+    "intent": "TECHNOLOGY",
+    "title": "Pocket App 🎮",
+    "hook_text": "Pocket App generates games.",
+    "script_key_sents": [
+      "Pocket App generates games",
+      "The Pocket App uses AI to generate interactive mini",
+      "The Pocket App's AI technology is the key to its innovative game generation, making it a game-changer for the industry"
+    ],
+    "total_duration_seconds": 43.16,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-04T02:06:24.369280",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"

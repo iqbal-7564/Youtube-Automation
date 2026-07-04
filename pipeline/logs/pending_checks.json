@@ -177,11 +177,16 @@
   {
     "video_id": "Gdx9b72evaA",
     "check_after": "2026-07-03T21:54:23.621858",
-    "done": false
+    "done": true
   },
   {
     "video_id": "YE5i5np_oxs",
     "check_after": "2026-07-04T03:08:17.389099",
+    "done": false
+  },
+  {
+    "video_id": "kKhUIkt_JMg",
+    "check_after": "2026-07-04T08:06:24.371033",
     "done": false
   }
 ]
