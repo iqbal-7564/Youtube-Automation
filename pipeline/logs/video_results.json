@@ -1666,5 +1666,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "2Z9iRpFuHxk",
+    "intent": "HISTORY",
+    "title": "Ancient Greeks Knew This",
+    "hook_text": "Ancient Greeks knew Earth's shape.",
+    "script_key_sents": [
+      "Ancient Greeks knew Earth's shape",
+      "Eratosthenes measured the Earth's circumference with shocking accuracy, just",
+      "Ancient Greeks knew this: the Earth's circumference"
+    ],
+    "total_duration_seconds": 25.51,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-04T20:56:59.734123",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
