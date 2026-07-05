@@ -1665,7 +1665,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 21,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-05T02:09:52.917651"
   },
   {
     "video_id": "2Z9iRpFuHxk",
@@ -1683,6 +1687,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-04T20:56:59.734123",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "GBJSjEF7kKg",
+    "intent": "TECHNOLOGY",
+    "title": "Claude Code",
+    "hook_text": "Claude Code banned.",
+    "script_key_sents": [
+      "Claude Code banned",
+      "Claude Code was banned by Alibaba due to its potential impact",
+      "The ban on Claude Code is a result of its high-risk classification, and this decision may influence the future of software development and c"
+    ],
+    "total_duration_seconds": 39.26,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-05T02:14:33.144927",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
