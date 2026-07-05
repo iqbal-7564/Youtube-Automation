@@ -4,11 +4,11 @@ on:
   schedule:
     # ── Video uploads: 3 Shorts/day + 1 bonus/day ───────────────────────────────
     # (PKT = UTC+5)
-    - cron: '0 5 * * *'   # 05:00 UTC │ 10:00 AM PKT │ SHORT #1  — US West Coast 10 PM + UK 5 AM early risers
+    - cron: '0 0 * * *'   # 05:00 UTC │ 10:00 AM PKT │ SHORT #1  — US West Coast 10 PM + UK 5 AM early risers
     # - cron: '0 11 * * *'  # 11:00 UTC │  4:00 PM PKT │ STANDARD  — disabled (ElevenLabs quota conservation)
-    - cron: '0 14 * * *'  # 14:00 UTC │  7:00 PM PKT │ SHORT #2  — UK prime-time + US lunch
-    - cron: '0 20 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — UK prime evening (8 PM GMT) + US afternoon
-    - cron: '0 0 * * *'   # 00:00 UTC │  5:00 AM PKT │ BONUS     — US prime time 7 PM ET / 4 PM PT (highest US traffic)
+    - cron: '0 6 * * *'  # 14:00 UTC │  7:00 PM PKT │ SHORT #2  — UK prime-time + US lunch
+    - cron: '0 12 * * *'  # 20:00 UTC │  1:00 AM PKT │ SHORT #3  — UK prime evening (8 PM GMT) + US afternoon
+    - cron: '0 18 * * *'   # 00:00 UTC │  5:00 AM PKT │ BONUS     — US prime time 7 PM ET / 4 PM PT (highest US traffic)
     # ── Background tasks — always running ──────────────────────────────────────
     - cron: '0 * * * *'   # Every hour — comment auto-responder + news monitor
   workflow_dispatch:
