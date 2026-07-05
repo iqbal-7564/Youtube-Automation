@@ -1690,7 +1690,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 851,
+    "early_likes": 6,
+    "early_comments": 4,
+    "early_fetched_at": "2026-07-05T07:55:26.691375"
   },
   {
     "video_id": "GBJSjEF7kKg",
@@ -1708,6 +1712,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-05T02:14:33.144927",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "h4xC4bPzXvM",
+    "intent": "HISTORY",
+    "title": "Genghis Khan's Secret Heirs",
+    "hook_text": "Genghis Khan's heirs",
+    "script_key_sents": [
+      "Genghis Khan's heirs",
+      "Recent DNA research reveals that nearly 1 in 200",
+      "Genghis Khan's secret heirs are everywhere, and his genetic legacy continues to shape modern society, with nearly 1 in 200 men being his dir"
+    ],
+    "total_duration_seconds": 38.17,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-05T08:02:23.911258",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
