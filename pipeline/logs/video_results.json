@@ -1715,7 +1715,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 419,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-05T15:04:44.347136"
   },
   {
     "video_id": "h4xC4bPzXvM",
@@ -1733,6 +1737,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-05T08:02:23.911258",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 860,
+    "early_likes": 8,
+    "early_comments": 4,
+    "early_fetched_at": "2026-07-05T15:04:44.636416"
+  },
+  {
+    "video_id": "8_FOq7F_EZ4",
+    "intent": "HISTORY",
+    "title": "Silk Road's Dark Secret",
+    "hook_text": "Silk Road spreads death.",
+    "script_key_sents": [
+      "Silk Road spreads death",
+      "Recent DNA analysis reveals that the Silk Road not",
+      "The Silk Road's dark secret is that it was a conduit for death, changing the course of human history"
+    ],
+    "total_duration_seconds": 42.89,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-05T15:10:43.245197",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
