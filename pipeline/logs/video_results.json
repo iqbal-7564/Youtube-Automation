@@ -1790,6 +1790,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 48,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-07T02:10:13.955650"
+  },
+  {
+    "video_id": "tkmfhxwOPJE",
+    "intent": "TECHNOLOGY",
+    "title": "Ransomware AI",
+    "hook_text": "Ransomware AI attacks",
+    "script_key_sents": [
+      "Ransomware AI attacks",
+      "Ransomware AI carries out the technical execution of attacks,",
+      "Ransomware AI's power is limited by its need for human direction"
+    ],
+    "total_duration_seconds": 44.78,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-07T02:14:22.663290",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
