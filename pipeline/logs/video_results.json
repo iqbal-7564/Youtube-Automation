@@ -1840,6 +1840,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 18,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-09T02:03:38.980472"
+  },
+  {
+    "video_id": "C9c0_DUzKO8",
+    "intent": "TECHNOLOGY",
+    "title": "Deepfake Detector",
+    "hook_text": "Deepfake Detector",
+    "script_key_sents": [
+      "Deepfake Detector",
+      "Deepfake detector systems use AI to identify and",
+      "Deepfake Detector resolves the issue by identifying fake media, thus it was the answer all along"
+    ],
+    "total_duration_seconds": 33.38,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-09T02:07:30.081392",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
