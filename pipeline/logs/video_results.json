@@ -1890,6 +1890,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 29,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-11T01:56:16.127029"
+  },
+  {
+    "video_id": "eJV3k76BNrk",
+    "intent": "TECHNOLOGY",
+    "title": "Instagram AI 📸",
+    "hook_text": "Instagram AI raises concerns.",
+    "script_key_sents": [
+      "Instagram AI raises concerns",
+      "The removal of this feature impacts how social media",
+      "Instagram AI's removal shows the struggle to balance creativity and user control"
+    ],
+    "total_duration_seconds": 43.5,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-11T02:00:35.978149",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
