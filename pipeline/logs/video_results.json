@@ -1915,6 +1915,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 51,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-12T01:52:02.489240"
+  },
+  {
+    "video_id": "DH5MXuRuQXI",
+    "intent": "TECHNOLOGY",
+    "title": "OpenAI Lawsuit 🤖",
+    "hook_text": "OpenAI lawsuit allegations",
+    "script_key_sents": [
+      "OpenAI lawsuit allegations",
+      "The lawsuit specifically alleges that OpenAI's senior leadership misappropriated",
+      "The OpenAI lawsuit serves as a reminder of the importance of protecting intellectual property in the tech industry"
+    ],
+    "total_duration_seconds": 64.97,
+    "scene_count": 12,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-12T01:58:17.982429",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
