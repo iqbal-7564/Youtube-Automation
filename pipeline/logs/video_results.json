@@ -1990,6 +1990,30 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 120,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-15T01:28:11.842502"
+  },
+  {
+    "video_id": "-kptoQViKTY",
+    "intent": "TECHNOLOGY",
+    "title": "GPT-5.6 Sol 🚨",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.86,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-15T01:32:07.864112",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
