@@ -2039,6 +2039,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 17,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-17T01:52:01.279981"
+  },
+  {
+    "video_id": "i24AoN492tc",
+    "intent": "TECHNOLOGY",
+    "title": "Google Vids AI 📹",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Google Vids AI 📹",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.97,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-17T01:56:04.475949",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
