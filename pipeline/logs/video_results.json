@@ -2088,6 +2088,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 26,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-19T01:49:44.297514"
+  },
+  {
+    "video_id": "mY1jjhJ9_uU",
+    "intent": "TECHNOLOGY",
+    "title": "Digit Robots 🤖",
+    "hook_text": "Digit robots optimize logistics.",
+    "script_key_sents": [
+      "Digit robots optimize logistics",
+      "The expansion of Digit robots into new areas like Fremont,",
+      "Digit robots are the key to streamlining logistics, and their integration is changing the game"
+    ],
+    "total_duration_seconds": 40.82,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-19T01:53:47.955972",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
