@@ -2113,6 +2113,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 271,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-20T02:07:07.373074"
+  },
+  {
+    "video_id": "85qWCJUUb44",
+    "intent": "TECHNOLOGY",
+    "title": "Nvidia Japan 💻",
+    "hook_text": "Nvidia Japan expands AI",
+    "script_key_sents": [
+      "Nvidia Japan expands AI",
+      "Nvidia Japan enables advancements in robotics and healthcare,",
+      "Nvidia Japan's AI expansion changes the technology landscape, impacting industries and lives, with its cutting-edge solutions, Nvidia Japan "
+    ],
+    "total_duration_seconds": 34.93,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-20T02:11:44.173998",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
