@@ -2138,6 +2138,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 142,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-21T01:49:30.652185"
+  },
+  {
+    "video_id": "UqkEjsQoIbA",
+    "intent": "TECHNOLOGY",
+    "title": "Anthropic AI",
+    "hook_text": "Anthropic AI raises ownership questions.",
+    "script_key_sents": [
+      "Anthropic AI raises ownership questions",
+      "Anthropic AI's training data includes copyrighted materials, which has",
+      "Anthropic AI's future hangs in the balance as the settlement sets a precedent for AI ownership and usage rights, leaving us to wonder what t"
+    ],
+    "total_duration_seconds": 53.65,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-21T01:56:20.182497",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
