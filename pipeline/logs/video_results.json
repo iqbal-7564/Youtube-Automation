@@ -2163,6 +2163,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 23,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-22T01:49:22.839975"
+  },
+  {
+    "video_id": "4RtwyImsN2Y",
+    "intent": "TECHNOLOGY",
+    "title": "Hugging Face",
+    "hook_text": "Hugging Face exposes AI risks.",
+    "script_key_sents": [
+      "Hugging Face exposes AI risks",
+      "Hugging Face allows developers to build and share AI models,",
+      "Hugging Face's breach reveals the importance of securing AI models"
+    ],
+    "total_duration_seconds": 39.07,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-22T01:53:55.143287",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
