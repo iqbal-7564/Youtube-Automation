@@ -2188,6 +2188,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 51,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-07-24T07:58:42.035629"
+  },
+  {
+    "video_id": "5AzyPLZP-XM",
+    "intent": "ANIMALS",
+    "title": "Crows Expose Human Liars",
+    "hook_text": "Crows expose human liars.",
+    "script_key_sents": [
+      "Crows expose human liars",
+      "Crows recognize human faces and remember the actions of",
+      "Crows expose human liars by responding aggressively to people who have deceived them before, making them a unique indicator of human honesty"
+    ],
+    "total_duration_seconds": 51.53,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-24T08:05:18.692794",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
