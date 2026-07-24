@@ -2214,5 +2214,25 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "lA_7x9X6l_c",
+    "intent": "ANIMALS",
+    "title": "Elephants Mourn Like Humans",
+    "hook_text": "Elephants mourn.",
+    "script_key_sents": [
+      "Elephants revisit graves years later, showing a level of emotional",
+      "It's clear, elephants mourn like humans, challenging our understanding of animal emotions and intelligence"
+    ],
+    "total_duration_seconds": 35.14,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-07-24T08:25:42.499910",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
