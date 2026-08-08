@@ -2213,7 +2213,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 44,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-08T22:56:02.404622"
   },
   {
     "video_id": "lA_7x9X6l_c",
@@ -2230,6 +2234,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-07-24T08:25:42.499910",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 326,
+    "early_likes": 8,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-08T22:56:02.633921"
+  },
+  {
+    "video_id": "U3TZdL6N-DU",
+    "intent": "HISTORY",
+    "title": "The Dark Secret Behind the Black Death",
+    "hook_text": "Black Death hides a dark secret.",
+    "script_key_sents": [
+      "Black Death hides a dark secret",
+      "The dark secret behind the Black Death is that",
+      "The Black Death's secret is now out: multiple plague strains led to its devastating impact"
+    ],
+    "total_duration_seconds": 37.28,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-08T23:02:26.296518",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
