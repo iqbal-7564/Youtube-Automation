@@ -2312,7 +2312,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 135,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-09T13:51:10.716913"
   },
   {
     "video_id": "12on-OH3VHA",
@@ -2330,6 +2334,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-09T07:50:43.791628",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 356,
+    "early_likes": 5,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-09T13:51:10.922654"
+  },
+  {
+    "video_id": "zhd-GE1wanE",
+    "intent": "HISTORY",
+    "title": "Ancient Greeks Knew",
+    "hook_text": "Ancient Greeks knew Earth was round.",
+    "script_key_sents": [
+      "Ancient Greeks knew Earth was round",
+      "Recent studies confirmed that ancient Greeks discovered the Earth",
+      "Ancient Greeks knew the Earth was round, and their calculations were remarkably accurate, leaving us to wonder how they achieved such a feat"
+    ],
+    "total_duration_seconds": 57.66,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-09T13:58:46.332831",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
