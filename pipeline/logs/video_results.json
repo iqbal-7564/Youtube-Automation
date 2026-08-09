@@ -2262,7 +2262,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 489,
+    "early_likes": 6,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-09T07:44:07.118919"
   },
   {
     "video_id": "2LgsxYfhjcI",
@@ -2283,7 +2287,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 352,
+    "early_likes": 4,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-09T07:44:07.325912"
   },
   {
     "video_id": "sRgtf7rHauo",
@@ -2301,6 +2309,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-09T03:08:09.166590",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "12on-OH3VHA",
+    "intent": "HISTORY",
+    "title": "Vikings in America",
+    "hook_text": "Vikings in America existed.",
+    "script_key_sents": [
+      "Vikings in America existed",
+      "A new archaeological discovery in Canada may be the",
+      "Vikings in America existed, and their legacy remains"
+    ],
+    "total_duration_seconds": 34.19,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-09T07:50:43.791628",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
