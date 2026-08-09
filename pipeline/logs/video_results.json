@@ -2363,5 +2363,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "JrW3khERCA0",
+    "intent": "GEOGRAPHY",
+    "title": "Trench Deeper Than Everest",
+    "hook_text": "Trench deeper than Everest.",
+    "script_key_sents": [
+      "Trench deeper than Everest",
+      "It's 36,000 feet deeper than Mount Everest is tall",
+      "The Mariana Trench is indeed deeper than Everest, with life forms that challenge our understanding of Earth"
+    ],
+    "total_duration_seconds": 33.19,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-09T19:31:46.838340",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
