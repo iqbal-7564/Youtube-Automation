@@ -2284,5 +2284,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "sRgtf7rHauo",
+    "intent": "HISTORY",
+    "title": "Plague & Prayer",
+    "hook_text": "Plague spreads prayer.",
+    "script_key_sents": [
+      "Plague spreads prayer",
+      "Recent archaeological findings and DNA analysis reveal that the Black",
+      "This connection between plague and prayer shows how the spread of ideas and diseases are intertwined"
+    ],
+    "total_duration_seconds": 42.39,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-09T03:08:09.166590",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
