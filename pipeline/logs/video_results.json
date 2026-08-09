@@ -2263,5 +2263,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "2LgsxYfhjcI",
+    "intent": "TECHNOLOGY",
+    "title": "Amazon Data Center 🚀",
+    "hook_text": "Amazon Data Center",
+    "script_key_sents": [
+      "Amazon Data Center",
+      "The new Texas data center features an on-site power plant,",
+      "This development makes Amazon Data Center a significant contributor to climate pollution, answering the question about its environmental imp"
+    ],
+    "total_duration_seconds": 31.36,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-09T00:48:05.584253",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
