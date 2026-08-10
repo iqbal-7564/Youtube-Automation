@@ -2362,7 +2362,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 81,
+    "early_likes": 5,
+    "early_comments": 4,
+    "early_fetched_at": "2026-08-10T00:46:05.865097"
   },
   {
     "video_id": "JrW3khERCA0",
@@ -2380,6 +2384,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-09T19:31:46.838340",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "wECPa9PV7no",
+    "intent": "TECHNOLOGY",
+    "title": "Source Foundry",
+    "hook_text": "Source Foundry develops AI chips.",
+    "script_key_sents": [
+      "Source Foundry develops AI chips",
+      "Source Foundry creates specialized AI-focused chips that can lead",
+      "Source Foundry's innovative chips are the key to unlocking AI's full potential"
+    ],
+    "total_duration_seconds": 45.84,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-10T00:51:26.067654",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
