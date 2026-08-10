@@ -2462,7 +2462,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 992,
+    "early_likes": 21,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-10T19:49:01.499908"
   },
   {
     "video_id": "xBpz3SGXmY8",
@@ -2480,6 +2484,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-10T14:25:12.701167",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "NkievNWLJlo",
+    "intent": "GEOGRAPHY",
+    "title": "Finland's Shocking Secret",
+    "hook_text": "Finland's lakes move.",
+    "script_key_sents": [
+      "Finland's lakes move",
+      "The reason behind this movement is post-glacial rebound, where the Earth's",
+      "Finland's lakes are literally moving, and this shocking secret is changing our understanding of the country's landscape and climate"
+    ],
+    "total_duration_seconds": 31.55,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-10T19:54:15.034938",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
