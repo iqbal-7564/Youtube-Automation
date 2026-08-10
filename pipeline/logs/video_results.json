@@ -2412,7 +2412,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 18,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-10T08:21:20.612096"
   },
   {
     "video_id": "RB6VDflEVL8",
@@ -2430,6 +2434,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-10T03:16:23.713935",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Zi0mru45uzk",
+    "intent": "CULTURE",
+    "title": "Sumerians' Hidden Code",
+    "hook_text": "Sumerians' Hidden Code exists.",
+    "script_key_sents": [
+      "Sumerians' Hidden Code exists",
+      "The Sumerians' Hidden Code is actually a mathematical system",
+      "The Sumerians' Hidden Code was a sophisticated system that connected astronomy, mathematics, and computer science, challenging our previous "
+    ],
+    "total_duration_seconds": 68.06,
+    "scene_count": 12,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-10T08:29:37.515128",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
