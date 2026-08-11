@@ -2562,7 +2562,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 157,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-11T14:20:30.642786"
   },
   {
     "video_id": "U9DDtSqsA_Q",
@@ -2580,6 +2584,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-11T08:11:09.198314",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 8,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-11T14:20:30.841915"
+  },
+  {
+    "video_id": "t8Bq1FNEoR8",
+    "intent": "SPACE",
+    "title": "Neutron Stars' Dark Secret",
+    "hook_text": "Neutron stars drag space-time.",
+    "script_key_sents": [
+      "Neutron stars drag space-time",
+      "This phenomenon, known as 'frame-dragging', has been observed in",
+      "The dark secret of neutron stars is their ability to drag space-time, and this discovery has left scientists stunned"
+    ],
+    "total_duration_seconds": 50.56,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-11T14:27:34.625760",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
