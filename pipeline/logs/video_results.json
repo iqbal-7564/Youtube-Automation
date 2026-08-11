@@ -2613,5 +2613,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "EBsw4C-xWXI",
+    "intent": "CULTURE",
+    "title": "Ancient Navigators' Secret",
+    "hook_text": "Ancient navigators used ocean swells.",
+    "script_key_sents": [
+      "Ancient navigators used ocean swells",
+      "The secret to their navigation was a complex system",
+      "Ancient navigators' secret was their ability to decode nature, and this knowledge could revolutionize modern navigation"
+    ],
+    "total_duration_seconds": 43.43,
+    "scene_count": 9,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-11T20:02:49.991571",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
