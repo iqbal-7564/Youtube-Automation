@@ -2512,7 +2512,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 343,
+    "early_likes": 8,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-11T03:03:47.949162"
   },
   {
     "video_id": "u4i009UIkk0",
@@ -2530,6 +2534,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-11T00:50:20.860127",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "kPK6PBi2B6g",
+    "intent": "HISTORY",
+    "title": "Alexandria's Dark Secret",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Alexandria's Dark Secret",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.68,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-11T03:08:26.255686",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
