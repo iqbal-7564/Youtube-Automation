@@ -2487,7 +2487,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 19,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-11T00:45:48.049695"
   },
   {
     "video_id": "NkievNWLJlo",
@@ -2505,6 +2509,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-10T19:54:15.034938",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "u4i009UIkk0",
+    "intent": "TECHNOLOGY",
+    "title": "Daybreak AI",
+    "hook_text": "Daybreak AI detects threats.",
+    "script_key_sents": [
+      "Daybreak AI detects threats",
+      "Daybreak AI provides an additional layer of security for individuals",
+      "Daybreak AI is the answer to increasingly sophisticated cyber attacks"
+    ],
+    "total_duration_seconds": 34.18,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-11T00:50:20.860127",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
