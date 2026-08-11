@@ -2537,7 +2537,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 11,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-11T08:03:23.769200"
   },
   {
     "video_id": "kPK6PBi2B6g",
@@ -2555,6 +2559,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-11T03:08:26.255686",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "U9DDtSqsA_Q",
+    "intent": "SPACE",
+    "title": "Black Holes Are Eating Stars",
+    "hook_text": "Black holes eat stars.",
+    "script_key_sents": [
+      "Black holes eat stars",
+      "Recent observations reveal that supermassive black holes are consuming",
+      "This phenomenon has left experts stunned, as it was previously thought that black holes only consumed gas and dust"
+    ],
+    "total_duration_seconds": 60.61,
+    "scene_count": 11,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-11T08:11:09.198314",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
