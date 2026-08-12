@@ -2637,7 +2637,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 197,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-12T03:22:47.111050"
   },
   {
     "video_id": "OD5n5Ufjm4k",
@@ -2655,6 +2659,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-12T00:58:16.301161",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "XK6Yn3kL1PA",
+    "intent": "CULTURE",
+    "title": "Sumerian Code Cracked",
+    "hook_text": "Sumerian code cracked.",
+    "script_key_sents": [
+      "Sumerian code cracked",
+      "Recent AI analysis reveals Sumerians used a sexagesimal system to",
+      "The cracked Sumerian code proves that ancient civilizations contributed significantly to modern math"
+    ],
+    "total_duration_seconds": 39.82,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-12T03:28:39.339569",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
