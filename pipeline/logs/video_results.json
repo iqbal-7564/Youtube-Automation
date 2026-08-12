@@ -2738,5 +2738,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "jZIbltiJEwk",
+    "intent": "CULTURE",
+    "title": "Ancient Persia's Drunk Decisions",
+    "hook_text": "Ancient Persia's drunk decisions",
+    "script_key_sents": [
+      "Ancient Persia's drunk decisions",
+      "Ancient Persia's practice of debating sober and then drunk",
+      "By embracing this unique approach, Ancient Persia's drunk decisions actually led to groundbreaking discoveries and a more open-minded societ"
+    ],
+    "total_duration_seconds": 43.4,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-12T20:03:22.946458",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
