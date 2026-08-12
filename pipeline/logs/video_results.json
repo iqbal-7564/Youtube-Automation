@@ -2612,7 +2612,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 141,
+    "early_likes": 10,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-12T00:54:05.497363"
   },
   {
     "video_id": "EBsw4C-xWXI",
@@ -2630,6 +2634,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-11T20:02:49.991571",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "OD5n5Ufjm4k",
+    "intent": "TECHNOLOGY",
+    "title": "Accel India Fund 💰",
+    "hook_text": "Accel India Fund invests heavily.",
+    "script_key_sents": [
+      "Accel India Fund invests heavily",
+      "Accel India Fund provides necessary funding for Indian startups",
+      "Accel India Fund's success is a sign of the region's economic growth"
+    ],
+    "total_duration_seconds": 33.74,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-12T00:58:16.301161",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
