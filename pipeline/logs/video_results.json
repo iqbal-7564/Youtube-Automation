@@ -2687,7 +2687,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 529,
+    "early_likes": 19,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-12T14:22:54.263814"
   },
   {
     "video_id": "qIGRyaWGaiU",
@@ -2705,6 +2709,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-12T08:13:54.884910",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 41,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-12T14:22:54.566188"
+  },
+  {
+    "video_id": "ReV4eEhoQqI",
+    "intent": "CULTURE",
+    "title": "Ancient Code Unleashed",
+    "hook_text": "Ancient code unleashes secrets.",
+    "script_key_sents": [
+      "Ancient code unleashes secrets",
+      "Recent breakthroughs in deciphering Sumerian cuneiform reveal surprising connections to",
+      "The ancient code has been unleashed, and it's rewriting history"
+    ],
+    "total_duration_seconds": 50.23,
+    "scene_count": 10,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-12T14:29:27.125355",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
