@@ -2787,7 +2787,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 23,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-13T08:11:11.960885"
   },
   {
     "video_id": "YrVxerHZ7Y8",
@@ -2805,6 +2809,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-13T03:32:26.594897",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "GwqxVOdjRas",
+    "intent": "SCIENCE",
+    "title": "Antibiotics' Dark Secret",
+    "hook_text": "Antibiotics alter human microbiome.",
+    "script_key_sents": [
+      "Antibiotics alter human microbiome",
+      "Scientists have discovered that the overuse of antibiotics not only makes",
+      "The answer to 'Antibiotics' Dark Secret' is that it's not just about resistance, but about the lasting impact on our microbiome"
+    ],
+    "total_duration_seconds": 42.72,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-13T08:17:25.795278",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
