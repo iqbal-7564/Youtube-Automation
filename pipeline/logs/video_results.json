@@ -2737,7 +2737,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-13T00:55:01.077337"
   },
   {
     "video_id": "jZIbltiJEwk",
@@ -2755,6 +2759,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-12T20:03:22.946458",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "emWbCVfLs6U",
+    "intent": "TECHNOLOGY",
+    "title": "Anthropic Watermarks 🚫",
+    "hook_text": "Anthropic Watermarks detect AI misuse.",
+    "script_key_sents": [
+      "Anthropic Watermarks detect AI misuse",
+      "Anthropic's watermarking system helps detect and prevent unauthorized use",
+      "Anthropic Watermarks are the answer to securing AI models"
+    ],
+    "total_duration_seconds": 36.62,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-13T00:59:31.513525",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
