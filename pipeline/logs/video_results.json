@@ -2863,5 +2863,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "E8AFdlJCiY8",
+    "intent": "SCIENCE",
+    "title": "Dreams: Brain's Deleted Files",
+    "hook_text": "Dreams delete files.",
+    "script_key_sents": [
+      "Dreams delete files",
+      "Scientists found that brain waves during sleep can predict",
+      "This process helps our brain stay efficient"
+    ],
+    "total_duration_seconds": 33.62,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-13T19:57:00.823865",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
