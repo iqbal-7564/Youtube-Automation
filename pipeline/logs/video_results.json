@@ -2762,7 +2762,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 124,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-13T03:26:12.640050"
   },
   {
     "video_id": "emWbCVfLs6U",
@@ -2780,6 +2784,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-13T00:59:31.513525",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "YrVxerHZ7Y8",
+    "intent": "SCIENCE",
+    "title": "Secrets in Sleep",
+    "hook_text": "Secrets in Sleep",
+    "script_key_sents": [
+      "Secrets in Sleep",
+      "Recent brain scan studies reveal that dreams are a hidden memory",
+      "Secrets in Sleep are now revealed, and it's clear that dreams play a crucial role in our learning and problem-solving abilities, with a 30% "
+    ],
+    "total_duration_seconds": 39.11,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-13T03:32:26.594897",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
