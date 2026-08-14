@@ -2908,7 +2908,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 29,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-14T08:06:37.232947"
   },
   {
     "video_id": "iN2kG5y2kro",
@@ -2926,6 +2930,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-14T03:29:15.666951",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "IVONHv6s_ds",
+    "intent": "MYTHOLOGY",
+    "title": "Norse Mythology's Dark Web",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Norse Mythology's Dark Web",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.63,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-14T08:12:03.181515",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
