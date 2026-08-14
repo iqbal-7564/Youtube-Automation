@@ -2862,7 +2862,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 50,
+    "early_likes": 1,
+    "early_comments": 4,
+    "early_fetched_at": "2026-08-14T00:54:27.707246"
   },
   {
     "video_id": "E8AFdlJCiY8",
@@ -2880,6 +2884,23 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-13T19:57:00.823865",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "nxTHtzuRcos",
+    "intent": "TECHNOLOGY",
+    "title": "GLM-5.2 AI 🤖",
+    "hook_text": "GLM-5.2 AI enhances accessibility.",
+    "script_key_sents": [],
+    "total_duration_seconds": 37.87,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-14T00:58:36.366397",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
