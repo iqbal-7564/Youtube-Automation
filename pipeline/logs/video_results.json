@@ -2887,7 +2887,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 62,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-14T03:24:18.487580"
   },
   {
     "video_id": "nxTHtzuRcos",
@@ -2901,6 +2905,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-14T00:58:36.366397",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "iN2kG5y2kro",
+    "intent": "SPACE",
+    "title": "Sun's Shocking Loss",
+    "hook_text": "Sun's shocking loss",
+    "script_key_sents": [
+      "Sun's shocking loss",
+      "The sun loses a staggering 4 million tons per second,",
+      "The sun's shocking loss is accelerating, and understanding its implications is crucial for our planet's protection from solar radiation"
+    ],
+    "total_duration_seconds": 33.49,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-14T03:29:15.666951",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
