@@ -2982,6 +2982,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 29,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-15T00:31:38.278172"
+  },
+  {
+    "video_id": "Engn_PQdnhw",
+    "intent": "TECHNOLOGY",
+    "title": "Google AI Watermark",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Google AI Watermark",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.54,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-15T00:36:07.407510",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
