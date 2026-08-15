@@ -3007,7 +3007,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 205,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-15T07:21:31.145467"
   },
   {
     "video_id": "b41yzAVNSZ4",
@@ -3025,6 +3029,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-15T02:21:22.225919",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "KJJmHM_MDfs",
+    "intent": "CULTURE",
+    "title": "Ancient Navigators' Secret",
+    "hook_text": "Ancient navigators used a secret",
+    "script_key_sents": [
+      "Ancient navigators used a secret",
+      "The secret to their navigation was a complex system",
+      "Ancient navigators' secret was their ability to decode nature, and this knowledge could revolutionize modern navigation, so ancient navigato"
+    ],
+    "total_duration_seconds": 37.45,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-15T07:28:44.755570",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
