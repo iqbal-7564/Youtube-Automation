@@ -3008,5 +3008,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "b41yzAVNSZ4",
+    "intent": "MYTHOLOGY",
+    "title": "Crete's Hidden Labyrinth",
+    "hook_text": "Crete's labyrinth hides secrets.",
+    "script_key_sents": [
+      "Crete's labyrinth hides secrets",
+      "Archaeologists have discovered a sophisticated Minoan palace with a",
+      "The labyrinth's secrets are now being uncovered, revealing a possible connection to the Minotaur myth"
+    ],
+    "total_duration_seconds": 40.42,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-15T02:21:22.225919",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
