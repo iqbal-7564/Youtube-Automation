@@ -3083,5 +3083,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "8v2PLG-xdH8",
+    "intent": "CULTURE",
+    "title": "Ancient Code Unleashed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Ancient Code Unleashed",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.51,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-15T19:20:00.323954",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
