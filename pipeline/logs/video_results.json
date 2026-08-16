@@ -3082,7 +3082,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 14,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-16T00:32:14.668029"
   },
   {
     "video_id": "8v2PLG-xdH8",
@@ -3100,6 +3104,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-15T19:20:00.323954",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "L6FRC3PlJCQ",
+    "intent": "TECHNOLOGY",
+    "title": "Glimmer AI",
+    "hook_text": "Glimmer AI democratizes access",
+    "script_key_sents": [
+      "Glimmer AI democratizes access",
+      "Glimmer AI is an open-weight AI model that can be",
+      "Glimmer AI gives everyone access to AI technology, making it possible for individuals to innovate and create without relying on large organi"
+    ],
+    "total_duration_seconds": 32.35,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-16T00:36:31.833277",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
