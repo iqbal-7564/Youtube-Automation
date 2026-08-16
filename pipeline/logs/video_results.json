@@ -3107,7 +3107,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-16T02:21:29.883327"
   },
   {
     "video_id": "L6FRC3PlJCQ",
@@ -3125,6 +3129,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-16T00:36:31.833277",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "VQONopVj1rA",
+    "intent": "CULTURE",
+    "title": "Romans' Bizarre Toothpaste",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Romans' Bizarre Toothpaste",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.68,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-16T02:26:51.332834",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
