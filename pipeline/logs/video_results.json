@@ -3157,7 +3157,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 36,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-16T13:32:40.420928"
   },
   {
     "video_id": "ueeP4VPSaxI",
@@ -3175,6 +3179,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-16T07:28:42.566615",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-16T13:32:40.622969"
+  },
+  {
+    "video_id": "z3DaDiRKpLU",
+    "intent": "SPACE",
+    "title": "Pulsars' Hidden Signal",
+    "hook_text": "Pulsars' hidden signal",
+    "script_key_sents": [
+      "Pulsars' hidden signal",
+      "These signals could be used as a cosmic GPS, allowing for",
+      "The hidden signal of pulsars is a potential game-changer for space navigation, and it's a signal that's been hidden in plain sight, pulsars'"
+    ],
+    "total_duration_seconds": 31.45,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-16T13:37:33.674574",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
