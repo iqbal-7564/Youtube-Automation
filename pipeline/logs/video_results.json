@@ -3132,7 +3132,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 22,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-16T07:22:23.072820"
   },
   {
     "video_id": "VQONopVj1rA",
@@ -3150,6 +3154,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-16T02:26:51.332834",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ueeP4VPSaxI",
+    "intent": "CULTURE",
+    "title": "Rome's Chinese Secret",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "Rome's Chinese Secret",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.49,
+    "scene_count": 5,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-16T07:28:42.566615",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
