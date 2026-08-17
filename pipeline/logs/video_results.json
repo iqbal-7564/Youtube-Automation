@@ -3233,5 +3233,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "5CNVvm223i8",
+    "intent": "SPACE",
+    "title": "Saturn's Rings Are Disappearing",
+    "hook_text": "Saturn's rings disappear.",
+    "script_key_sents": [
+      "Saturn's rings disappear",
+      "Scientists have found that Saturn's moons are eating the",
+      "Saturn's rings are disappearing because of their own moons, a surprising reason that is rewriting our understanding of the Saturnian system"
+    ],
+    "total_duration_seconds": 34.63,
+    "scene_count": 8,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-17T02:24:13.463909",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
