@@ -3282,7 +3282,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-17T19:21:24.895940"
   },
   {
     "video_id": "zW7pmzzRxvA",
@@ -3300,6 +3304,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-17T13:45:49.891745",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "N1_W-n3wWJY",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Habitable Exoplanets",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Habitable Exoplanets",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.81,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-17T19:27:17.604417",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
