@@ -3207,6 +3207,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 21,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-17T00:30:28.997744"
+  },
+  {
+    "video_id": "du__t7EzrfE",
+    "intent": "TECHNOLOGY",
+    "title": "Glimmer AI",
+    "hook_text": "Glimmer AI runs locally.",
+    "script_key_sents": [
+      "Glimmer AI runs locally",
+      "Glimmer AI allows users to leverage AI technology without relying on",
+      "Glimmer AI runs locally, democratizing access to AI and potentially changing the landscape of AI development, so Glimmer AI is empowering us"
+    ],
+    "total_duration_seconds": 39.09,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-17T00:36:03.045840",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
