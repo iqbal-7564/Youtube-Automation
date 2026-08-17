@@ -3232,7 +3232,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-17T07:42:34.305961"
   },
   {
     "video_id": "5CNVvm223i8",
@@ -3250,6 +3254,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-17T02:24:13.463909",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "7Fgkl42lFE8",
+    "intent": "SPACE",
+    "title": "NASA's Hidden Planet",
+    "hook_text": "NASA's hidden planet",
+    "script_key_sents": [
+      "NASA's hidden planet",
+      "The hidden planet is actually Wolf 359b, a habitable",
+      "NASA's hidden planet, Wolf 359b, is a game-changer in the search for alien life"
+    ],
+    "total_duration_seconds": 69.36,
+    "scene_count": 14,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-17T07:51:17.263320",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
