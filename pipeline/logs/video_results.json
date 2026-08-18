@@ -3357,7 +3357,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 7,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-18T13:43:23.149694"
   },
   {
     "video_id": "gS8aeNUv0aU",
@@ -3375,6 +3379,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-18T07:34:41.243149",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 22,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-18T13:43:23.324638"
+  },
+  {
+    "video_id": "uSVPPd9PZKQ",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Half The World'S Languages Will Be Extinct",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.39,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-18T13:49:05.043492",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
