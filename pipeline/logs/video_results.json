@@ -3482,7 +3482,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 38,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-20T13:48:42.733970"
   },
   {
     "video_id": "hwdlG3fD7OU",
@@ -3500,6 +3504,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-20T07:38:19.430298",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 5,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-20T13:48:42.895455"
+  },
+  {
+    "video_id": "U9tR2Mymyck",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About The Mantis Shrimp Can Punch At Bullet Speed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Mantis Shrimp Can Punch At",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.84,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-20T13:54:56.671103",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
