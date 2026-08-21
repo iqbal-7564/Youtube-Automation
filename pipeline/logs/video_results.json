@@ -3558,5 +3558,26 @@
     "tts_engines": [
       "edge-tts"
     ]
+  },
+  {
+    "video_id": "TjyQPDwY6hM",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Rome Had A Population Of 1 Million Before London",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Rome Had A Population Of 1 Million",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.98,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-21T07:39:33.200426",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
   }
 ]
