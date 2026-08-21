@@ -3557,7 +3557,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 1,
+    "early_fetched_at": "2026-08-21T13:46:11.703799"
   },
   {
     "video_id": "TjyQPDwY6hM",
@@ -3575,6 +3579,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-21T07:39:33.200426",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 15,
+    "early_likes": 0,
+    "early_comments": 0,
+    "early_fetched_at": "2026-08-21T13:46:11.918522"
+  },
+  {
+    "video_id": "J6LPZKmidUY",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.25,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-21T13:52:19.581776",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
