@@ -3657,7 +3657,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 34,
+    "early_likes": 1,
+    "early_comments": 0,
+    "early_fetched_at": "2026-08-22T13:33:15.979150"
   },
   {
     "video_id": "eNsBb3az2DU",
@@ -3675,6 +3679,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-22T07:27:22.057563",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 148,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-22T13:33:16.293022"
+  },
+  {
+    "video_id": "QWaBn19VYiE",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-22T13:41:02.869997",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
