@@ -3832,7 +3832,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 189,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-24T19:22:32.593248"
   },
   {
     "video_id": "ZncTrqmJK0g",
@@ -3850,6 +3854,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-24T07:54:16.898481",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 106,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-24T19:22:32.850014"
+  },
+  {
+    "video_id": "iSTZAOAqATw",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Mars Has The Tallest Volcano In The Solar System",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Mars Has The Tallest Volcano In The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.08,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-24T19:27:47.027748",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
