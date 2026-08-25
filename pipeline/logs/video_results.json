@@ -3907,7 +3907,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 8,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-25T13:52:09.383101"
   },
   {
     "video_id": "9uMsGJ0k3nU",
@@ -3925,6 +3929,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-25T07:42:30.687371",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 18,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-25T13:52:09.575170"
+  },
+  {
+    "video_id": "y4FMdu3J3Ww",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Writing Was Invented To Track Beer Supplies",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Writing Was Invented To Track Beer",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.72,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-25T14:00:04.432012",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
