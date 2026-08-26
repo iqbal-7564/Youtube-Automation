@@ -3982,7 +3982,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-26T13:55:59.579326"
   },
   {
     "video_id": "OvUEPQMgyQk",
@@ -4000,6 +4004,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-26T07:44:15.596742",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 152,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-26T13:55:59.849860"
+  },
+  {
+    "video_id": "F9U8UZZiIqU",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Industrial Revolution Happened In 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.51,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-26T14:08:40.454773",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
