@@ -4032,6 +4032,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-26T21:30:09.368006"
+  },
+  {
+    "video_id": "olOfxUfnVAU",
+    "intent": "GEOGRAPHY",
+    "title": "The Incredible Truth About A Point On The Equator Moves 1670 Km Per Hour",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About A Point On The Equator Moves 1670",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.73,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-26T21:35:10.301247",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
