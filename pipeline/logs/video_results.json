@@ -4182,6 +4182,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 64,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-28T19:08:18.284640"
+  },
+  {
+    "video_id": "rxP5cyO0yBI",
+    "intent": "OCEAN",
+    "title": "The Incredible Truth About The Pacific Garbage Patch Is Twice The Size Of Texas",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Pacific Garbage Patch Is Twice The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.41,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-28T19:14:01.310784",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
