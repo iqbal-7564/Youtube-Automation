@@ -4107,7 +4107,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 274,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-28T02:23:39.678588"
   },
   {
     "video_id": "s4468JkAkoM",
@@ -4125,6 +4129,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-27T22:56:59.951456",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "j65n2GrB3Nw",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About Ancient Greek Gods Were Based On Real Astronomical Observations",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Greek Gods Were Based On Real",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.7,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-28T02:29:07.390261",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
