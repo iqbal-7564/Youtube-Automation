@@ -4282,7 +4282,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-29T17:01:56.886253"
   },
   {
     "video_id": "gUcBkpztYzU",
@@ -4300,6 +4304,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-29T12:58:00.649099",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "6KN_bmWWhUk",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Saturn'S Rings Composition",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Saturn'S Rings Composition",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-29T17:08:02.250908",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
