@@ -4307,7 +4307,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 46,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-29T21:24:31.168126"
   },
   {
     "video_id": "6KN_bmWWhUk",
@@ -4325,6 +4329,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-29T17:08:02.250908",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ozY4xLoH33U",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About What Happened Before The Big Bang",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About What Happened Before The Big Bang",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-29T21:31:09.053354",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
