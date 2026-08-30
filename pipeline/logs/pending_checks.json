@@ -1,10 +1,5 @@
 [
   {
-    "video_id": "VQONopVj1rA",
-    "check_after": "2026-08-16T08:26:51.335384",
-    "done": true
-  },
-  {
     "video_id": "ueeP4VPSaxI",
     "check_after": "2026-08-16T13:28:42.569273",
     "done": true
@@ -247,6 +242,11 @@
   {
     "video_id": "5momQDSd72Y",
     "check_after": "2026-08-30T12:23:05.470932",
+    "done": true
+  },
+  {
+    "video_id": "UubJRlsgbxQ",
+    "check_after": "2026-08-30T18:30:55.371210",
     "done": false
   }
 ]

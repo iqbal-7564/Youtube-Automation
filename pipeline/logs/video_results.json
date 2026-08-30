@@ -4382,6 +4382,31 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
+    ],
+    "early_views": 12,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-30T12:24:02.863160"
+  },
+  {
+    "video_id": "UubJRlsgbxQ",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Mars Has The Tallest Volcano In The Solar System",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Mars Has The Tallest Volcano In The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.08,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-30T12:30:55.367685",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
     ]
   }
 ]
