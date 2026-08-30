@@ -4407,7 +4407,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 14,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-08-30T21:45:23.496990"
   },
   {
     "video_id": "l-69aPUk1Aw",
@@ -4425,6 +4429,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-08-30T17:21:10.512787",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "6A-xzIYnbXg",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About The Sun Loses 4 Million Tons Per Second",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Sun Loses 4 Million Tons",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-08-30T21:51:14.972363",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
