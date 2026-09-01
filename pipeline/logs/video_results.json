@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "2dMiG7r9l-8",
-    "intent": "SPACE",
-    "title": "Black Holes Shine",
-    "hook_text": "Black holes shine brighter than stars",
-    "total_duration_seconds": 52.42,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-28T19:52:09.083875",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "lcGU_SVUfzU",
     "intent": "SCIENCE",
     "title": "Magnets Defy Gravity",
@@ -4582,7 +4567,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 75,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-01T21:30:55.225133"
   },
   {
     "video_id": "dkSXgI2anjk",
@@ -4600,6 +4589,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-01T17:19:06.114377",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "pfJKPdG7DUo",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About Ancient Greek Gods Were Based On Real Astronomical Observations",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Greek Gods Were Based On Real",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.7,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-01T21:37:00.235695",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
