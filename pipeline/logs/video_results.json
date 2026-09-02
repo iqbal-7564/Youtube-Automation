@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "t3IB0QhMSmk",
-    "intent": "SCIENCE",
-    "title": "Dreams Aren't Random",
-    "hook_text": "Your brain cleans toxic waste during dreams.",
-    "total_duration_seconds": 108.45,
-    "scene_count": 15,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-29T20:53:10.751565",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "Edk873GHD8A",
     "intent": "HISTORY",
     "title": "Roman Empire's Dark Secret",
@@ -4622,7 +4607,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 30,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-02T21:27:18.572363"
   },
   {
     "video_id": "b8Ala9WbnzI",
@@ -4640,6 +4629,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-02T17:09:37.285908",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "N77nU0yiX0Y",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Pulsars",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Pulsars",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.53,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-02T21:32:52.393609",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
