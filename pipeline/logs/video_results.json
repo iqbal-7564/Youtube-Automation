@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "szA72kwXdto",
-    "intent": "HISTORY",
-    "title": "Khan's Hidden Legacy",
-    "hook_text": "Genghis Khan's DNA is everywhere.",
-    "total_duration_seconds": 62.63,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-28T22:48:34.618691",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "md4g6_B8R1A",
     "intent": "SPACE",
     "title": "Venus' Dark Secret",
@@ -4624,6 +4609,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-02T05:33:09.783839",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-02T11:51:01.579428"
+  },
+  {
+    "video_id": "bK0pnzuemcM",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About The Myth Of Atlantis May Be Based On A Real Sunken Island",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Myth Of Atlantis May",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 32.88,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-02T11:56:19.970340",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
