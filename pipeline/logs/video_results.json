@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "md4g6_B8R1A",
-    "intent": "SPACE",
-    "title": "Venus' Dark Secret",
-    "hook_text": "243 Earth days make one day on Venus.",
-    "total_duration_seconds": 66.54,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-29T18:22:52.438229",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "t3IB0QhMSmk",
     "intent": "SCIENCE",
     "title": "Dreams Aren't Random",
@@ -4634,6 +4619,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-02T11:56:19.970340",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "b8Ala9WbnzI",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About Ancient Egyptians Believed The Heart Not The Brain Held Intelligence",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egyptians Believed The Heart Not The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.58,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-02T17:09:37.285908",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
