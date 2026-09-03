@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "XQHSgo66hlw",
-    "intent": "HISTORY",
-    "title": "Beer Led to Writing",
-    "hook_text": "Writing exists because of beer.",
-    "total_duration_seconds": 59.41,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-30T12:53:40.087063",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "Qh2qArCjdg4",
     "intent": "ANIMALS",
     "title": "Whales Talk Across Oceans",
@@ -4662,7 +4647,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 21,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-03T21:31:53.913479"
   },
   {
     "video_id": "s0GuhuoDmvM",
@@ -4680,6 +4669,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-03T17:03:28.285061",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "LDVaez7phJM",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About The Sun Loses 4 Million Tons Per Second",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Sun Loses 4 Million Tons",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-03T21:38:18.784460",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
