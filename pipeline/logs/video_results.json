@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "2XNTptJQ1VM",
-    "intent": "NATURE",
-    "title": "Dark Cave Secrets",
-    "hook_text": "Everything you know about life is wrong",
-    "total_duration_seconds": 116.58,
-    "scene_count": 17,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-30T16:09:22.236961",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "Lcg8ZXKllzY",
     "intent": "GEOGRAPHY",
     "title": "Earth's Secret Speed",
@@ -4704,6 +4689,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-04T11:58:17.986974",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "SWuBTVRSmxw",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Black Death Changed Europe Forever",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Black Death Changed Europe Forever",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-04T16:53:25.199463",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
