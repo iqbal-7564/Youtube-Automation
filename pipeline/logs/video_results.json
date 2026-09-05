@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "RlJCM5Q_g6E",
-    "intent": "OCEAN",
-    "title": "Incredible Facts About Ocean Discovery Seaworld San Antonio",
-    "hook_text": "This fact will completely change how you see the world.",
-    "total_duration_seconds": 38.97,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-31T12:07:08.974613",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "ZgcXhrhGrPI",
     "intent": "CULTURE",
     "title": "Incredible Facts About The Most Spoken Language In 3000 Bc Was Sumerian",
@@ -4724,6 +4709,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-05T05:24:56.637919",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "AAwXYK_SULU",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Industrial Revolution Happened In 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.51,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-05T11:06:55.371337",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
