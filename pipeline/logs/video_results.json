@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "s3SwzxiPZOs",
-    "intent": "SCIENCE",
-    "title": "Scientists Found Life in 4Bn Yr Rocks",
-    "hook_text": "4.4 billion-year-old fossils exist.",
-    "total_duration_seconds": 155.57,
-    "scene_count": 22,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-31T16:20:25.733667",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "ij-92EiuIZ0",
     "intent": "SPACE",
     "title": "NASA's Dark Secret Found",
@@ -4722,7 +4707,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-05T20:50:15.296179"
   },
   {
     "video_id": "8PmWvWYOcrk",
@@ -4740,6 +4729,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-05T15:57:17.672515",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "kDQcoulO2GE",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-05T20:56:27.623886",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
