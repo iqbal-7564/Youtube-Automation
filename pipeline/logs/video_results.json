@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "ZgcXhrhGrPI",
-    "intent": "CULTURE",
-    "title": "Incredible Facts About The Most Spoken Language In 3000 Bc Was Sumerian",
-    "hook_text": "They never taught you this in school.",
-    "total_duration_seconds": 62.07,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-05-31T12:40:06.121390",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "s3SwzxiPZOs",
     "intent": "SCIENCE",
     "title": "Scientists Found Life in 4Bn Yr Rocks",
@@ -4712,7 +4697,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-05T15:50:49.350127"
   },
   {
     "video_id": "AAwXYK_SULU",
@@ -4730,6 +4719,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-05T11:06:55.371337",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "8PmWvWYOcrk",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Rome Had A Population Of 1 Million Before London",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Rome Had A Population Of 1 Million",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.98,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-05T15:57:17.672515",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
