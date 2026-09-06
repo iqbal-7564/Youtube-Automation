@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "ryYFJbxi3-w",
-    "intent": "SCIENCE",
-    "title": " Scientists Found Music in Brain",
-    "hook_text": "90% of brain activity is music-like patterns.",
-    "total_duration_seconds": 163.04,
-    "scene_count": 23,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-01T23:41:10.544459",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "xO3UE8RsMy4",
     "intent": "SPACE",
     "title": "NASA's Mars Water Secret",
@@ -4752,7 +4737,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 64,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-06T20:57:29.092387"
   },
   {
     "video_id": "ppiHA43BeZU",
@@ -4770,6 +4759,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-06T16:08:42.906873",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "mAfxqLNya3M",
+    "intent": "SCIENCE",
+    "title": "The Incredible Truth About Why Humans Dream",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why Humans Dream",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.86,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-06T21:02:14.292292",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
