@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "tJ5TLmauAsg",
-    "intent": "NATURE",
-    "title": "Nature's Dark Secret",
-    "hook_text": "10% of trees are zombies",
-    "total_duration_seconds": 71.92,
-    "scene_count": 12,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-01T21:28:18.774996",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "ryYFJbxi3-w",
     "intent": "SCIENCE",
     "title": " Scientists Found Music in Brain",
@@ -4764,6 +4749,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-06T11:30:38.115872",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ppiHA43BeZU",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Rome Had A Population Of 1 Million Before London",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Rome Had A Population Of 1 Million",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.98,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-06T16:08:42.906873",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
