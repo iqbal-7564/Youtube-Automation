@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "18KkmcV5xic",
-    "intent": "SPACE",
-    "title": "NASA Hides 3i Atlas Secret",
-    "hook_text": "A toxic exoplanet exists nearby.",
-    "total_duration_seconds": 64.69,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-03T06:05:33.708899",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "0wntuRASiWI",
     "intent": "HISTORY",
     "title": "Ancient Sleep Secrets",
@@ -4804,6 +4789,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-07T13:12:23.887168",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "PicEr53MA2s",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Internet Weighs The Same As",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.79,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-07T18:13:25.588270",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
