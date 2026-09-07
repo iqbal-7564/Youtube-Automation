@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "0wntuRASiWI",
-    "intent": "HISTORY",
-    "title": "Ancient Sleep Secrets",
-    "hook_text": "Ancient sleep patterns exist. Nobody knows why.",
-    "total_duration_seconds": 48.05,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-03T06:32:05.714627",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "DxWs2JhNm1k",
     "intent": "ANIMALS",
     "title": "Crows Never Forget",
@@ -4792,7 +4777,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-07T21:51:34.184783"
   },
   {
     "video_id": "PicEr53MA2s",
@@ -4810,6 +4799,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-07T18:13:25.588270",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ANOJU41ISco",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Internet Weighs The Same As",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.79,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-07T21:56:50.648307",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
