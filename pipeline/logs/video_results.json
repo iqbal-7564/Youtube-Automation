@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "Dvmr6bKwOVY",
-    "intent": "SCIENCE",
-    "title": "Secrets in Sound",
-    "hook_text": "They never taught you this in school: sound can alter your mind.",
-    "total_duration_seconds": 169.35,
-    "scene_count": 22,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-03T00:14:16.577414",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "18KkmcV5xic",
     "intent": "SPACE",
     "title": "NASA Hides 3i Atlas Secret",
@@ -4794,6 +4779,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-07T05:47:49.972119",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-07T13:07:08.694464"
+  },
+  {
+    "video_id": "PhvR3N6kDKI",
+    "intent": "SCIENCE",
+    "title": "The Incredible Truth About Nuclear Fusion Could Power Civilization Forever",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Nuclear Fusion Could Power Civilization Forever",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.36,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-07T13:12:23.887168",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
