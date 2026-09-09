@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "TrkzK9Ko290",
-    "intent": "OCEAN",
-    "title": "Ocean's Glow Exposed",
-    "hook_text": "What makes a gallon of ocean water glow like 1000 light bulbs?",
-    "total_duration_seconds": 163.64,
-    "scene_count": 21,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-03T18:26:35.247944",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "OSWJ8rJsEtQ",
     "intent": "CULTURE",
     "title": "Rome's Chinese Secret",
@@ -4854,6 +4839,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-09T05:50:09.375789",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 32,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-09T12:02:28.003654"
+  },
+  {
+    "video_id": "q_8MuG2DLXY",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Octopuses Have Three Hearts And Blue Blood",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Octopuses Have Three Hearts And Blue",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.46,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-09T12:07:44.732793",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
