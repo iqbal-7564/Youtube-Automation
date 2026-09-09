@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "OSWJ8rJsEtQ",
-    "intent": "CULTURE",
-    "title": "Rome's Chinese Secret",
-    "hook_text": "Everything you know about ancient Rome is wrong",
-    "total_duration_seconds": 62.33,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-03T19:40:49.697258",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "YUHVTWo_9aI",
     "intent": "SPACE",
     "title": "Mars Volcano Secret",
@@ -4864,6 +4849,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-09T12:07:44.732793",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "OjodO1Utjx0",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Octopuses Have Three Hearts And Blue Blood",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Octopuses Have Three Hearts And Blue",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.46,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-09T17:33:22.614098",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
