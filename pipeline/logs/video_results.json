@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "pkKb1OVTqxU",
-    "intent": "HISTORY",
-    "title": "Alexandria's Secret Vault",
-    "hook_text": "What lies beneath Alexandria?",
-    "total_duration_seconds": 69.72,
-    "scene_count": 11,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-04T20:48:11.485305",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "9kXlhkmvls8",
     "intent": "ANIMALS",
     "title": "Jellyfish Defies Death",
@@ -4904,6 +4889,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-10T12:03:08.128318",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "SvtLwyn93fM",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Internet Weighs The Same As",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.79,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-10T17:02:13.045063",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
