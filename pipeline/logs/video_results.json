@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "HefVsG1Y74w",
-    "intent": "SCIENCE",
-    "title": "Memory Hacking",
-    "hook_text": "Memories can be hacked, but how?",
-    "total_duration_seconds": 177.02,
-    "scene_count": 23,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-04T14:22:28.497402",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "pkKb1OVTqxU",
     "intent": "HISTORY",
     "title": "Alexandria's Secret Vault",
@@ -4894,6 +4879,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-10T05:44:43.269303",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-10T11:57:20.125654"
+  },
+  {
+    "video_id": "ghVdbASHSLw",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About Brain-Computer Interfaces Let Paralyzed People Type With Thoughts",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Brain-Computer Interfaces Let Paralyzed People Type",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.71,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-10T12:03:08.128318",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
