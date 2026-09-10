@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "9kXlhkmvls8",
-    "intent": "ANIMALS",
-    "title": "Jellyfish Defies Death",
-    "hook_text": "Jellyfish are immortal.",
-    "total_duration_seconds": 212.2,
-    "scene_count": 31,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-04T22:48:45.484996",
-    "profile": "standard",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "RB3SgcAzMaE",
     "intent": "NATURE",
     "title": "Lightning's Shocking Secret",
@@ -4892,7 +4877,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 75,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-10T21:19:23.528754"
   },
   {
     "video_id": "SvtLwyn93fM",
@@ -4910,6 +4899,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-10T17:02:13.045063",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "KVOavuGldjI",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About Dragons Appear In Every Ancient Culture Independently",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Dragons Appear In Every Ancient Culture",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.75,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-10T21:26:05.961579",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
