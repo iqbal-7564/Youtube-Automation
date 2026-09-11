@@ -1,20 +1,5 @@
 [
   {
-    "video_id": "Io4nb-1ne3Q",
-    "intent": "SPACE",
-    "title": "Jupiter's Giant Storms",
-    "hook_text": "This fact will completely change how you see the world.",
-    "total_duration_seconds": 37.44,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "uploaded_at": "2026-06-06T00:00:57.021541",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "FjCRxxhJpN0",
     "intent": "SCIENCE",
     "title": "Fusion Breakthrough",
@@ -4934,6 +4919,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-11T05:45:17.732276",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-11T11:59:01.118876"
+  },
+  {
+    "video_id": "kBBvHiGuhEA",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-11T12:06:29.202120",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
