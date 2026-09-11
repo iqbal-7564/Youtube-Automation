@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "FjCRxxhJpN0",
-    "intent": "SCIENCE",
-    "title": "Fusion Breakthrough",
-    "hook_text": "Fusion breakthroughs happen.",
-    "script_key_sents": [
-      "Fusion breakthroughs happen",
-      "Scientists just achieved a record 59-second nuclear fusion",
-      "This breakthrough could revolutionize space exploration and make humanity a multi-planetary species"
-    ],
-    "total_duration_seconds": 25.52,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-21T18:09:29.789247",
-    "profile": "shorts",
-    "tts_engines": [
-      "elevenlabs"
-    ]
-  },
-  {
     "video_id": "BPIyqmUfo4g",
     "intent": "SCIENCE",
     "title": "Memory Hacking Discovered",
@@ -4944,6 +4923,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-11T12:06:29.202120",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ox9EROrRYN8",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Romans Used Crushed Mouse Brains As Toothpaste",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Romans Used Crushed Mouse Brains",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.91,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-11T17:15:35.689444",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
