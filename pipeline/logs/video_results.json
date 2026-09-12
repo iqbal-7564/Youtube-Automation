@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "D1t0SQJhmSA",
-    "intent": "TECHNOLOGY",
-    "title": "Lithium Battery Accident",
-    "hook_text": "Lithium battery accidents",
-    "script_key_sents": [
-      "Lithium battery accidents",
-      "Scientists stumbled upon lithium batteries in the 1970s while",
-      "The accident that led to lithium batteries was a fortunate mistake, and recent advancements are making them even more efficient"
-    ],
-    "total_duration_seconds": 33.54,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-22T18:59:31.574908",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "b9ArdPKHkbU",
     "intent": "TECHNOLOGY",
     "title": "Lithium's Dark Secret",
@@ -4941,7 +4920,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-12T21:07:47.566873"
   },
   {
     "video_id": "ZbwKrH4nK_w",
@@ -4959,6 +4942,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-12T16:09:36.474068",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "1DSyrMTfZxk",
+    "intent": "NATURE",
+    "title": "The Incredible Truth About A Single Storm Can Release Nuclear Bomb Levels Of Energy",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About A Single Storm Can Release Nuclear Bomb",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-12T21:14:25.942299",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
