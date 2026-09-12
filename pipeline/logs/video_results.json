@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "3eew_2_3EbY",
-    "intent": "SCIENCE",
-    "title": "Dreams Are Not Random",
-    "hook_text": "Dreams are not random.",
-    "script_key_sents": [
-      "Dreams are not random",
-      "The brain's ability to clear toxins increases during dream stages,",
-      "This means that dreams are not just random firings of the brain, but an essential part of our mental health"
-    ],
-    "total_duration_seconds": 36.11,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-22T00:26:35.557097",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "oQvu8cb6was",
     "intent": "TECHNOLOGY",
     "title": "DeepMind AI",
@@ -4955,6 +4934,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-12T05:30:17.620663",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "rE9X1uj6H6E",
+    "intent": "NATURE",
+    "title": "The Incredible Truth About Permafrost Holds Twice The Carbon In Our Atmosphere",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Permafrost Holds Twice The Carbon In",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.94,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-12T11:27:16.990450",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
