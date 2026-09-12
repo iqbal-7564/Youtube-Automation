@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "oQvu8cb6was",
-    "intent": "TECHNOLOGY",
-    "title": "DeepMind AI",
-    "hook_text": "DeepMind AI develops neural networks.",
-    "script_key_sents": [
-      "DeepMind AI develops neural networks",
-      "DeepMind AI uses neural networks to develop intelligent systems",
-      "DeepMind AI's technology has the potential to transform various industries and improve our daily lives"
-    ],
-    "total_duration_seconds": 51.43,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-22T18:02:09.617588",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "D1t0SQJhmSA",
     "intent": "TECHNOLOGY",
     "title": "Lithium Battery Accident",
@@ -4937,7 +4916,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 201,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-12T16:04:01.573913"
   },
   {
     "video_id": "rE9X1uj6H6E",
@@ -4955,6 +4938,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-12T11:27:16.990450",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ZbwKrH4nK_w",
+    "intent": "NATURE",
+    "title": "The Incredible Truth About Fire Needs Living Ecosystems To Be Able To Survive",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Fire Needs Living Ecosystems To Be Able",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.94,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-12T16:09:36.474068",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
