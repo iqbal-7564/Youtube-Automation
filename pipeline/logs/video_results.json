@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "ORkLrYmI1x4",
-    "intent": "TECHNOLOGY",
-    "title": "Data Explosion Secret",
-    "hook_text": "Data explosion happens daily.",
-    "script_key_sents": [
-      "Data explosion happens daily",
-      "The data explosion secret is that 99% of the 5 billion",
-      "The secret to the data explosion is the vast amount of dark data"
-    ],
-    "total_duration_seconds": 38.64,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-23T18:58:29.818562",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 38,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-24T12:35:59.869371"
-  },
-  {
     "video_id": "abTxMqST1o8",
     "intent": "TECHNOLOGY",
     "title": "NASA's 1969 Secret",
@@ -4957,7 +4932,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 120,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-13T21:13:03.779986"
   },
   {
     "video_id": "LyVrRXvwYw4",
@@ -4975,6 +4954,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-13T16:59:14.080306",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "HFI9Ij1LGI8",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.25,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-13T21:19:39.842463",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
