@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "1vdy2y-qM9I",
-    "intent": "TECHNOLOGY",
-    "title": "Paralyzed People Now Type 6x Faster",
-    "hook_text": "Paralyzed people type faster",
-    "script_key_sents": [
-      "Paralyzed people type faster",
-      "Recent advancements in brain-computer interfaces have led to neural",
-      "This 6x increase in typing speed is a game-changer for assistive technology, forever changing the lives of paralyzed individuals"
-    ],
-    "total_duration_seconds": 34.14,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-23T00:02:34.059239",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ]
-  },
-  {
     "video_id": "sDt9F5UG2eA",
     "intent": "TECHNOLOGY",
     "title": "Materials That Heal Like Skin",
@@ -4971,6 +4950,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-13T05:46:48.400449",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 48,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-13T12:25:56.307497"
+  },
+  {
+    "video_id": "uNaziuF5Tzc",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-13T12:32:08.292592",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
