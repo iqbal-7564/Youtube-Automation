@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "klnIBjOan9o",
-    "intent": "CULTURE",
-    "title": "Ancient Code Cracked",
-    "hook_text": "Ancient code cracked.",
-    "script_key_sents": [
-      "Ancient code cracked",
-      "The cracked code shows Sumerian is the ancestor of",
-      "The ancient code cracked, revealing Sumerian's surprising impact on modern languages"
-    ],
-    "total_duration_seconds": 33.19,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-25T13:32:07.720884",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 293,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-25T21:02:21.044183"
-  },
-  {
     "video_id": "RJEQk721FDk",
     "intent": "CULTURE",
     "title": "Last Speakers",
@@ -4957,7 +4932,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-15T21:50:24.854436"
   },
   {
     "video_id": "110KyUVqtZM",
@@ -4975,6 +4954,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-15T17:40:27.894295",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "uGDRCtCAkkY",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-15T21:56:34.616359",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
