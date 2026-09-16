@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "LAzCr0xs4z4",
-    "intent": "TECHNOLOGY",
-    "title": "Patronus AI 🚀",
-    "hook_text": "Patronus AI builds worlds",
-    "script_key_sents": [
-      "Patronus AI builds worlds",
-      "Patronus AI creates digital environments to test and improve the",
-      "This technology has the potential to significantly impact various industries, and Patronus AI's digital worlds are the key to unlocking more"
-    ],
-    "total_duration_seconds": 41.47,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-26T10:44:41.537983",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 82,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-27T02:26:06.097749"
-  },
-  {
     "video_id": "XY_zaUE2Lvo",
     "intent": "CULTURE",
     "title": "Ancient Pacific Navigators' Secret",
@@ -4957,7 +4932,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 63,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-16T21:48:28.590255"
   },
   {
     "video_id": "w_2RT3lh9hg",
@@ -4975,6 +4954,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-16T17:38:45.233005",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "VXMem45wcIk",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why The Roman Empire Really Collapsed",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.78,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-16T21:55:16.415159",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
