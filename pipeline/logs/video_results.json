@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "bK3gaqeosTY",
-    "intent": "TECHNOLOGY",
-    "title": "Vision Pro 🤖",
-    "hook_text": "Vision Pro combines reality.",
-    "script_key_sents": [
-      "Vision Pro combines reality",
-      "The Apple Vision Pro headset uses advanced technologies to enhance user",
-      "The Vision Pro's fate, merging realities, now hinges on its development team's ability to deliver without its lead executive"
-    ],
-    "total_duration_seconds": 35.95,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-28T02:41:48.950416",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 56,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-28T15:10:05.846644"
-  },
-  {
     "video_id": "VdX56yQzLvw",
     "intent": "ANIMALS",
     "title": "Deep Sea Glow",
@@ -4979,6 +4954,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-18T05:40:05.589326",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 444,
+    "early_likes": 15,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-18T11:58:13.334526"
+  },
+  {
+    "video_id": "vDgXNCrbZ0k",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.01,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-18T12:03:08.657564",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
