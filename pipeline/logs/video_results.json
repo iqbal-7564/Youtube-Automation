@@ -1,29 +1,5 @@
 [
   {
-    "video_id": "3sZzGJzY8vI",
-    "intent": "TECHNOLOGY",
-    "title": "AI Falls Short 🚗",
-    "hook_text": "AI falls short",
-    "script_key_sents": [
-      "The answer lies in AI's inability to fully replace human",
-      "AI falls short because it lacks the nuance and critical thinking of human engineers"
-    ],
-    "total_duration_seconds": 37.92,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-29T02:42:35.254640",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 55,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-29T09:25:56.213640"
-  },
-  {
     "video_id": "bKq9DE6jnto",
     "intent": "TECHNOLOGY",
     "title": "Paralyzed Minds Now Type",
@@ -4979,6 +4955,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-19T05:36:23.045123",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 37,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-19T11:41:57.320461"
+  },
+  {
+    "video_id": "WDiYoWEcsMk",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Sumerian Is The Oldest Written Language Ever Found",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Sumerian Is The Oldest Written Language",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.91,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-19T11:47:09.304027",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
