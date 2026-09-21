@@ -1,29 +1,5 @@
 [
   {
-    "video_id": "jXKwvs9BxlU",
-    "intent": "HISTORY",
-    "title": "Plague & Prayer",
-    "hook_text": "Plague spreads.",
-    "script_key_sents": [
-      "Recent DNA analysis confirms the Silk Road's role in",
-      "So, the plague and prayer are intertwined through the Silk Road, a reminder that our history is marked by both the spread of disease and the"
-    ],
-    "total_duration_seconds": 53.83,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-30T16:20:52.044133",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 5,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-01T02:39:15.685346"
-  },
-  {
     "video_id": "CjZm81us6tk",
     "intent": "CULTURE",
     "title": "Sumerians' Shocking Secret",
@@ -4980,6 +4956,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-21T13:34:52.683273",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "pqKHFewFgPs",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.01,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-21T18:37:55.123634",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
