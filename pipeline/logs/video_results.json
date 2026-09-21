@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "bAugr4H8eFc",
-    "intent": "HISTORY",
-    "title": "Egypt's Pyramid Secret",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Egypt's Pyramid Secret",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 27.54,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-30T08:33:31.408787",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-06-30T16:14:33.050604"
-  },
-  {
     "video_id": "jXKwvs9BxlU",
     "intent": "HISTORY",
     "title": "Plague & Prayer",
@@ -4980,6 +4955,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-21T06:02:52.778149",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 19,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-21T13:27:39.982690"
+  },
+  {
+    "video_id": "y5DEuvbBpic",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About The Ancient Trade Route Connected China To Rome",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Ancient Trade Route Connected China",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-21T13:34:52.683273",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
