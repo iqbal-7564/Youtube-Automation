@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "CjZm81us6tk",
-    "intent": "CULTURE",
-    "title": "Sumerians' Shocking Secret",
-    "hook_text": "Sumerians' shocking secret",
-    "script_key_sents": [
-      "Sumerians' shocking secret",
-      "The hidden code contains calculations for the movements of",
-      "Sumerians' shocking secret is their advanced understanding of astronomy and mathematics, encoded in their language"
-    ],
-    "total_duration_seconds": 51.28,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-06-30T21:32:18.160091",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 22,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-01T08:48:30.768391"
-  },
-  {
     "video_id": "lJN4TwoZPZ4",
     "intent": "TECHNOLOGY",
     "title": "Etched AI Chip 🚀",
@@ -4959,7 +4934,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 22,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-21T22:23:03.015768"
   },
   {
     "video_id": "pqKHFewFgPs",
@@ -4977,6 +4956,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-21T18:37:55.123634",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "4zxTefpreBg",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-21T22:29:57.055124",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
