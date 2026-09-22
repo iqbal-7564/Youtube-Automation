@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "2CD7nVVE2Wg",
-    "intent": "CULTURE",
-    "title": "Egypt's 3,000yr Old Honey Cure",
-    "hook_text": "Egypt's 3,000yr old honey cure",
-    "script_key_sents": [
-      "Egypt's 3,000yr old honey cure",
-      "as one specific type of honey shows a",
-      "Egypt's 3,000yr old honey cure is real and it works, with a 99% success rate, which is why scientists are re-examining it, Egypt's 3,000yr o"
-    ],
-    "total_duration_seconds": 35.8,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-01T08:53:21.728600",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-01T16:15:00.996327"
-  },
-  {
     "video_id": "0JeJsQAgNoM",
     "intent": "CULTURE",
     "title": "Ancient Navigators' Secret",
@@ -4981,6 +4956,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-22T05:58:08.358589",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 28,
+    "early_likes": 2,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-22T12:11:53.096648"
+  },
+  {
+    "video_id": "RJGjxmlHH_c",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Dolphins Call Each Other By Name",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Dolphins Call Each Other By Name",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-22T12:17:11.098585",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
