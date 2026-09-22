@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "0JeJsQAgNoM",
-    "intent": "CULTURE",
-    "title": "Ancient Navigators' Secret",
-    "hook_text": "Ancient navigators pinpoint locations.",
-    "script_key_sents": [
-      "Ancient navigators pinpoint locations",
-      "Recent studies reveal they used observations of ocean currents,",
-      "Ancient navigators' secret was their ability to read nature, pinpointing locations with astonishing accuracy"
-    ],
-    "total_duration_seconds": 34.45,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-01T16:20:11.584549",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 13,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-02T02:28:36.963115"
-  },
-  {
     "video_id": "vUHjRD32ISY",
     "intent": "TECHNOLOGY",
     "title": "AI Labs VC",
@@ -4981,6 +4956,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-22T12:17:11.098585",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "BCUecADOg0c",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Sumerian Is The Oldest Written Language Ever Found",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Sumerian Is The Oldest Written Language",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.91,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-22T17:40:35.248403",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
