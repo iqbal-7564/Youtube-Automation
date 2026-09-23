@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "6D3wchI4-pI",
-    "intent": "HISTORY",
-    "title": "Roman Empire's Dark Secret",
-    "hook_text": "Roman Empire's dark secret",
-    "script_key_sents": [
-      "Roman Empire's dark secret",
-      "Climate change and devastating pandemics, similar to COVID-19, played",
-      "The Roman Empire's dark secret is that it was not just invaded, but also ravaged by the very environment it sought to control"
-    ],
-    "total_duration_seconds": 54.63,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-02T16:07:00.319486",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-03T02:04:01.540397"
-  },
-  {
     "video_id": "CVcEsmHo1UA",
     "intent": "NATURE",
     "title": "Fire's Hidden Ally",
@@ -4959,7 +4934,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-23T21:54:15.797356"
   },
   {
     "video_id": "9tNeGtXV-S8",
@@ -4977,6 +4956,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-23T17:51:29.899839",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Gn7SEUAKpKY",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Vikings Discovered America 500 Years Before",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.69,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-23T22:02:04.684845",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
