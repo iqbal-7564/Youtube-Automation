@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "rPrT629Oj6w",
-    "intent": "TECHNOLOGY",
-    "title": "Anthropic Chip 🚀",
-    "hook_text": "Anthropic Chip boosts AI",
-    "script_key_sents": [
-      "Anthropic Chip boosts AI",
-      "The Anthropic Chip, developed in partnership with Samsung, is",
-      "The Anthropic Chip's capabilities are a game-changer"
-    ],
-    "total_duration_seconds": 43.12,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-03T02:08:33.885049",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 24,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-03T15:48:03.371006"
-  },
-  {
     "video_id": "Gdx9b72evaA",
     "intent": "CULTURE",
     "title": "Ancient Secrets Hidden",
@@ -4981,6 +4956,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-24T06:01:36.511134",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-24T12:24:01.224657"
+  },
+  {
+    "video_id": "VXKk24yWq-M",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Industrial Revolution Happened In 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.51,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-24T12:30:30.463677",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
