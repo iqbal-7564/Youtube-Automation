@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "YE5i5np_oxs",
-    "intent": "CULTURE",
-    "title": "Lost Tongues",
-    "hook_text": "Lost Tongues disappear daily.",
-    "script_key_sents": [
-      "Lost Tongues disappear daily",
-      "Half of the world's languages are on the brink",
-      "Lost Tongues are indeed disappearing, but efforts to preserve them continue, and it's crucial we act now to save these languages, and by doi"
-    ],
-    "total_duration_seconds": 56.87,
-    "scene_count": 12,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-03T21:08:17.387624",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 10,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-04T14:57:14.667381"
-  },
-  {
     "video_id": "kKhUIkt_JMg",
     "intent": "TECHNOLOGY",
     "title": "Pocket App 🎮",
@@ -4959,7 +4934,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-24T21:54:59.086357"
   },
   {
     "video_id": "tXYpSbmwZkY",
@@ -4977,6 +4956,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-24T17:54:08.700582",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "I60lWtGPggU",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Tardigrades Can Survive In Outer Space",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Tardigrades Can Survive In Outer Space",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.88,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-24T22:01:30.522230",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
