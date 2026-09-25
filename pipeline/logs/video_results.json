@@ -1,29 +1,5 @@
 [
   {
-    "video_id": "Nx6gEhIx1uo",
-    "intent": "HISTORY",
-    "title": "Khan's Secret To Success",
-    "hook_text": "Khan's secret",
-    "script_key_sents": [
-      "Khan's secret to success lies in his genetic legacy,",
-      "Khan's secret to success is now clear: his ability to leave a lasting genetic legacy"
-    ],
-    "total_duration_seconds": 46.59,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-04T15:03:10.192500",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 21,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-05T02:09:52.917651"
-  },
-  {
     "video_id": "2Z9iRpFuHxk",
     "intent": "HISTORY",
     "title": "Ancient Greeks Knew This",
@@ -4981,6 +4957,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-25T05:59:29.014587",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 19,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-25T12:23:58.270143"
+  },
+  {
+    "video_id": "150T13zi98Q",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About The Colosseum Could Flood For Mock Sea Battles",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Colosseum Could Flood For Mock",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.89,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-25T12:30:47.720890",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
