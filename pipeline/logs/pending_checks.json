@@ -242,11 +242,11 @@
   {
     "video_id": "150T13zi98Q",
     "check_after": "2026-09-25T18:30:47.724837",
-    "done": false
+    "done": true
   },
   {
     "video_id": "QdiKdSm3Xlw",
     "check_after": "2026-09-25T23:55:59.159007",
-    "done": false
+    "done": true
   }
 ]
