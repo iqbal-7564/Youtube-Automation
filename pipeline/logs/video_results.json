@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "EOOaEv202ko",
-    "intent": "TECHNOLOGY",
-    "title": "Muse Image 📸",
-    "hook_text": "Muse Image creates photos.",
-    "script_key_sents": [
-      "Muse Image creates photos",
-      "Muse Image is an AI generator that creates images",
-      "Muse Image creates photos that are nearly indistinguishable from real ones, making it a game-changer in the world of visual content creation"
-    ],
-    "total_duration_seconds": 60.7,
-    "scene_count": 12,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-08T01:56:20.367725",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 18,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-09T02:03:38.980472"
-  },
-  {
     "video_id": "C9c0_DUzKO8",
     "intent": "TECHNOLOGY",
     "title": "Deepfake Detector",
@@ -4960,7 +4935,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 8,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-27T21:44:18.170591"
   },
   {
     "video_id": "cYW7ohtJbb0",
@@ -4978,6 +4957,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-27T17:42:41.822957",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "mCogpF5r59w",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited City",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-27T21:50:13.478333",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
