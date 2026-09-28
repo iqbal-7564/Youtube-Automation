@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "7yU5ogw0MmY",
-    "intent": "TECHNOLOGY",
-    "title": "Atlas AI Browser 🚀",
-    "hook_text": "Atlas AI Browser shuts down.",
-    "script_key_sents": [
-      "Atlas AI Browser shuts down",
-      "Atlas AI Browser used artificial intelligence to enhance",
-      "Atlas AI Browser may be gone, but its legacy lives on in OpenAI's desktop app and Chrome extension, changing how people interact with the in"
-    ],
-    "total_duration_seconds": 37.8,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-10T02:05:56.465826",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 29,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-11T01:56:16.127029"
-  },
-  {
     "video_id": "eJV3k76BNrk",
     "intent": "TECHNOLOGY",
     "title": "Instagram AI 📸",
@@ -4982,6 +4957,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-28T06:26:53.766812",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 104,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-28T14:41:18.488108"
+  },
+  {
+    "video_id": "f6hp1KZvTpU",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-28T14:50:13.216971",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
