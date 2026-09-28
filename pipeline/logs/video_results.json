@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "DH5MXuRuQXI",
-    "intent": "TECHNOLOGY",
-    "title": "OpenAI Lawsuit 🤖",
-    "hook_text": "OpenAI lawsuit allegations",
-    "script_key_sents": [
-      "OpenAI lawsuit allegations",
-      "The lawsuit specifically alleges that OpenAI's senior leadership misappropriated",
-      "The OpenAI lawsuit serves as a reminder of the importance of protecting intellectual property in the tech industry"
-    ],
-    "total_duration_seconds": 64.97,
-    "scene_count": 12,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-12T01:58:17.982429",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 73,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-13T01:54:36.899749"
-  },
-  {
     "video_id": "tJwO-G2lygU",
     "intent": "TECHNOLOGY",
     "title": "OpenAI Lawsuit 🤖",
@@ -4960,7 +4935,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 21,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-28T23:36:48.175208"
   },
   {
     "video_id": "sACwqZLIPI0",
@@ -4978,6 +4957,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-28T20:07:31.675511",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "rKlamVKFr_w",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Library Of Alexandria Held Half A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.2,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-28T23:44:44.937752",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
