@@ -1,29 +1,5 @@
 [
   {
-    "video_id": "-kptoQViKTY",
-    "intent": "TECHNOLOGY",
-    "title": "GPT-5.6 Sol 🚨",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.86,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-15T01:32:07.864112",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 205,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-16T01:48:16.079282"
-  },
-  {
     "video_id": "rnUcsb7LMpU",
     "intent": "TECHNOLOGY",
     "title": "OpenAI Impact 🤖",
@@ -4960,7 +4936,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 31,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-09-29T22:46:35.258446"
   },
   {
     "video_id": "Ga1kuo_R1aw",
@@ -4978,6 +4958,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-29T18:35:47.984975",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "GanilMHanQI",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-29T22:53:53.233499",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
