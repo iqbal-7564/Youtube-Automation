@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "k66apZQZQVk",
-    "intent": "TECHNOLOGY",
-    "title": "Uber AV Labs 🚗",
-    "hook_text": "Uber AV Labs uses AI",
-    "script_key_sents": [
-      "Uber AV Labs uses AI",
-      "Uber AV Labs utilizes artificial intelligence to enhance the",
-      "Uber AV Labs is revolutionizing transportation with AI"
-    ],
-    "total_duration_seconds": 36.22,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-14T01:46:24.432717",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 120,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-15T01:28:11.842502"
-  },
-  {
     "video_id": "-kptoQViKTY",
     "intent": "TECHNOLOGY",
     "title": "GPT-5.6 Sol 🚨",
@@ -4982,6 +4957,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-09-29T13:36:53.664833",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Ga1kuo_R1aw",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About The Mantis Shrimp Can Punch At Bullet Speed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Mantis Shrimp Can Punch At",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.84,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-09-29T18:35:47.984975",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
