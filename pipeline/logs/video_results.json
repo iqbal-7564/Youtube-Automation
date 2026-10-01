@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "4RtwyImsN2Y",
-    "intent": "TECHNOLOGY",
-    "title": "Hugging Face",
-    "hook_text": "Hugging Face exposes AI risks.",
-    "script_key_sents": [
-      "Hugging Face exposes AI risks",
-      "Hugging Face allows developers to build and share AI models,",
-      "Hugging Face's breach reveals the importance of securing AI models"
-    ],
-    "total_duration_seconds": 39.07,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-07-22T01:53:55.143287",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 51,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-07-24T07:58:42.035629"
-  },
-  {
     "video_id": "5AzyPLZP-XM",
     "intent": "ANIMALS",
     "title": "Crows Expose Human Liars",
@@ -4984,6 +4959,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-01T14:07:14.157358",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Hxj9Tj0W0PA",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why The Roman Empire Really Collapsed",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.78,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-01T18:50:30.137101",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
