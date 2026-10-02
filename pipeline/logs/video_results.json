@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "U3TZdL6N-DU",
-    "intent": "HISTORY",
-    "title": "The Dark Secret Behind the Black Death",
-    "hook_text": "Black Death hides a dark secret.",
-    "script_key_sents": [
-      "Black Death hides a dark secret",
-      "The dark secret behind the Black Death is that",
-      "The Black Death's secret is now out: multiple plague strains led to its devastating impact"
-    ],
-    "total_duration_seconds": 37.28,
-    "scene_count": 8,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-08T23:02:26.296518",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 489,
-    "early_likes": 6,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-09T07:44:07.118919"
-  },
-  {
     "video_id": "2LgsxYfhjcI",
     "intent": "TECHNOLOGY",
     "title": "Amazon Data Center 🚀",
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-02T06:51:16.345891",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 49,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-02T13:25:13.342115"
+  },
+  {
+    "video_id": "m_PsK4aTdoU",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Half The World'S Languages Will Be Extinct",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.39,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-02T13:32:40.977518",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
