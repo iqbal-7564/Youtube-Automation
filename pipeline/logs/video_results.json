@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "JrW3khERCA0",
-    "intent": "GEOGRAPHY",
-    "title": "Trench Deeper Than Everest",
-    "hook_text": "Trench deeper than Everest.",
-    "script_key_sents": [
-      "Trench deeper than Everest",
-      "It's 36,000 feet deeper than Mount Everest is tall",
-      "The Mariana Trench is indeed deeper than Everest, with life forms that challenge our understanding of Earth"
-    ],
-    "total_duration_seconds": 33.19,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-09T19:31:46.838340",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 427,
-    "early_likes": 3,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-10T03:11:03.599241"
-  },
-  {
     "video_id": "wECPa9PV7no",
     "intent": "TECHNOLOGY",
     "title": "Source Foundry",
@@ -4963,7 +4938,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 39,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-03T21:55:00.215017"
   },
   {
     "video_id": "1g1hNyKpMWU",
@@ -4981,6 +4960,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-03T17:09:12.718807",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "YNRb3108PYY",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About The Speed Of Light Limits",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Speed Of Light Limits",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.42,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-03T22:00:50.283986",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
