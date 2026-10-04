@@ -27,11 +27,11 @@
   {
     "video_id": "RB6VDflEVL8",
     "intent": "CULTURE",
-    "title": "Göbekli Tepe's Dark Secret",
+    "title": "G\u00f6bekli Tepe's Dark Secret",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "Göbekli Tepe's Dark Secret",
+      "G\u00f6bekli Tepe's Dark Secret",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 27.7,
@@ -252,7 +252,7 @@
   {
     "video_id": "OD5n5Ufjm4k",
     "intent": "TECHNOLOGY",
-    "title": "Accel India Fund 💰",
+    "title": "Accel India Fund \ud83d\udcb0",
     "hook_text": "Accel India Fund invests heavily.",
     "script_key_sents": [
       "Accel India Fund invests heavily",
@@ -377,7 +377,7 @@
   {
     "video_id": "emWbCVfLs6U",
     "intent": "TECHNOLOGY",
-    "title": "Anthropic Watermarks 🚫",
+    "title": "Anthropic Watermarks \ud83d\udeab",
     "hook_text": "Anthropic Watermarks detect AI misuse.",
     "script_key_sents": [
       "Anthropic Watermarks detect AI misuse",
@@ -502,7 +502,7 @@
   {
     "video_id": "nxTHtzuRcos",
     "intent": "TECHNOLOGY",
-    "title": "GLM-5.2 AI 🤖",
+    "title": "GLM-5.2 AI \ud83e\udd16",
     "hook_text": "GLM-5.2 AI enhances accessibility.",
     "script_key_sents": [],
     "total_duration_seconds": 37.87,
@@ -3322,11 +3322,11 @@
   {
     "video_id": "0o3pc3mo-Gc",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3672,11 +3672,11 @@
   {
     "video_id": "vDgXNCrbZ0k",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3822,11 +3822,11 @@
   {
     "video_id": "7yk3hzXhZxY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3922,11 +3922,11 @@
   {
     "video_id": "pqKHFewFgPs",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4172,11 +4172,11 @@
   {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4963,7 +4963,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-04T03:05:46.597504"
   },
   {
     "video_id": "YNRb3108PYY",
