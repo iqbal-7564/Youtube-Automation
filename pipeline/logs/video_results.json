@@ -1,37 +1,12 @@
 [
   {
-    "video_id": "wECPa9PV7no",
-    "intent": "TECHNOLOGY",
-    "title": "Source Foundry",
-    "hook_text": "Source Foundry develops AI chips.",
-    "script_key_sents": [
-      "Source Foundry develops AI chips",
-      "Source Foundry creates specialized AI-focused chips that can lead",
-      "Source Foundry's innovative chips are the key to unlocking AI's full potential"
-    ],
-    "total_duration_seconds": 45.84,
-    "scene_count": 9,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-10T00:51:26.067654",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 18,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-10T08:21:20.612096"
-  },
-  {
     "video_id": "RB6VDflEVL8",
     "intent": "CULTURE",
-    "title": "G\u00f6bekli Tepe's Dark Secret",
+    "title": "Göbekli Tepe's Dark Secret",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "G\u00f6bekli Tepe's Dark Secret",
+      "Göbekli Tepe's Dark Secret",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 27.7,
@@ -252,7 +227,7 @@
   {
     "video_id": "OD5n5Ufjm4k",
     "intent": "TECHNOLOGY",
-    "title": "Accel India Fund \ud83d\udcb0",
+    "title": "Accel India Fund 💰",
     "hook_text": "Accel India Fund invests heavily.",
     "script_key_sents": [
       "Accel India Fund invests heavily",
@@ -377,7 +352,7 @@
   {
     "video_id": "emWbCVfLs6U",
     "intent": "TECHNOLOGY",
-    "title": "Anthropic Watermarks \ud83d\udeab",
+    "title": "Anthropic Watermarks 🚫",
     "hook_text": "Anthropic Watermarks detect AI misuse.",
     "script_key_sents": [
       "Anthropic Watermarks detect AI misuse",
@@ -502,7 +477,7 @@
   {
     "video_id": "nxTHtzuRcos",
     "intent": "TECHNOLOGY",
-    "title": "GLM-5.2 AI \ud83e\udd16",
+    "title": "GLM-5.2 AI 🤖",
     "hook_text": "GLM-5.2 AI enhances accessibility.",
     "script_key_sents": [],
     "total_duration_seconds": 37.87,
@@ -3322,11 +3297,11 @@
   {
     "video_id": "0o3pc3mo-Gc",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3672,11 +3647,11 @@
   {
     "video_id": "vDgXNCrbZ0k",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3822,11 +3797,11 @@
   {
     "video_id": "7yk3hzXhZxY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3922,11 +3897,11 @@
   {
     "video_id": "pqKHFewFgPs",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4172,11 +4147,11 @@
   {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-03T22:00:50.283986",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 8,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-04T06:38:23.219097"
+  },
+  {
+    "video_id": "Vlw9Gt1EvAM",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Writing Was Invented To Track Beer Supplies",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Writing Was Invented To Track Beer",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.72,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-04T06:44:57.652561",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
