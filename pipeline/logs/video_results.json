@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "Zi0mru45uzk",
-    "intent": "CULTURE",
-    "title": "Sumerians' Hidden Code",
-    "hook_text": "Sumerians' Hidden Code exists.",
-    "script_key_sents": [
-      "Sumerians' Hidden Code exists",
-      "The Sumerians' Hidden Code is actually a mathematical system",
-      "The Sumerians' Hidden Code was a sophisticated system that connected astronomy, mathematics, and computer science, challenging our previous "
-    ],
-    "total_duration_seconds": 68.06,
-    "scene_count": 12,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-10T08:29:37.515128",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 992,
-    "early_likes": 21,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-10T19:49:01.499908"
-  },
-  {
     "video_id": "xBpz3SGXmY8",
     "intent": "CULTURE",
     "title": "Ancient Pacific Secret",
@@ -4985,6 +4960,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-04T13:02:40.593809",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "BUrX9V_RExc",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Library Of Alexandria Held Half A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.2,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-04T17:26:58.538325",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
