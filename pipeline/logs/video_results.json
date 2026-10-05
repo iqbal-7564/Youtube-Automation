@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "kPK6PBi2B6g",
-    "intent": "HISTORY",
-    "title": "Alexandria's Dark Secret",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Alexandria's Dark Secret",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 27.68,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-11T03:08:26.255686",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 157,
-    "early_likes": 3,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-11T14:20:30.642786"
-  },
-  {
     "video_id": "U9DDtSqsA_Q",
     "intent": "SPACE",
     "title": "Black Holes Are Eating Stars",
@@ -4985,6 +4960,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-05T15:28:54.431566",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Yjo3ui6v-pw",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Black Death Changed Europe Forever",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Black Death Changed Europe Forever",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-05T21:12:44.763487",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
