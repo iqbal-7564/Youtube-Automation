@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "u4i009UIkk0",
-    "intent": "TECHNOLOGY",
-    "title": "Daybreak AI",
-    "hook_text": "Daybreak AI detects threats.",
-    "script_key_sents": [
-      "Daybreak AI detects threats",
-      "Daybreak AI provides an additional layer of security for individuals",
-      "Daybreak AI is the answer to increasingly sophisticated cyber attacks"
-    ],
-    "total_duration_seconds": 34.18,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-11T00:50:20.860127",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 11,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-11T08:03:23.769200"
-  },
-  {
     "video_id": "kPK6PBi2B6g",
     "intent": "HISTORY",
     "title": "Alexandria's Dark Secret",
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-05T06:40:38.333358",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-05T15:23:12.158128"
+  },
+  {
+    "video_id": "ifHhKnhuYcg",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why The Roman Empire Really Collapsed",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.78,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-05T15:28:54.431566",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
