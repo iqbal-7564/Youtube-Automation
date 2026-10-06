@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "t8Bq1FNEoR8",
-    "intent": "SPACE",
-    "title": "Neutron Stars' Dark Secret",
-    "hook_text": "Neutron stars drag space-time.",
-    "script_key_sents": [
-      "Neutron stars drag space-time",
-      "This phenomenon, known as 'frame-dragging', has been observed in",
-      "The dark secret of neutron stars is their ability to drag space-time, and this discovery has left scientists stunned"
-    ],
-    "total_duration_seconds": 50.56,
-    "scene_count": 10,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-11T14:27:34.625760",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 141,
-    "early_likes": 10,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-12T00:54:05.497363"
-  },
-  {
     "video_id": "EBsw4C-xWXI",
     "intent": "CULTURE",
     "title": "Ancient Navigators' Secret",
@@ -52,7 +27,7 @@
   {
     "video_id": "OD5n5Ufjm4k",
     "intent": "TECHNOLOGY",
-    "title": "Accel India Fund \ud83d\udcb0",
+    "title": "Accel India Fund 💰",
     "hook_text": "Accel India Fund invests heavily.",
     "script_key_sents": [
       "Accel India Fund invests heavily",
@@ -177,7 +152,7 @@
   {
     "video_id": "emWbCVfLs6U",
     "intent": "TECHNOLOGY",
-    "title": "Anthropic Watermarks \ud83d\udeab",
+    "title": "Anthropic Watermarks 🚫",
     "hook_text": "Anthropic Watermarks detect AI misuse.",
     "script_key_sents": [
       "Anthropic Watermarks detect AI misuse",
@@ -302,7 +277,7 @@
   {
     "video_id": "nxTHtzuRcos",
     "intent": "TECHNOLOGY",
-    "title": "GLM-5.2 AI \ud83e\udd16",
+    "title": "GLM-5.2 AI 🤖",
     "hook_text": "GLM-5.2 AI enhances accessibility.",
     "script_key_sents": [],
     "total_duration_seconds": 37.87,
@@ -3122,11 +3097,11 @@
   {
     "video_id": "0o3pc3mo-Gc",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3472,11 +3447,11 @@
   {
     "video_id": "vDgXNCrbZ0k",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3622,11 +3597,11 @@
   {
     "video_id": "7yk3hzXhZxY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3722,11 +3697,11 @@
   {
     "video_id": "pqKHFewFgPs",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3972,11 +3947,11 @@
   {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-06T00:37:09.552769",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 79,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-06T07:13:09.710793"
+  },
+  {
+    "video_id": "Ezl--m_10q0",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific Without Instruments",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.71,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-06T07:20:27.226725",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
