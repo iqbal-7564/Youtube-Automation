@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "qIGRyaWGaiU",
-    "intent": "CULTURE",
-    "title": "Roman Toothpaste Secret",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Roman Toothpaste Secret",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 27.58,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-12T08:13:54.884910",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 41,
-    "early_likes": 2,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-12T14:22:54.566188"
-  },
-  {
     "video_id": "ReV4eEhoQqI",
     "intent": "CULTURE",
     "title": "Ancient Code Unleashed",
@@ -77,7 +52,7 @@
   {
     "video_id": "emWbCVfLs6U",
     "intent": "TECHNOLOGY",
-    "title": "Anthropic Watermarks \ud83d\udeab",
+    "title": "Anthropic Watermarks 🚫",
     "hook_text": "Anthropic Watermarks detect AI misuse.",
     "script_key_sents": [
       "Anthropic Watermarks detect AI misuse",
@@ -202,7 +177,7 @@
   {
     "video_id": "nxTHtzuRcos",
     "intent": "TECHNOLOGY",
-    "title": "GLM-5.2 AI \ud83e\udd16",
+    "title": "GLM-5.2 AI 🤖",
     "hook_text": "GLM-5.2 AI enhances accessibility.",
     "script_key_sents": [],
     "total_duration_seconds": 37.87,
@@ -3022,11 +2997,11 @@
   {
     "video_id": "0o3pc3mo-Gc",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3372,11 +3347,11 @@
   {
     "video_id": "vDgXNCrbZ0k",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3522,11 +3497,11 @@
   {
     "video_id": "7yk3hzXhZxY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3622,11 +3597,11 @@
   {
     "video_id": "pqKHFewFgPs",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -3872,11 +3847,11 @@
   {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-06T22:57:14.561767",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 43,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-07T06:52:38.907319"
+  },
+  {
+    "video_id": "rWeeuEuCKT4",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Elephants Are The Only Animals That Hold Funerals",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Elephants Are The Only Animals That",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.94,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-07T06:57:24.046385",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
