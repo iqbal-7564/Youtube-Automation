@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "jZIbltiJEwk",
-    "intent": "CULTURE",
-    "title": "Ancient Persia's Drunk Decisions",
-    "hook_text": "Ancient Persia's drunk decisions",
-    "script_key_sents": [
-      "Ancient Persia's drunk decisions",
-      "Ancient Persia's practice of debating sober and then drunk",
-      "By embracing this unique approach, Ancient Persia's drunk decisions actually led to groundbreaking discoveries and a more open-minded societ"
-    ],
-    "total_duration_seconds": 43.4,
-    "scene_count": 8,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-12T20:03:22.946458",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 124,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-13T03:26:12.640050"
-  },
-  {
     "video_id": "emWbCVfLs6U",
     "intent": "TECHNOLOGY",
     "title": "Anthropic Watermarks 🚫",
@@ -4985,6 +4960,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-07T14:09:12.238166",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ixUwm3eZvZA",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Bioluminescent Creatures Light Up The Deep Ocean",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Bioluminescent Creatures Light Up The Deep",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.43,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-07T19:21:46.868274",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
