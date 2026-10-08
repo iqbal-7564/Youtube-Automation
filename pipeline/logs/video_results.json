@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "GwqxVOdjRas",
-    "intent": "SCIENCE",
-    "title": "Antibiotics' Dark Secret",
-    "hook_text": "Antibiotics alter human microbiome.",
-    "script_key_sents": [
-      "Antibiotics alter human microbiome",
-      "Scientists have discovered that the overuse of antibiotics not only makes",
-      "The answer to 'Antibiotics' Dark Secret' is that it's not just about resistance, but about the lasting impact on our microbiome"
-    ],
-    "total_duration_seconds": 42.72,
-    "scene_count": 8,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-13T08:17:25.795278",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 20,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-13T14:23:11.844927"
-  },
-  {
     "video_id": "5Nbs5HDKdE0",
     "intent": "SCIENCE",
     "title": "Fire's Hidden State",
@@ -4985,6 +4960,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-08T14:18:11.542275",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "g97qlznX1fY",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.25,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-08T19:17:53.958258",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
