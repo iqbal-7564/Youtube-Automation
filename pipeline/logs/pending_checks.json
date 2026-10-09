@@ -242,11 +242,11 @@
   {
     "video_id": "NYC79ziD_fg",
     "check_after": "2026-10-08T20:18:11.546055",
-    "done": false
+    "done": true
   },
   {
     "video_id": "g97qlznX1fY",
     "check_after": "2026-10-09T01:17:53.961452",
-    "done": false
+    "done": true
   }
 ]
