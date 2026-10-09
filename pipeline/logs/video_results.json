@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "E8AFdlJCiY8",
-    "intent": "SCIENCE",
-    "title": "Dreams: Brain's Deleted Files",
-    "hook_text": "Dreams delete files.",
-    "script_key_sents": [
-      "Dreams delete files",
-      "Scientists found that brain waves during sleep can predict",
-      "This process helps our brain stay efficient"
-    ],
-    "total_duration_seconds": 33.62,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-13T19:57:00.823865",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 62,
-    "early_likes": 2,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-14T03:24:18.487580"
-  },
-  {
     "video_id": "nxTHtzuRcos",
     "intent": "TECHNOLOGY",
     "title": "GLM-5.2 AI 🤖",
@@ -4985,6 +4960,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-09T07:15:15.673284",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-09T13:57:55.273316"
+  },
+  {
+    "video_id": "8U3P8CfxqtU",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About Fiber Optic Cables Carry Data At The Speed Of Light",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Fiber Optic Cables Carry Data At The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.73,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-09T14:03:12.964178",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
