@@ -1,26 +1,5 @@
 [
   {
-    "video_id": "nxTHtzuRcos",
-    "intent": "TECHNOLOGY",
-    "title": "GLM-5.2 AI 🤖",
-    "hook_text": "GLM-5.2 AI enhances accessibility.",
-    "script_key_sents": [],
-    "total_duration_seconds": 37.87,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-14T00:58:36.366397",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 29,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-14T08:06:37.232947"
-  },
-  {
     "video_id": "iN2kG5y2kro",
     "intent": "SPACE",
     "title": "Sun's Shocking Loss",
@@ -4985,6 +4964,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-09T14:03:12.964178",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "La5DWKGmNuo",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About Quantum Computers Can Break Any Encryption Instantly",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Quantum Computers Can Break Any Encryption",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.6,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-09T18:46:14.405886",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
