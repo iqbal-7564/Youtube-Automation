@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "IVONHv6s_ds",
-    "intent": "MYTHOLOGY",
-    "title": "Norse Mythology's Dark Web",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Norse Mythology's Dark Web",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 27.63,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-14T08:12:03.181515",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-14T14:16:36.725185"
-  },
-  {
     "video_id": "WP5p1P0RKt4",
     "intent": "MYTHOLOGY",
     "title": "Gods Were Stars",
@@ -4989,6 +4964,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-10T06:49:48.559034",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 34,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-10T13:08:32.481346"
+  },
+  {
+    "video_id": "Xykkw_Hpr40",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About The Colosseum Could Flood For Mock Sea Battles",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Colosseum Could Flood For Mock",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.89,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-10T13:14:24.833310",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
