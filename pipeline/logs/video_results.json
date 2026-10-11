@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "cTLIACziuuY",
-    "intent": "CULTURE",
-    "title": "Rome's Hidden Chinese Secret",
-    "hook_text": "Rome's Hidden Chinese Secret",
-    "script_key_sents": [
-      "Rome's Hidden Chinese Secret",
-      "Roman glassmaking was actually influenced by Chinese techniques, with",
-      "Rome's Hidden Chinese Secret is that the Romans borrowed heavily from Chinese techniques, proving that even ancient civilizations were conne"
-    ],
-    "total_duration_seconds": 46.46,
-    "scene_count": 8,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-15T13:38:30.789762",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 14,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-16T00:32:14.668029"
-  },
-  {
     "video_id": "8v2PLG-xdH8",
     "intent": "CULTURE",
     "title": "Ancient Code Unleashed",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-11T22:35:19.614228"
   },
   {
     "video_id": "Hhuv_IBik_4",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-11T18:00:30.100293",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "EeITDPIHp2M",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About The Ancient Trade Route Connected China To Rome",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Ancient Trade Route Connected China",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-11T22:41:39.607462",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
