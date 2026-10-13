@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "7Fgkl42lFE8",
-    "intent": "SPACE",
-    "title": "NASA's Hidden Planet",
-    "hook_text": "NASA's hidden planet",
-    "script_key_sents": [
-      "NASA's hidden planet",
-      "The hidden planet is actually Wolf 359b, a habitable",
-      "NASA's hidden planet, Wolf 359b, is a game-changer in the search for alien life"
-    ],
-    "total_duration_seconds": 69.36,
-    "scene_count": 14,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-17T07:51:17.263320",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-17T19:21:24.895940"
-  },
-  {
     "video_id": "zW7pmzzRxvA",
     "intent": "SPACE",
     "title": "The Incredible Truth About Dark Matter Mystery",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "gtts"
-    ]
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-13T23:10:16.126969"
   },
   {
     "video_id": "Hwz3RuMNzWE",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-13T19:51:53.911389",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "h-qeDq5AKe8",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Vikings Discovered America 500 Years Before",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.69,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-13T23:18:07.258272",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
