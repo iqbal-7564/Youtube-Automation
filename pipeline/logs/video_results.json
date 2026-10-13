@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "ueeP4VPSaxI",
-    "intent": "CULTURE",
-    "title": "Rome's Chinese Secret",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "Rome's Chinese Secret",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 27.49,
-    "scene_count": 5,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-16T07:28:42.566615",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-16T13:32:40.622969"
-  },
-  {
     "video_id": "z3DaDiRKpLU",
     "intent": "SPACE",
     "title": "Pulsars' Hidden Signal",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "gtts"
-    ]
+    ],
+    "early_views": 4,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-13T01:02:31.019602"
   },
   {
     "video_id": "QEvxXacfUeo",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-12T21:41:46.377763",
+    "profile": "shorts",
+    "tts_engines": [
+      "gtts"
+    ]
+  },
+  {
+    "video_id": "zkn_1Fx8TsU",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Habitable Exoplanets",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Habitable Exoplanets",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 32.93,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-13T01:07:41.564058",
     "profile": "shorts",
     "tts_engines": [
       "gtts"
