@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "du__t7EzrfE",
-    "intent": "TECHNOLOGY",
-    "title": "Glimmer AI",
-    "hook_text": "Glimmer AI runs locally.",
-    "script_key_sents": [
-      "Glimmer AI runs locally",
-      "Glimmer AI allows users to leverage AI technology without relying on",
-      "Glimmer AI runs locally, democratizing access to AI and potentially changing the landscape of AI development, so Glimmer AI is empowering us"
-    ],
-    "total_duration_seconds": 39.09,
-    "scene_count": 7,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-17T00:36:03.045840",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-17T07:42:34.305961"
-  },
-  {
     "video_id": "5CNVvm223i8",
     "intent": "SPACE",
     "title": "Saturn's Rings Are Disappearing",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-13T07:31:26.687002",
+    "profile": "shorts",
+    "tts_engines": [
+      "gtts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-13T14:40:22.242273"
+  },
+  {
+    "video_id": "97SajH96UUk",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific Without Instruments",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 35.4,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-13T14:47:19.249088",
     "profile": "shorts",
     "tts_engines": [
       "gtts"
