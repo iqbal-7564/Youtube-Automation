@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "N1_W-n3wWJY",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About Habitable Exoplanets",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Habitable Exoplanets",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.81,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-17T19:27:17.604417",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 18,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-18T02:18:34.800139"
-  },
-  {
     "video_id": "9Ksz2KLJT0w",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-14T05:58:08.912837",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 20,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-14T12:33:15.401112"
+  },
+  {
+    "video_id": "ElSNWaw-a1c",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.32,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-14T12:39:52.856092",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
