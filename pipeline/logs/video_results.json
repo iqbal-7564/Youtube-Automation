@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "uSVPPd9PZKQ",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Half The World'S Languages Will Be Extinct",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.39,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-18T13:49:05.043492",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 19,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-19T00:30:56.161028"
-  },
-  {
     "video_id": "9H2LMBIy_5U",
     "intent": "MEDICINE",
     "title": "The Incredible Truth About Penicillin Was Discovered Accidentally By A Messy Laboratory",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-15T05:41:34.816496",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-15T12:15:01.144492"
+  },
+  {
+    "video_id": "SoVsftO739Q",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Neutron Stars",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Neutron Stars",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.57,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-15T12:20:14.368791",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
