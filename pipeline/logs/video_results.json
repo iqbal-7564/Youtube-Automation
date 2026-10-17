@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "J6LPZKmidUY",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.25,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-21T13:52:19.581776",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 7,
-    "early_likes": 0,
-    "early_comments": 1,
-    "early_fetched_at": "2026-08-22T00:30:12.109752"
-  },
-  {
     "video_id": "Ll-HCzNv9gs",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About Animal Migration Covering Thousands Of Miles",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-17T16:10:38.700942"
   },
   {
     "video_id": "Te1OdmqNSRw",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-17T11:21:31.351043",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "kmONyurH-PI",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.24,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-17T16:16:29.988383",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
