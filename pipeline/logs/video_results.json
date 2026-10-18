@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "QWaBn19VYiE",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Silk Road Spread Religion And",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.32,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-22T13:41:02.869997",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 28,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-23T00:33:17.432283"
-  },
-  {
     "video_id": "YHfzGbV4mZE",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Ancient Greeks Discovered The Earth Was Round In 240 Bc",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-18T21:12:05.565453"
   },
   {
     "video_id": "RFHxQ5sUPtA",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-18T16:29:57.002274",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "B5iq_SOq_Gk",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Black Death Changed Europe Forever",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Black Death Changed Europe Forever",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-18T21:18:46.258756",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
