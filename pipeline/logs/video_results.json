@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "cbJ99t_YouE",
-    "intent": "MYTHOLOGY",
-    "title": "The Incredible Truth About The Trojan War Was Proven Real By Archaeology In 1870",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Trojan War Was Proven Real By",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 32.02,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-23T13:39:49.736907",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 151,
-    "early_likes": 2,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-24T00:31:47.238630"
-  },
-  {
     "video_id": "_X5WUi2_pQs",
     "intent": "CULTURE",
     "title": "The Incredible Truth About The Most Spoken Language In 3000 Bc Was Sumerian",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-19T22:42:04.360336"
   },
   {
     "video_id": "NhWnYsV59KY",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-19T19:13:13.901212",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "zTKNuGIfVfw",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Writing Was Invented To Track Beer Supplies",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Writing Was Invented To Track Beer",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.72,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-19T22:48:00.965357",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
