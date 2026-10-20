@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "iSTZAOAqATw",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About Mars Has The Tallest Volcano In The Solar System",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Mars Has The Tallest Volcano In The",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.08,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-24T19:27:47.027748",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 255,
-    "early_likes": 7,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-25T02:18:00.296560"
-  },
-  {
     "video_id": "6IllNZZia9E",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any In History",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-20T22:00:09.890501"
   },
   {
     "video_id": "Txd_G6Cp7T8",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-20T17:55:23.534402",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "zgfI0-_dzcg",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Black Death Changed Europe Forever",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Black Death Changed Europe Forever",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-20T22:05:20.973748",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
