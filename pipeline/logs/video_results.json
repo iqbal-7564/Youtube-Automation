@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "rxP5cyO0yBI",
-    "intent": "OCEAN",
-    "title": "The Incredible Truth About The Pacific Garbage Patch Is Twice The Size Of Texas",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Pacific Garbage Patch Is Twice The",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.41,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-28T19:14:01.310784",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-29T01:57:31.364553"
-  },
-  {
     "video_id": "sT8QnsyMjOk",
     "intent": "OCEAN",
     "title": "The Incredible Truth About Waves In The Southern Ocean Circle The Globe Non-Stop",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-24T11:47:33.164389",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "gbvldacijR0",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Animal Migration Covering Thousands Of Miles",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Animal Migration Covering Thousands Of Miles",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.16,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-24T16:33:27.737336",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
