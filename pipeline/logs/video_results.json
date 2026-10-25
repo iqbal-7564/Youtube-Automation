@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "D9BOrTEPpfk",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About Dark Matter Mystery",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Dark Matter Mystery",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 29.91,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-29T07:46:47.898551",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-29T17:01:56.886253"
-  },
-  {
     "video_id": "gUcBkpztYzU",
     "intent": "SPACE",
     "title": "The Incredible Truth About Black Holes",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-25T12:23:09.882137",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "wNUfbCEu0eM",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Vikings Discovered America 500 Years Before",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.69,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-25T17:05:02.153674",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
