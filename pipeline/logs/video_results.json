@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "UubJRlsgbxQ",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About Mars Has The Tallest Volcano In The Solar System",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Mars Has The Tallest Volcano In The",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.08,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-30T12:30:55.367685",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 14,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-30T21:45:23.496990"
-  },
-  {
     "video_id": "l-69aPUk1Aw",
     "intent": "SPACE",
     "title": "The Incredible Truth About The Sun Loses 4 Million Tons Per Second",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 7,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-26T22:56:51.902084"
   },
   {
     "video_id": "FEMKDcaKuc8",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-26T19:12:39.231796",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "m-A3An88_Cg",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Pulsars",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Pulsars",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.53,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-26T23:01:22.016355",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
