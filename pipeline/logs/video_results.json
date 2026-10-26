@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "ozY4xLoH33U",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About What Happened Before The Big Bang",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About What Happened Before The Big Bang",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-29T21:31:09.053354",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 4,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-30T06:15:52.146599"
-  },
-  {
     "video_id": "5momQDSd72Y",
     "intent": "SPACE",
     "title": "The Incredible Truth About The True Scale Of The Universe",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-26T05:52:24.800418",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-26T13:41:56.462551"
+  },
+  {
+    "video_id": "gnropSD_rLQ",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Library Of Alexandria Held Half A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.2,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-26T13:48:31.942864",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
