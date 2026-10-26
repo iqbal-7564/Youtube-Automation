@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "5momQDSd72Y",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About The True Scale Of The Universe",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The True Scale Of The Universe",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-08-30T06:23:05.467018",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 12,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-08-30T12:24:02.863160"
-  },
-  {
     "video_id": "UubJRlsgbxQ",
     "intent": "SPACE",
     "title": "The Incredible Truth About Mars Has The Tallest Volcano In The Solar System",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-26T13:48:31.942864",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "FEMKDcaKuc8",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.24,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-26T19:12:39.231796",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
