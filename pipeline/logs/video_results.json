@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "9-nlxuAKDOs",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Tardigrades Can Survive In Outer Space",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Tardigrades Can Survive In Outer Space",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.88,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-01T12:18:02.600767",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 75,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-01T21:30:55.225133"
-  },
-  {
     "video_id": "dkSXgI2anjk",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About Dolphins Call Each Other By Name",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-28T13:47:28.989403",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "3J01k00M0pA",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About A Day On Venus Is Longer Than Its Year",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About A Day On Venus Is Longer Than",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.38,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-28T18:47:47.141727",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
