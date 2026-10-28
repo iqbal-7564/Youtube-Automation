@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "KIbJQuaXLwk",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Dolphins Call Each Other By Name",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Dolphins Call Each Other By Name",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-01T06:08:08.300629",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 39,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-01T12:12:52.883088"
-  },
-  {
     "video_id": "9-nlxuAKDOs",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About Tardigrades Can Survive In Outer Space",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-28T06:45:49.778721",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-28T13:40:52.115567"
+  },
+  {
+    "video_id": "JHh-3CD5wj4",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About Jupiter'S Storms Bigger Than Earth",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Jupiter'S Storms Bigger Than Earth",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.42,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-28T13:47:28.989403",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
