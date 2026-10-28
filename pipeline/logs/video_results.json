@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "dkSXgI2anjk",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Dolphins Call Each Other By Name",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Dolphins Call Each Other By Name",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-01T17:19:06.114377",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 28,
-    "early_likes": 1,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-02T01:39:20.673133"
-  },
-  {
     "video_id": "pfJKPdG7DUo",
     "intent": "MYTHOLOGY",
     "title": "The Incredible Truth About Ancient Greek Gods Were Based On Real Astronomical Observations",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-28T22:55:37.700405"
   },
   {
     "video_id": "3J01k00M0pA",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-28T18:47:47.141727",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "3HG7xKm0TIg",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About The True Scale Of The Universe",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The True Scale Of The Universe",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.27,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-28T23:01:02.396923",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
