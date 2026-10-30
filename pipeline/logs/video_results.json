@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "r_yGD76CI4Y",
-    "intent": "SPACE",
-    "title": "The Incredible Truth About A Day On Venus Is Longer Than Its Year",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About A Day On Venus Is Longer Than",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.38,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-03T05:36:22.413216",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 88,
-    "early_likes": 4,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-03T11:49:24.435782"
-  },
-  {
     "video_id": "nHEpxfFU_mg",
     "intent": "SPACE",
     "title": "The Incredible Truth About Black Holes",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-10-30T06:54:12.828568",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 8,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-10-30T13:42:12.504721"
+  },
+  {
+    "video_id": "Uei-n7VOHJo",
+    "intent": "SPACE",
+    "title": "The Incredible Truth About A Day On Venus Is Longer Than Its Year",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About A Day On Venus Is Longer Than",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.38,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-10-30T13:49:02.062690",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
