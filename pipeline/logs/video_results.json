@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "PhvR3N6kDKI",
-    "intent": "SCIENCE",
-    "title": "The Incredible Truth About Nuclear Fusion Could Power Civilization Forever",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Nuclear Fusion Could Power Civilization Forever",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 29.36,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-07T13:12:23.887168",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-07T21:51:34.184783"
-  },
-  {
     "video_id": "PicEr53MA2s",
     "intent": "TECHNOLOGY",
     "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-03T14:50:53.238933",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "ZWpw80gKTls",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Vikings Discovered America 500 Years Before",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.69,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-03T20:08:29.689856",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
