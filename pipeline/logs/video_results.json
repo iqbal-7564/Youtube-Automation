@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "PicEr53MA2s",
-    "intent": "TECHNOLOGY",
-    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Internet Weighs The Same As",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.79,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-07T18:13:25.588270",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 6,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-08T01:41:43.001576"
-  },
-  {
     "video_id": "ANOJU41ISco",
     "intent": "TECHNOLOGY",
     "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-03T23:50:15.071079"
   },
   {
     "video_id": "ZWpw80gKTls",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-03T20:08:29.689856",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "2T8i7E6o6aA",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any In History",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.38,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-03T23:58:05.181629",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
