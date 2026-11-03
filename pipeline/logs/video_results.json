@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "mAfxqLNya3M",
-    "intent": "SCIENCE",
-    "title": "The Incredible Truth About Why Humans Dream",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Why Humans Dream",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 29.86,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-06T21:02:14.292292",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-07T05:42:54.319238"
-  },
-  {
     "video_id": "On3_WGOJW8Q",
     "intent": "SCIENCE",
     "title": "The Incredible Truth About Fire Is Not Actually A Solid Liquid Or Gas",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 5,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-03T01:26:06.045052"
   },
   {
     "video_id": "nPRZV7Sf-QQ",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-02T22:17:03.715318",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "_IsN0Ozx08s",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Industrial Revolution Happened In 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.51,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-03T01:35:05.868717",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
