@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "ANOJU41ISco",
-    "intent": "TECHNOLOGY",
-    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Internet Weighs The Same As",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.79,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-07T21:56:50.648307",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-08T11:52:08.502924"
-  },
-  {
     "video_id": "LyPA6DukXnc",
     "intent": "HISTORY",
     "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
@@ -577,11 +552,11 @@
   {
     "video_id": "0o3pc3mo-Gc",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -927,11 +902,11 @@
   {
     "video_id": "vDgXNCrbZ0k",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -1077,11 +1052,11 @@
   {
     "video_id": "7yk3hzXhZxY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -1177,11 +1152,11 @@
   {
     "video_id": "pqKHFewFgPs",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -1427,11 +1402,11 @@
   {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4652,11 +4627,11 @@
   {
     "video_id": "RpVfTD-f3dY",
     "intent": "CULTURE",
-    "title": "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older Than Stonehenge",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
     "hook_text": "This fact will completely change how you see the world.",
     "script_key_sents": [
       "This fact will completely change how you see the world",
-      "The Incredible Truth About G\u00f6bekli Tepe Is 6000 Years Older",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
       "Now you understand the real truth behind one of the world's most overlooked facts"
     ],
     "total_duration_seconds": 31.01,
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-03T23:58:05.181629",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-04T07:16:11.039580"
+  },
+  {
+    "video_id": "ORcx9KdjmzA",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any In History",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.38,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-04T07:27:36.899640",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
