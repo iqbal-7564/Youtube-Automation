@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "Aq505BuI3cE",
-    "intent": "TECHNOLOGY",
-    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Internet Weighs The Same As",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.79,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-10T05:44:43.269303",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-10T11:57:20.125654"
-  },
-  {
     "video_id": "ghVdbASHSLw",
     "intent": "TECHNOLOGY",
     "title": "The Incredible Truth About Brain-Computer Interfaces Let Paralyzed People Type With Thoughts",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-05T23:53:36.936415"
   },
   {
     "video_id": "Lz0QDFPphc8",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-05T20:34:49.603677",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "_FD13ArqW74",
+    "intent": "GEOGRAPHY",
+    "title": "The Incredible Truth About There Is A Place Where Four Countries Meet At One Point",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About There Is A Place",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.89,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-05T23:58:42.877836",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
