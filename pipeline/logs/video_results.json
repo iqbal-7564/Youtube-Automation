@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "OihSfXnD3wc",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Animal Migration Covering Thousands Of Miles",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Animal Migration Covering Thousands Of Miles",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 29.16,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-09T05:50:09.375789",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 32,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-09T12:02:28.003654"
-  },
-  {
     "video_id": "q_8MuG2DLXY",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About Octopuses Have Three Hearts And Blue Blood",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-05T00:14:48.561357"
   },
   {
     "video_id": "pQbC4KuC994",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-04T20:24:12.754967",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "H4MfKj0bNZ8",
+    "intent": "TECHNOLOGY",
+    "title": "The Incredible Truth About We Produce More Data Every Day Than In All Of Human History Before 2003",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About We Produce More Data Every",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 32.7,
+    "scene_count": 7,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-05T00:21:10.822794",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
