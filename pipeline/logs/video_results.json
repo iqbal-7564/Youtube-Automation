@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "SvtLwyn93fM",
-    "intent": "TECHNOLOGY",
-    "title": "The Incredible Truth About The Internet Weighs The Same As A Strawberry",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Internet Weighs The Same As",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.79,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-10T17:02:13.045063",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-11T01:43:36.558356"
-  },
-  {
     "video_id": "KVOavuGldjI",
     "intent": "MYTHOLOGY",
     "title": "The Incredible Truth About Dragons Appear In Every Ancient Culture Independently",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-06T14:49:57.105381",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "_Zw7XBaeUJ4",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About The Ancient Trade Route Connected China To Rome",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Ancient Trade Route Connected China",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.26,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-06T19:59:49.526408",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
