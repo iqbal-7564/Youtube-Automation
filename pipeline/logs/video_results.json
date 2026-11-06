@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "KVOavuGldjI",
-    "intent": "MYTHOLOGY",
-    "title": "The Incredible Truth About Dragons Appear In Every Ancient Culture Independently",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Dragons Appear In Every Ancient Culture",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.75,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-10T21:26:05.961579",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 95,
-    "early_likes": 3,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-11T05:38:33.653638"
-  },
-  {
     "video_id": "ClZvjIzgDzs",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Writing Was Invented To Track Beer Supplies",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-06T23:36:04.692982"
   },
   {
     "video_id": "_Zw7XBaeUJ4",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-06T19:59:49.526408",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "AsZLjjX3rzw",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.01,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-06T23:43:24.592531",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
