@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "1DSyrMTfZxk",
-    "intent": "NATURE",
-    "title": "The Incredible Truth About A Single Storm Can Release Nuclear Bomb Levels Of Energy",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About A Single Storm Can Release Nuclear Bomb",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-12T21:14:25.942299",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 2,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-13T05:41:20.783321"
-  },
-  {
     "video_id": "unSKtN-LtLs",
     "intent": "NATURE",
     "title": "The Incredible Truth About The Northern Lights Are Caused By Solar Wind",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 204,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-08T22:36:33.903795"
   },
   {
     "video_id": "HSvMrW4lxWU",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-08T18:20:13.341100",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "DbHw7edcrkM",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Industrial Revolution Happened In 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.28,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-08T22:43:50.733114",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
