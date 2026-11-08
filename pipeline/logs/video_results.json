@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "rE9X1uj6H6E",
-    "intent": "NATURE",
-    "title": "The Incredible Truth About Permafrost Holds Twice The Carbon In Our Atmosphere",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Permafrost Holds Twice The Carbon In",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.94,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-12T11:27:16.990450",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-12T21:07:47.566873"
-  },
-  {
     "video_id": "ZbwKrH4nK_w",
     "intent": "NATURE",
     "title": "The Incredible Truth About Fire Needs Living Ecosystems To Be Able To Survive",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-08T07:04:47.049513",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-08T13:57:37.717627"
+  },
+  {
+    "video_id": "1lFeRkhKkUc",
+    "intent": "SCIENCE",
+    "title": "The Incredible Truth About Why Humans Dream",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why Humans Dream",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.58,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 85,
+    "uploaded_at": "2026-11-08T14:03:03.222880",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
