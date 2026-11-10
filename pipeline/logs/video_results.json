@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "H6z30Q7m2NM",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About The Colosseum Could Flood For Mock Sea Battles",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Colosseum Could Flood For Mock",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.89,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-14T18:30:14.884812",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 36,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-15T02:07:31.859169"
-  },
-  {
     "video_id": "Gm656E-Wk6E",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Rome Had A Population Of 1 Million Before London",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-10T08:05:45.745151",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 315,
+    "early_likes": 3,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-10T15:23:24.822127"
+  },
+  {
+    "video_id": "YDRe1iLSM_U",
+    "intent": "SCIENCE",
+    "title": "The Incredible Truth About Dna Stores Data Like A Hard Drive",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Dna Stores Data Like A Hard",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 29.73,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-10T15:28:50.488443",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
