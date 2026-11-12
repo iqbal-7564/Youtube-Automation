@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "VXMem45wcIk",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Why The Roman Empire Really Collapsed",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.78,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-16T21:55:16.415159",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 11,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-17T12:17:29.668831"
-  },
-  {
     "video_id": "HfHRUM-_rS0",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Ancient Romans Used Crushed Mouse Brains As Toothpaste",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-12T15:45:03.294733",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "QrdzY2D3iJc",
+    "intent": "SCIENCE",
+    "title": "The Incredible Truth About Magnets And Quantum Mechanics",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Magnets And Quantum Mechanics",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 27.63,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-12T20:46:54.467442",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
