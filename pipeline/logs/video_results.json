@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "-sgQ8HPsdAo",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About The Ancient Trade Route Connected China To Rome",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Ancient Trade Route Connected China",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.26,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-18T21:28:59.967215",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 74,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-19T05:30:33.330865"
-  },
-  {
     "video_id": "jTV3azvVHYY",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific Without Instruments",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-14T13:56:59.819286",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "T4ojaY87edY",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Library Of Alexandria Held Half A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.97,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-14T18:45:39.870738",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
