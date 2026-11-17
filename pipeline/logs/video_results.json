@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "RJGjxmlHH_c",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Dolphins Call Each Other By Name",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Dolphins Call Each Other By Name",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.27,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-22T12:17:11.098585",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 104,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-23T02:04:07.358078"
-  },
-  {
     "video_id": "BCUecADOg0c",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Ancient Sumerian Is The Oldest Written Language Ever Found",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-17T08:55:22.074798",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 113,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-17T16:34:00.092897"
+  },
+  {
+    "video_id": "T6nz4SoZJSE",
+    "intent": "MYTHOLOGY",
+    "title": "The Incredible Truth About Ancient Greek Gods Were Based On Real Astronomical Observations",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Greek Gods Were Based On Real",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.48,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 85,
+    "uploaded_at": "2026-11-17T16:38:25.614526",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
