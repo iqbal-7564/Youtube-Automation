@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "4zxTefpreBg",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.32,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-21T22:29:57.055124",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 40,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-22T05:52:51.616352"
-  },
-  {
     "video_id": "JbswK-FPAzw",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About Octopuses Have Three Hearts And Blue Blood",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-16T22:51:29.163263",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "Zcz2p3dZjKA",
+    "intent": "ANIMALS",
+    "title": "The Incredible Truth About Ants Have Been Farming For 50 Million Years",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ants Have Been Farming For 50",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.71,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-17T02:19:11.209627",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
