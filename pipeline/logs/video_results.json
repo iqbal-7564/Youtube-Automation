@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "Gn7SEUAKpKY",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Vikings Discovered America 500 Years Before",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.69,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-23T22:02:04.684845",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-24T05:53:20.849924"
-  },
-  {
     "video_id": "y5T68xiPKlg",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Ancient Greeks Discovered The Earth Was Round In 240 Bc",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-18T08:21:13.222834",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 16,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-18T16:02:08.613151"
+  },
+  {
+    "video_id": "15qnZ0ty-7A",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific Without Instruments",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.42,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-18T16:10:05.598695",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
