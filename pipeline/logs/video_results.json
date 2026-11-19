@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "I60lWtGPggU",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Tardigrades Can Survive In Outer Space",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Tardigrades Can Survive In Outer Space",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 28.88,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-24T22:01:30.522230",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 8,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-25T05:52:20.146892"
-  },
-  {
     "video_id": "WmXWNy0AGTY",
     "intent": "HISTORY",
     "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-19T08:30:45.137117",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 32,
+    "early_likes": 1,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-19T16:08:50.783701"
+  },
+  {
+    "video_id": "_khdu9xTWhY",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Library Of Alexandria Held Half A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.97,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-19T16:15:11.555177",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
