@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "VXKk24yWq-M",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Industrial Revolution Happened In 50",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.51,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-24T12:30:30.463677",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 4,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-24T21:54:59.086357"
-  },
-  {
     "video_id": "tXYpSbmwZkY",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 6,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-19T00:50:57.027241"
   },
   {
     "video_id": "1JfCFTReg_o",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-18T21:14:57.663694",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "TPGjkYz9x40",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Vikings Discovered America 500 Years Before Columbus",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Vikings Discovered America 500 Years Before",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.4,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-19T00:58:35.156296",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
