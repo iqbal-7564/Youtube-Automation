@@ -1,10 +1,5 @@
 [
   {
-    "video_id": "AsZLjjX3rzw",
-    "check_after": "2026-11-07T05:43:24.596212",
-    "done": true
-  },
-  {
     "video_id": "YwC9xdn0QFg",
     "check_after": "2026-11-07T12:58:03.894702",
     "done": true
@@ -242,11 +237,16 @@
   {
     "video_id": "_khdu9xTWhY",
     "check_after": "2026-11-19T22:15:11.557585",
-    "done": false
+    "done": true
   },
   {
     "video_id": "GALkexLZo7w",
     "check_after": "2026-11-20T03:23:02.889733",
+    "done": false
+  },
+  {
+    "video_id": "L3JoN36g8EA",
+    "check_after": "2026-11-20T07:04:57.460348",
     "done": false
   }
 ]

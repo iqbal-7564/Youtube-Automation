@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "150T13zi98Q",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About The Colosseum Could Flood For Mock Sea Battles",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Colosseum Could Flood For Mock",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.89,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-25T12:30:47.720890",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-26T02:14:30.125429"
-  },
-  {
     "video_id": "QdiKdSm3Xlw",
     "intent": "CULTURE",
     "title": "The Incredible Truth About The Most Spoken Language In 3000 Bc Was Sumerian",
@@ -4968,7 +4943,11 @@
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
-    ]
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-20T00:58:38.178223"
   },
   {
     "video_id": "GALkexLZo7w",
@@ -4986,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-19T21:23:02.885930",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "L3JoN36g8EA",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any In History",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Genghis Khan'S Empire Was Larger Than Any",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.21,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-20T01:04:57.456790",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
