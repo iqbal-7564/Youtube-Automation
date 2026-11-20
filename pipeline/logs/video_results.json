@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "KDGCcdrYJwI",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Library Of Alexandria Held Half A",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.2,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-26T17:01:07.720771",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 5,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-27T02:08:12.052846"
-  },
-  {
     "video_id": "v5w-sFcHgbs",
     "intent": "HISTORY",
     "title": "The Incredible Truth About The Library Of Alexandria Held Half A Million Scrolls",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-20T15:57:38.403135",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "dXQr2C2uirc",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Why The Roman Empire Really Collapsed",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 28.1,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-20T21:04:18.396711",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
