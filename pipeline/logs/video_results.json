@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "mCogpF5r59w",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited City",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.26,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-27T21:50:13.478333",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 102,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-28T06:20:42.189313"
-  },
-  {
     "video_id": "k1hp2F59prs",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-21T15:05:16.966321",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 6,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-21T23:38:43.260918"
+  },
+  {
+    "video_id": "iwp7j3R0oVM",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific Without Instruments",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Traditional Wayfinding Could Navigate The Pacific",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.42,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-21T23:45:12.008913",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
