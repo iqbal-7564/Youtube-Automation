@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "f6hp1KZvTpU",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.32,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-28T14:50:13.216971",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 21,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-28T23:36:48.175208"
-  },
-  {
     "video_id": "sACwqZLIPI0",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited City",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-22T15:02:38.145945",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "dJBGkurHsF0",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Göbekli Tepe Is 6000 Years Older Than Stonehenge",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Göbekli Tepe Is 6000 Years Older",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.78,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-22T20:17:31.636501",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
