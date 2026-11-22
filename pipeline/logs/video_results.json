@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "k1hp2F59prs",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Half The World'S Languages Will Be Extinct",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.39,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-28T06:26:53.766812",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 104,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-28T14:41:18.488108"
-  },
-  {
     "video_id": "f6hp1KZvTpU",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Ancient Persians Debated Sober Then Drunk To Double-Check Decisions",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-21T23:45:12.008913",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 21,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-22T14:57:36.928098"
+  },
+  {
+    "video_id": "3CwqNXEMSKA",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Romans Used Crushed Mouse Brains As Toothpaste",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Romans Used Crushed Mouse Brains",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.68,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-22T15:02:38.145945",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
