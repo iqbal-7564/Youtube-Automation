@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "fuqAsa8yl8M",
-    "intent": "ANIMALS",
-    "title": "The Incredible Truth About Ants Have Been Farming For 50 Million Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ants Have Been Farming For 50",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.94,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-29T13:36:53.664833",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 31,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-29T22:46:35.258446"
-  },
-  {
     "video_id": "Ga1kuo_R1aw",
     "intent": "ANIMALS",
     "title": "The Incredible Truth About The Mantis Shrimp Can Punch At Bullet Speed",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-23T08:41:15.931373",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 2,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-23T18:50:31.800625"
+  },
+  {
+    "video_id": "vPnU96X8W3w",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.57,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-23T18:56:49.352031",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
