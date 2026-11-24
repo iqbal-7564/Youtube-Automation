@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "QswueK8d8DA",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About Ancient Greeks Discovered The Earth Was Round In 240 Bc",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Greeks Discovered The Earth Was Round",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.51,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-30T18:24:07.117309",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 0,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-10-01T02:44:24.731651"
-  },
-  {
     "video_id": "Fg8W3-zMSrE",
     "intent": "HISTORY",
     "title": "The Incredible Truth About The Black Death Changed Europe Forever",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 85,
     "uploaded_at": "2026-11-24T18:31:01.534946",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "y56IHudI91M",
+    "intent": "OCEAN",
+    "title": "The Incredible Truth About The Mariana Trench Pressure Would Crush A Submarine Instantly",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Mariana Trench Pressure Would Crush A",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.19,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 85,
+    "uploaded_at": "2026-11-24T23:00:33.146671",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
