@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "GTV36tXziao",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Egypt Pyramid Construction Methods",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.24,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-09-30T13:15:15.818117",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 1,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-09-30T22:45:25.526636"
-  },
-  {
     "video_id": "QswueK8d8DA",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Ancient Greeks Discovered The Earth Was Round In 240 Bc",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-24T10:48:00.120616",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 25,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-24T18:27:21.387290"
+  },
+  {
+    "video_id": "wG2LYoHfJHM",
+    "intent": "OCEAN",
+    "title": "The Incredible Truth About Ocean Dead Zones Are Growing Every Decade",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Ocean Dead Zones Are Growing Every",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.25,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 85,
+    "uploaded_at": "2026-11-24T18:31:01.534946",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
