@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "r3600qWcgPs",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About The Industrial Revolution Happened In 50 Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About The Industrial Revolution Happened In 50",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.51,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-10-01T14:07:14.157358",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 2,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-10-01T22:58:19.582915"
-  },
-  {
     "video_id": "Hxj9Tj0W0PA",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Why The Roman Empire Really Collapsed",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-25T09:56:43.888520",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 0,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-25T17:41:25.596231"
+  },
+  {
+    "video_id": "sxiptJMttts",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited City",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.47,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-25T17:49:08.846482",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
