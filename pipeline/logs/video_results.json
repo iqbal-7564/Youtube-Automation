@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "-pq_ggo3bxE",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.25,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-10-02T18:22:24.979087",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 52,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-10-03T02:34:25.791951"
-  },
-  {
     "video_id": "0hWlMNKKX8s",
     "intent": "CULTURE",
     "title": "The Incredible Truth About The Ancient Trade Route Connected China To Rome",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-26T17:32:17.143052",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "cBq1eE3mYZk",
+    "intent": "CULTURE",
+    "title": "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited City",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Jericho Is The Oldest Continuously Inhabited",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.47,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-26T22:15:04.577503",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
