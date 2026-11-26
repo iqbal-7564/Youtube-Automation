@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "m_PsK4aTdoU",
-    "intent": "CULTURE",
-    "title": "The Incredible Truth About Half The World'S Languages Will Be Extinct In 100 Years",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Half The World'S Languages Will Be Extinct",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 31.39,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-10-02T13:32:40.977518",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 56,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-10-02T22:42:54.343621"
-  },
-  {
     "video_id": "-pq_ggo3bxE",
     "intent": "CULTURE",
     "title": "The Incredible Truth About Ancient Egyptians Used Honey As Medicine And It Still Works",
@@ -4990,6 +4965,31 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-26T09:17:23.966029",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ],
+    "early_views": 1,
+    "early_likes": 0,
+    "early_comments": 2,
+    "early_fetched_at": "2026-11-26T17:24:54.470832"
+  },
+  {
+    "video_id": "uM2ZCWvSqoc",
+    "intent": "HISTORY",
+    "title": "The Incredible Truth About The Silk Road Spread Religion And Plague Simultaneously",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About The Silk Road Spread Religion And",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 31.09,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-26T17:32:17.143052",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
