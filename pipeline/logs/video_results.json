@@ -1,30 +1,5 @@
 [
   {
-    "video_id": "jBILH7vkQoE",
-    "intent": "HISTORY",
-    "title": "The Incredible Truth About Rome Had A Population Of 1 Million Before London",
-    "hook_text": "This fact will completely change how you see the world.",
-    "script_key_sents": [
-      "This fact will completely change how you see the world",
-      "The Incredible Truth About Rome Had A Population Of 1 Million",
-      "Now you understand the real truth behind one of the world's most overlooked facts"
-    ],
-    "total_duration_seconds": 30.98,
-    "scene_count": 6,
-    "avg_clip_score": 1.0,
-    "quality_gate_passed": true,
-    "quality_score": 100,
-    "uploaded_at": "2026-10-04T22:15:53.868831",
-    "profile": "shorts",
-    "tts_engines": [
-      "edge-tts"
-    ],
-    "early_views": 2,
-    "early_likes": 0,
-    "early_comments": 2,
-    "early_fetched_at": "2026-10-05T06:34:28.822536"
-  },
-  {
     "video_id": "GqA2eY01O8A",
     "intent": "HISTORY",
     "title": "The Incredible Truth About Writing Was Invented To Track Beer Supplies",
@@ -4990,6 +4965,27 @@
     "quality_gate_passed": true,
     "quality_score": 100,
     "uploaded_at": "2026-11-28T15:58:07.403104",
+    "profile": "shorts",
+    "tts_engines": [
+      "edge-tts"
+    ]
+  },
+  {
+    "video_id": "VUNz94PO9p4",
+    "intent": "OCEAN",
+    "title": "The Incredible Truth About Waves In The Southern Ocean Circle The Globe Non-Stop",
+    "hook_text": "This fact will completely change how you see the world.",
+    "script_key_sents": [
+      "This fact will completely change how you see the world",
+      "The Incredible Truth About Waves In The Southern Ocean Circle The",
+      "Now you understand the real truth behind one of the world's most overlooked facts"
+    ],
+    "total_duration_seconds": 30.9,
+    "scene_count": 6,
+    "avg_clip_score": 1.0,
+    "quality_gate_passed": true,
+    "quality_score": 100,
+    "uploaded_at": "2026-11-28T20:51:55.426090",
     "profile": "shorts",
     "tts_engines": [
       "edge-tts"
